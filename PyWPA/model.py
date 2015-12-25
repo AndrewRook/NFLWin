@@ -86,7 +86,7 @@ def rescale_data(data, inplace=False):
         return scaled_data
 
     
-def fit_model(data_df, n_neighbors_list=[10,20,40,80,160,320,640,1280],
+def fit_model(data_df, n_neighbors_list=[10,20,40,80,160],
               test_frac=0.2, n_bootstrap=20):
     '''
     Fit a model to the data.
@@ -167,6 +167,22 @@ def compute_goodness_of_fit(predicted_probabilities, target_test):
     fit_metric = np.sum(scaled_probabilities[np.arange(len(target_test)),target_test])
 
     return fit_metric
+
+def make_model(n_neighbors_list=[10,20,40,80,160], test_frac=0.2, n_bootstrap=20):
+    '''
+    A wrapper that loads data, scales it, then finds the best fitting model.
+    See the documentation for data_info(), rescale_data(), and fit_model() for
+    info about specific parameters.
+    '''
+    data_info_dict = load_data()
+    scaled_data = rescale_data(data_info_dict['data'])
+    model_info_dict = fit_model(scaled_data, n_neighbors_list=n_neighbors_list,
+                                test_frac=test_frac,
+                                n_bootstrap=n_bootstrap)
+
+    return {'seasons': data_info_dict['loaded_seasons'],
+            'fit_model': model_info_dict['model'],
+            'bootstrapped_models': model_info_dict['bootstrapped_model_list']}
 
 
 if __name__ == "__main__":
