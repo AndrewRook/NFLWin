@@ -8,6 +8,7 @@ import os
 PYWPA_DIR = os.path.dirname(os.path.realpath(__file__))
 
 DATA_DIR = os.path.join(os.path.dirname(PYWPA_DIR),'data')
+MODEL_DIR = os.path.join(os.path.dirname(PYWPA_DIR),'model')
 
 DATA_PREFIX = 'nfldb_processed_data'
 
@@ -16,7 +17,7 @@ QUARTER_MAPPING = {'Q1': 1,
                    'Q3': 3,
                    'Q4': 4,
                    'OT': 5,
-                   'OT': 5,
+                   'OT2': 5,
                    }
 
 DATA_COLUMNS = ['quarter',

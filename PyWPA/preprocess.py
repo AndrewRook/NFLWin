@@ -5,11 +5,49 @@ to put it in the proper format for loading.
 
 from __future__ import print_function, division
 import os
+from datetime import date
 import time
 
 import nfldb
 
 import config as cf
+
+def process_all_seasons(season_type, first_season=2009, overwrite=False):
+    '''
+    Query the nfldb play table for all seasons from first_season.
+
+    Arguments:
+    season_type: A string or list of strings
+        with one or more of the following: Preseason, Regular,
+        or Postseason.
+    first_season (2009): The first season to try to query.
+    overwrite (False): If False, check and see if a file for the season
+        exists already before processing the data.
+
+
+    Returns:
+    None, but saves the data to files in cf.DATA_DIR named
+        cf.DATA_PREFIX+"_{0:d}.csv".format(year).
+    '''
+    #Get the current year:
+    curr_year = date.today().year
+
+    for year in range(first_season, curr_year+1):
+        #Check if a file for that year exists already:
+        filename = _create_data_filename(year)
+        if os.path.exists(filename) and overwrite == False:
+            print('skipping {0:d}'.format(year))
+        else:
+            process_season(year, season_type)
+
+def _create_data_filename(year):
+    '''
+    Make a filename for a season of data.
+    '''
+    
+    filename = os.path.join(cf.DATA_DIR,
+                            "{0:s}_{1:d}.csv".format(cf.DATA_PREFIX,year))
+    return filename
 
 def process_season(season_year, season_type):
     '''
@@ -34,8 +72,8 @@ def process_season(season_year, season_type):
     query.game(season_year=season_year, season_type=season_type).play(down__ge=0) #down__ge=0 pulls out kickoffs and stuff.
 
     #Create the filename:
-    filename = os.path.join(cf.DATA_DIR,
-                            "{0:s}_{1:d}.csv".format(cf.DATA_PREFIX,season_year))
+    filename = _create_data_filename(season_year)
+    
     #Open the file handle:
     count = 0
     game_dict = {} #Using a dict minimizes table lookups
@@ -124,5 +162,5 @@ def process_play(db, play, game_dict=None):
 
 if __name__ == "__main__":
     start = time.time()
-    process_season(2013,['Regular', 'Postseason'])
+    process_all_seasons(['Regular', 'Postseason'])
     print("took {0:.2f}s".format(time.time()-start))
