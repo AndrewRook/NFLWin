@@ -12,6 +12,8 @@ MODEL_DIR = os.path.join(os.path.dirname(PYWPA_DIR),'model')
 
 DATA_PREFIX = 'nfldb_processed_data'
 
+MODEL_FILENAME = os.path.join(MODEL_DIR,'PyWPA_model.pkl')
+
 QUARTER_MAPPING = {'Q1': 1,
                    'Q2': 2,
                    'Q3': 3,

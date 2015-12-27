@@ -6,6 +6,10 @@ from __future__ import print_function, division
 import glob
 import os
 import re
+try:
+   import cPickle as pickle
+except ImportError:
+   import pickle
 
 import numpy as np
 import pandas as pd
@@ -180,19 +184,14 @@ def make_model(n_neighbors_list=[10,20,30,40,50,60,70,80], test_frac=0.2, n_boot
                                 test_frac=test_frac,
                                 n_bootstrap=n_bootstrap)
 
-    return {'seasons': data_info_dict['loaded_seasons'],
-            'fit_model': model_info_dict['model'],
-            'bootstrapped_models': model_info_dict['bootstrapped_model_list']}
+    result_dict = {'seasons': data_info_dict['loaded_seasons'],
+                'fit_model': model_info_dict['model'],
+                'bootstrapped_models': model_info_dict['bootstrapped_model_list']}
+
+    with open(cf.MODEL_FILENAME,'wb') as model_file:
+        pickle.dump(result_dict,model_file)
 
 
 if __name__ == "__main__":
-    data_info = load_data()
-    scaled_data = rescale_data(data_info['data'])
-
-    model_info_dict = fit_model(scaled_data, n_neighbors_list=[10,20,30,40,50,60,70,80])
-
-    for i in range(1000,1010):
-       probability = model_info_dict['model'].predict_proba(scaled_data[cf.DATA_COLUMNS[:-1]].iloc[i].reshape(1,-1))
-       error = np.std([model.predict_proba(scaled_data[cf.DATA_COLUMNS[:-1]].iloc[i].reshape(1,-1))[0,1] for model in model_info_dict['bootstrapped_model_list']], ddof=1)
-       print(i,probability[0,1], error)
+    make_model()
     #print(knn.predict_proba(scaled_data[cf.DATA_COLUMNS[:-1]].iloc[1030:1040]))
