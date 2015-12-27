@@ -7,8 +7,12 @@ import os
 #The directory this file is in:
 PYWPA_DIR = os.path.dirname(os.path.realpath(__file__))
 
-DATA_DIR = os.path.join(os.path.dirname(PYWPA_DIR),'data')
-MODEL_DIR = os.path.join(os.path.dirname(PYWPA_DIR),'model')
+DATA_DIR = os.path.join(os.path.dirname(PYWPA_DIR),
+                        'PyWPA',
+                        'data')
+MODEL_DIR = os.path.join(os.path.dirname(PYWPA_DIR),
+                         'PyWPA',
+                         'model')
 
 DATA_PREFIX = 'nfldb_processed_data'
 

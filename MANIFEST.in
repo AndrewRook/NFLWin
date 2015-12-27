@@ -1,3 +1,3 @@
 include README* LICENSE
-include data/
-include model/
+include PyWPA/data/empty.txt
+include PyWPA/model/empty.txt

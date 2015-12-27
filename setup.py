@@ -25,7 +25,7 @@ INSTALL_REQUIRES = ['nfldb',
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 README = None
-with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
+with open(os.path.join(HERE, 'README.rst'),'r') as f:
     README = f.read()
     
 ###################################################################
@@ -47,4 +47,9 @@ if __name__ == "__main__":
         #zip_safe=False,
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
+        # package_data = {
+        #     'data': ['data/'],
+        #     'model': ['model/'],
+        #     },
+        include_package_data=True,
     )

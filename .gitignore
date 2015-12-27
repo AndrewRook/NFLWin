@@ -1,2 +1,5 @@
 *.pyc
 *.png
+dist/
+build/
+*.egg-info/
