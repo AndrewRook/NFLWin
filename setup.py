@@ -1,5 +1,8 @@
 import os
+import tarfile
+import warnings
 from setuptools import setup, find_packages
+from setuptools.command.install import install as _install
 
 ###################################################################
 #Boilerplate I modified from the internet
@@ -29,6 +32,34 @@ with open(os.path.join(HERE, 'README.rst'),'r') as f:
     README = f.read()
     
 ###################################################################
+
+class install(_install):
+    def run(self):
+        #Run the regular install:
+        _install.run(self)
+
+        #Get the installation directory:
+        INSTALL_DIR = os.path.join(self.install_lib,NAME)
+        #Unzip files:
+
+        #Data tarball:
+        data_tarball = os.path.join(INSTALL_DIR,'data','nfldb_processed_data.tar.gz')
+        if os.path.exists(data_tarball):
+            #Only unzip the files if the path exists:
+            with tarfile.open(data_tarball) as tarball:
+                tarball.extractall(path=os.path.dirname(data_tarball))
+        else:
+            warnings.warn("Could not find data tarball!")
+
+        #Saved model tarball:
+        model_tarball = os.path.join(INSTALL_DIR,'models','PyWPA_model.tar.gz')
+        if os.path.exists(model_tarball):
+            #Only unzip the files if the path exists:
+            with tarfile.open(model_tarball) as tarball:
+                tarball.extractall(path=os.path.dirname(model_tarball))
+        else:
+            warnings.warn("Could not find model tarball!")
+
 if __name__ == "__main__":
     setup(
         name=NAME,
@@ -43,13 +74,8 @@ if __name__ == "__main__":
         keywords=KEYWORDS,
         long_description=README,
         packages=PACKAGES,
-        #package_dir={"": "src"},
-        #zip_safe=False,
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
-        # package_data = {
-        #     'data': ['data/'],
-        #     'model': ['model/'],
-        #     },
         include_package_data=True,
+        cmdclass={'install': install},
     )

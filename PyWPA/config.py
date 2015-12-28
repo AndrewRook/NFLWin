@@ -12,7 +12,7 @@ DATA_DIR = os.path.join(os.path.dirname(PYWPA_DIR),
                         'data')
 MODEL_DIR = os.path.join(os.path.dirname(PYWPA_DIR),
                          'PyWPA',
-                         'model')
+                         'models')
 
 DATA_PREFIX = 'nfldb_processed_data'
 
