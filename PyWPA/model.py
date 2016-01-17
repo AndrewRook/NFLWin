@@ -113,12 +113,14 @@ def fit_model(data_df, n_neighbors_list=[10,20,30,40,50,60,70,80],
     features_train, features_test, target_train, target_test = \
       train_test_split(features, target, test_size=test_frac)
 
+    leaf_size = 10
+
     #Find the best model:
     best_model = None
     best_fitness = None
     for n in n_neighbors_list:
         #Make the fit:
-        knn = KNeighborsClassifier(n_neighbors=n, algorithm='ball_tree', leaf_size=30)
+        knn = KNeighborsClassifier(n_neighbors=n, algorithm='ball_tree', leaf_size=leaf_size)
         knn.fit(features_train, target_train)
 
         #Predict the test data:
@@ -138,7 +140,7 @@ def fit_model(data_df, n_neighbors_list=[10,20,30,40,50,60,70,80],
         indices = np.random.randint(len(features_train),size=len(features_train))
         bootstrapped_features = features_train[indices,:]
         bootstrapped_target = target_train[indices]
-        knn_temp = KNeighborsClassifier(n_neighbors=best_model.n_neighbors, algorithm='ball_tree', leaf_size=30)
+        knn_temp = KNeighborsClassifier(n_neighbors=best_model.n_neighbors, algorithm='ball_tree', leaf_size=leaf_size)
         knn_temp.fit(bootstrapped_features, bootstrapped_target)
         bootstrapped_models.append(knn_temp)
     return {'model':best_model, 'bootstrapped_model_list':bootstrapped_models}
