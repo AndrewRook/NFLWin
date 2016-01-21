@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cross_validation import train_test_split
+from sklearn.externals import joblib
 
 import config as cf
 
@@ -32,12 +33,14 @@ def load_data():
     data_df = None
     year_regex = re.compile(os.path.join(cf.DATA_DIR,cf.DATA_PREFIX)+r"_(?P<year>[\d]{4})")
     for filename in data_files:
-        loaded_seasons.append(year_regex.search(filename).group('year'))
-        season_data = pd.read_csv(filename, names=cf.DATA_COLUMNS)
-        if data_df is None:
-            data_df = season_data
-        else:
-            data_df = pd.concat([data_df,season_data], ignore_index=True)
+        regex_search_results = year_regex.search(filename)
+        if regex_search_results is not None:
+            loaded_seasons.append(regex_search_results.group('year'))
+            season_data = pd.read_csv(filename, names=cf.DATA_COLUMNS)
+            if data_df is None:
+                data_df = season_data
+            else:
+                data_df = pd.concat([data_df,season_data], ignore_index=True)
 
             
     return {'data': data_df, 'loaded_seasons': loaded_seasons}
@@ -90,14 +93,14 @@ def rescale_data(data, inplace=False):
         return scaled_data
 
     
-def fit_model(data_df, n_neighbors_list=[10,20,30,40,50,60,70,80],
+def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
               test_frac=0.2, n_bootstrap=20):
     '''
     Fit a model to the data.
 
     Arguments:
     data_df: A dataframe from rescale_data().
-    n_neighbors_list ([10,20,40,80,160,320,640,1280]): How many neighbors to try in the fit.
+    n_neighbors_list (config.DEFAULT_N_NEIGHBORS_LIST): How many neighbors to try in the fit.
     test_frac (0.2): What fraction of the data to use to test.
     n_bootstrap (20): The number of iterations to use to estimate the
         error. More will be more robust but take longer.
@@ -113,7 +116,7 @@ def fit_model(data_df, n_neighbors_list=[10,20,30,40,50,60,70,80],
     features_train, features_test, target_train, target_test = \
       train_test_split(features, target, test_size=test_frac)
 
-    leaf_size = 10
+    leaf_size = 40
 
     #Find the best model:
     best_model = None
@@ -124,7 +127,7 @@ def fit_model(data_df, n_neighbors_list=[10,20,30,40,50,60,70,80],
         knn.fit(features_train, target_train)
 
         #Predict the test data:
-        fit_metric = compute_goodness_of_fit(knn.predict_proba(features_test), target_test)
+        fit_metric = compute_goodness_of_fit(knn.predict_proba(features_test)[:,1], target_test) #Need the [:,1] because the prediction returns probabilities for both 0 and 1
         print(n,fit_metric)
 
         #If this is better than the previous best, use it:
@@ -146,7 +149,7 @@ def fit_model(data_df, n_neighbors_list=[10,20,30,40,50,60,70,80],
     return {'model':best_model, 'bootstrapped_model_list':bootstrapped_models}
 
 
-def compute_goodness_of_fit(predicted_probabilities, target_test):
+def _compute_goodness_of_fit(predicted_probabilities, target_test):
     '''
     Take a set of predicted probabilities and turn it into a metric
     useable to compare models against each other.
@@ -174,7 +177,63 @@ def compute_goodness_of_fit(predicted_probabilities, target_test):
 
     return fit_metric
 
-def make_model(n_neighbors_list=[10,20,30,40,50,60,70,80], test_frac=0.2, n_bootstrap=20):
+def compute_goodness_of_fit(predicted_probabilities, target_test):
+    '''
+    Take a set of predicted probabilities and computes a fitting function
+    as follows:
+    1. Split the plays on whether or not the offense won the game.
+    2. Use a kernel-density estimate of each set of play probabilities.
+    3. Take the ratio of the two, and compare that to the expected frequency
+        of wins at that predicted probability to compute a final
+        goodness of fit statistic: integral((expected-actual)**2). 
+
+    Arguments:
+    predicted_probabilities: The output of KNeighborsClassifier.predict_proba (or equivalent).
+    target_test: The actual answers. 
+
+    Returns:
+    goodness_of_fit: the integral of the squared differences between the expected and
+        actual probabilities.
+    '''
+    num_mult = 1000000.
+    integer_predicted_probabilities = (predicted_probabilities*num_mult).astype(np.int)
+    is_winner = (target_test == 1)
+    winner_predicted_probabilities = integer_predicted_probabilities[is_winner]
+    #winner_target_test = target_test[is_winner]
+    loser_predicted_probabilities = integer_predicted_probabilities[is_winner == False]
+    #loser_target_test = target_test[is_winner == False]
+    
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    ax = plt.figure().add_subplot(111)
+    winner_hist,bin_edges = np.histogram(winner_predicted_probabilities,bins=100)
+    loser_hist,bin_edges = np.histogram(loser_predicted_probabilities,bins=bin_edges)
+    bin_centers = 0.5*(bin_edges[1:] + bin_edges[:-1])
+    bin_width = bin_edges[1]-bin_edges[0]
+    ax.bar(bin_centers/num_mult,winner_hist, align='center', width=bin_width/num_mult, color='green', alpha=0.5)
+    ax.bar(bin_centers/num_mult,loser_hist, align='center', width=bin_width/num_mult, color='red', alpha=0.5)
+    ax.figure.savefig('test.png')
+    import sys
+    sys.exit(0)
+    
+    # import scipy
+    # print("woo", len(winner_target_test), len(loser_target_test))
+    # winner_kernel = scipy.stats.gaussian_kde(winner_predicted_probabilities)
+    # print("one")
+    # loser_kernel = scipy.stats.gaussian_kde(loser_predicted_probabilities)
+    # print("two")
+    # import matplotlib.pyplot as plt
+    # ax = plt.figure().add_subplot(111)
+    # xvals = np.linspace(0,1,100)
+    # ax.plot(xvals,winner_kernel(xvals), ls='-', color='green', lw=3)
+    # ax.plot(xvals,loser_kernel(xvals), ls='-', color='red', lw=3)
+    # ax.figure.savefig('test.png')
+    # print(np.unique(target_test))
+    return 0
+    
+
+def make_model(n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST, test_frac=0.2, n_bootstrap=20):
     '''
     A wrapper that loads data, scales it, then finds the best fitting model.
     See the documentation for data_info(), rescale_data(), and fit_model() for
@@ -190,10 +249,13 @@ def make_model(n_neighbors_list=[10,20,30,40,50,60,70,80], test_frac=0.2, n_boot
                 'fit_model': model_info_dict['model'],
                 'bootstrapped_models': model_info_dict['bootstrapped_model_list']}
 
-    with open(cf.MODEL_FILENAME,'wb') as model_file:
-        pickle.dump(result_dict,model_file)
+    # with open(cf.MODEL_FILENAME,'wb') as model_file:
+    #     pickle.dump(result_dict,model_file)
+    joblib.dump(result_dict,cf.MODEL_FILENAME,compress=0)
+        
 
 
 if __name__ == "__main__":
-    make_model()
+    np.random.seed(891)
+    make_model(n_bootstrap=1)
     #print(knn.predict_proba(scaled_data[cf.DATA_COLUMNS[:-1]].iloc[1030:1040]))
