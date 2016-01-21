@@ -16,7 +16,7 @@ MODEL_DIR = os.path.join(os.path.dirname(PYWPA_DIR),
 
 DATA_PREFIX = 'nfldb_processed_data'
 
-MODEL_FILENAME = os.path.join(MODEL_DIR,'PyWPA_model.pkl')
+MODEL_FILENAME = os.path.join(MODEL_DIR,'PyWPA_model.joblib.pkl')
 
 QUARTER_MAPPING = {'Q1': 1,
                    'Q2': 2,
@@ -35,3 +35,5 @@ DATA_COLUMNS = ['quarter',
                 'field_position',
                 'is_offense_winner'
                 ]
+
+DEFAULT_N_NEIGHBORS_LIST = [100]
