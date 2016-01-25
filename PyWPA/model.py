@@ -94,7 +94,7 @@ def rescale_data(data, inplace=False):
 
     
 def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
-              test_frac=0.2, n_bootstrap=20):
+              test_frac=0.2, n_bootstrap=20, make_diagnostic_plot=False):
     '''
     Fit a model to the data.
 
@@ -104,6 +104,10 @@ def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
     test_frac (0.2): What fraction of the data to use to test.
     n_bootstrap (20): The number of iterations to use to estimate the
         error. More will be more robust but take longer.
+    make_diagnostic_plot (False): If True, this will make a plot called "model_diagnostic.png"
+        in your pwd showing the fraction of winning test set plays at each predicted
+        probability level for the best fitting number of neighbors. Requires Matplotlib
+        (not a strict dependence for the PyWPA package).
 
     Returns:
     A dictionary with the following key/values:
@@ -136,6 +140,10 @@ def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
             best_fitness = fit_metric
 
     print("Best model has n_neighbors={0:d}".format(best_model.n_neighbors))
+
+    #Plot the model, if required:
+    if make_diagnostic_plot:
+        compute_goodness_of_fit(best_model.predict_proba(features_test)[:,1], target_test, make_diagnostic_plot=True)
     
     #Bootstrap it:
     bootstrapped_models = []
@@ -146,6 +154,7 @@ def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
         knn_temp = KNeighborsClassifier(n_neighbors=best_model.n_neighbors, algorithm='ball_tree', leaf_size=leaf_size)
         knn_temp.fit(bootstrapped_features, bootstrapped_target)
         bootstrapped_models.append(knn_temp)
+        
     return {'model':best_model, 'bootstrapped_model_list':bootstrapped_models}
 
 
@@ -177,7 +186,7 @@ def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
 
 #     return fit_metric
 
-def compute_goodness_of_fit(predicted_probabilities, target_test, n_bootstrap=20, num_mult=10000):
+def compute_goodness_of_fit(predicted_probabilities, target_test, num_mult=10000, make_diagnostic_plot=False):
     '''
     Take a set of predicted probabilities and computes a fitting function
     as follows:
@@ -185,16 +194,19 @@ def compute_goodness_of_fit(predicted_probabilities, target_test, n_bootstrap=20
     2. Use a kernel-density estimate of each set of play probabilities.
     3. Take the ratio of the two, and compare that to the expected frequency
         of wins at that predicted probability to compute a final
-        goodness of fit statistic: sum((expected-actual)**2/standard_error**2)/n_bins. 
+        goodness of fit statistic: sum(bin_count*sqrt((expected-actual)**2))/sum(bin_count). 
 
     Arguments:
     predicted_probabilities: The output of KNeighborsClassifier.predict_proba (or equivalent).
     target_test: The actual answers.
-    n_bootstrap (20): The number of bootstrap iterations to compute the errors.
     num_mult (10000): The number to multiply the probabilities by to ensure they're all
         integers (which allows us to do some tricks to quickly compute probabilities).
         If you look at more than this number of neighbors then you'll need to increase this
         multiplier proportionately.
+    make_diagnostic_plot (False): If True, this will make a plot called "model_diagnostic.png"
+        in your pwd showing the fraction of winning test set plays at each predicted
+        probability level for the best fitting number of neighbors. Requires Matplotlib
+        (not a strict dependence for the PyWPA package).
 
     Returns:
     goodness_of_fit: sum(bin_count*sqrt((predicted-actual)**2))/sum(bin_count)
@@ -212,28 +224,27 @@ def compute_goodness_of_fit(predicted_probabilities, target_test, n_bootstrap=20
                              np.sqrt((unique_probabilities - winner_fraction)**2))/np.sum(
                                  all_probability_counts)
 
-    
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    ax = plt.figure().add_subplot(111)
-    bin_width = unique_probabilities[1]-unique_probabilities[0]
-    ax.bar(unique_probabilities,
-           winner_fraction,
-           align='center',
-           width=bin_width,
-           color='orange',
-           alpha=0.75,
-           label="Test Sample")
-    ax.plot(np.linspace(0,1,10), np.linspace(0,1,10), ls='-', color='black', lw=3, label="Ideal")
-    ax.set_xlim(0,1)
-    ax.set_ylim(0,1)
-    ax.set_xlabel("Predicted Probabilities")
-    ax.set_ylabel("Actual Probabilities")
-    ax.legend(loc='upper left', numpoints=1, prop={'size':10})
-    ax.figure.savefig('test_{0:d}.png'.format(len(unique_probabilities)))
-    #import sys
-    #sys.exit(0)
+
+    if make_diagnostic_plot:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        ax = plt.figure().add_subplot(111)
+        bin_width = unique_probabilities[1]-unique_probabilities[0]
+        ax.bar(unique_probabilities,
+            winner_fraction,
+            align='center',
+            width=bin_width,
+            color='red',
+            alpha=0.75,
+            label="Test Sample")
+        ax.plot(np.linspace(0,1,10), np.linspace(0,1,10), ls='-', color='black', lw=3, label="Ideal")
+        ax.set_xlim(0,1)
+        ax.set_ylim(0,1)
+        ax.set_xlabel("Predicted Probabilities")
+        ax.set_ylabel("Actual Probabilities")
+        ax.legend(loc='upper left', numpoints=1, prop={'size':10})
+        ax.figure.savefig('model_diagnostic.png'.format(len(unique_probabilities)))
     
     return goodness_of_fit
 
@@ -255,7 +266,7 @@ def _compute_probabilities(predicted_probabilities, target_test, num_mult, minle
     unique_probabilities = np.nonzero(all_probability_counts)[0]/num_mult
     return unique_probabilities, winner_fraction, all_probability_counts[all_probability_counts > 0]
 
-def make_model(n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST, test_frac=0.2, n_bootstrap=20):
+def make_model(n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST, test_frac=0.2, n_bootstrap=20, make_diagnostic_plot=True):
     '''
     A wrapper that loads data, scales it, then finds the best fitting model.
     See the documentation for data_info(), rescale_data(), and fit_model() for
@@ -265,7 +276,8 @@ def make_model(n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST, test_frac=0.2, n_bo
     scaled_data = rescale_data(data_info_dict['data'])
     model_info_dict = fit_model(scaled_data, n_neighbors_list=n_neighbors_list,
                                 test_frac=test_frac,
-                                n_bootstrap=n_bootstrap)
+                                n_bootstrap=n_bootstrap,
+                                make_diagnostic_plot=make_diagnostic_plot)
 
     result_dict = {'seasons': data_info_dict['loaded_seasons'],
                 'fit_model': model_info_dict['model'],
@@ -279,5 +291,5 @@ def make_model(n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST, test_frac=0.2, n_bo
 
 if __name__ == "__main__":
     np.random.seed(891)
-    make_model(n_bootstrap=1)
+    make_model(n_bootstrap=1, make_diagnostic_plot=True)
     #print(knn.predict_proba(scaled_data[cf.DATA_COLUMNS[:-1]].iloc[1030:1040]))
