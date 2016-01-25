@@ -36,4 +36,4 @@ DATA_COLUMNS = ['quarter',
                 'is_offense_winner'
                 ]
 
-DEFAULT_N_NEIGHBORS_LIST = [100]
+DEFAULT_N_NEIGHBORS_LIST = [20,40,60,80,100]

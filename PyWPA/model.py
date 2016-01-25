@@ -149,35 +149,35 @@ def fit_model(data_df, n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST,
     return {'model':best_model, 'bootstrapped_model_list':bootstrapped_models}
 
 
-def _compute_goodness_of_fit(predicted_probabilities, target_test):
-    '''
-    Take a set of predicted probabilities and turn it into a metric
-    useable to compare models against each other.
+# def _compute_goodness_of_fit(predicted_probabilities, target_test):
+#     '''
+#     Take a set of predicted probabilities and turn it into a metric
+#     useable to compare models against each other.
 
-    Arguments:
-    predicted_probabilities: The output of KNeighborsClassifier.predict_proba (or equivalent).
-    target_test: The actual answers. 
+#     Arguments:
+#     predicted_probabilities: The output of KNeighborsClassifier.predict_proba (or equivalent).
+#     target_test: The actual answers. 
 
-    Returns:
-    fit_quality_metric: The sum of the scaled probabilities for each target, with scaling as follows:
-    1. Any probability less than 0.5 is set at probability - 1.0 (e.g. 0.2 becomes -0.8).
-    2. Any probability greater than 0.5 is set at 1.0 - probability (e.g 0.8 becomes 0.2).
-    3. If the probability is exactly 0.5, then set one to -0.5 and the other to 0.5.
-    '''
+#     Returns:
+#     fit_quality_metric: The sum of the scaled probabilities for each target, with scaling as follows:
+#     1. Any probability less than 0.5 is set at probability - 1.0 (e.g. 0.2 becomes -0.8).
+#     2. Any probability greater than 0.5 is set at 1.0 - probability (e.g 0.8 becomes 0.2).
+#     3. If the probability is exactly 0.5, then set one to -0.5 and the other to 0.5.
+#     '''
 
-    #Rescale the probabilities:
-    scaled_probabilities = predicted_probabilities.copy()
-    scaled_probabilities[scaled_probabilities < 0.5] -= 1.0
-    scaled_probabilities[scaled_probabilities > 0.5] = 1.0 - scaled_probabilities[scaled_probabilities > 0.5]
-    toss_ups = (abs(scaled_probabilities[:,0] - 0.5) <= 1e-4)
-    scaled_probabilities[toss_ups,0] -= 1 #Can leave the other one as is.
+#     #Rescale the probabilities:
+#     scaled_probabilities = predicted_probabilities.copy()
+#     scaled_probabilities[scaled_probabilities < 0.5] -= 1.0
+#     scaled_probabilities[scaled_probabilities > 0.5] = 1.0 - scaled_probabilities[scaled_probabilities > 0.5]
+#     toss_ups = (abs(scaled_probabilities[:,0] - 0.5) <= 1e-4)
+#     scaled_probabilities[toss_ups,0] -= 1 #Can leave the other one as is.
 
-    #Apply the scaled probabilities to the target, and sum:
-    fit_metric = np.sum(scaled_probabilities[np.arange(len(target_test)),target_test])
+#     #Apply the scaled probabilities to the target, and sum:
+#     fit_metric = np.sum(scaled_probabilities[np.arange(len(target_test)),target_test])
 
-    return fit_metric
+#     return fit_metric
 
-def compute_goodness_of_fit(predicted_probabilities, target_test):
+def compute_goodness_of_fit(predicted_probabilities, target_test, n_bootstrap=20, num_mult=10000):
     '''
     Take a set of predicted probabilities and computes a fitting function
     as follows:
@@ -185,53 +185,75 @@ def compute_goodness_of_fit(predicted_probabilities, target_test):
     2. Use a kernel-density estimate of each set of play probabilities.
     3. Take the ratio of the two, and compare that to the expected frequency
         of wins at that predicted probability to compute a final
-        goodness of fit statistic: integral((expected-actual)**2). 
+        goodness of fit statistic: sum((expected-actual)**2/standard_error**2)/n_bins. 
 
     Arguments:
     predicted_probabilities: The output of KNeighborsClassifier.predict_proba (or equivalent).
-    target_test: The actual answers. 
+    target_test: The actual answers.
+    n_bootstrap (20): The number of bootstrap iterations to compute the errors.
+    num_mult (10000): The number to multiply the probabilities by to ensure they're all
+        integers (which allows us to do some tricks to quickly compute probabilities).
+        If you look at more than this number of neighbors then you'll need to increase this
+        multiplier proportionately.
 
     Returns:
-    goodness_of_fit: the integral of the squared differences between the expected and
-        actual probabilities.
+    goodness_of_fit: sum(bin_count*sqrt((predicted-actual)**2))/sum(bin_count)
     '''
-    num_mult = 1000000.
-    integer_predicted_probabilities = (predicted_probabilities*num_mult).astype(np.int)
-    is_winner = (target_test == 1)
-    winner_predicted_probabilities = integer_predicted_probabilities[is_winner]
-    #winner_target_test = target_test[is_winner]
-    loser_predicted_probabilities = integer_predicted_probabilities[is_winner == False]
-    #loser_target_test = target_test[is_winner == False]
+
+    #Compute the predicted and actual probabilities, as well as the number of plays at
+    #each probability:
+    unique_probabilities, winner_fraction, all_probability_counts = \
+       _compute_probabilities(predicted_probabilities,
+                              target_test,
+                              num_mult)
+
+    #Finally, we have the information we need to compute a goodness of fit metric:
+    goodness_of_fit = np.sum(all_probability_counts *
+                             np.sqrt((unique_probabilities - winner_fraction)**2))/np.sum(
+                                 all_probability_counts)
+
     
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     ax = plt.figure().add_subplot(111)
-    winner_hist,bin_edges = np.histogram(winner_predicted_probabilities,bins=100)
-    loser_hist,bin_edges = np.histogram(loser_predicted_probabilities,bins=bin_edges)
-    bin_centers = 0.5*(bin_edges[1:] + bin_edges[:-1])
-    bin_width = bin_edges[1]-bin_edges[0]
-    ax.bar(bin_centers/num_mult,winner_hist, align='center', width=bin_width/num_mult, color='green', alpha=0.5)
-    ax.bar(bin_centers/num_mult,loser_hist, align='center', width=bin_width/num_mult, color='red', alpha=0.5)
-    ax.figure.savefig('test.png')
-    import sys
-    sys.exit(0)
+    bin_width = unique_probabilities[1]-unique_probabilities[0]
+    ax.bar(unique_probabilities,
+           winner_fraction,
+           align='center',
+           width=bin_width,
+           color='orange',
+           alpha=0.75,
+           label="Test Sample")
+    ax.plot(np.linspace(0,1,10), np.linspace(0,1,10), ls='-', color='black', lw=3, label="Ideal")
+    ax.set_xlim(0,1)
+    ax.set_ylim(0,1)
+    ax.set_xlabel("Predicted Probabilities")
+    ax.set_ylabel("Actual Probabilities")
+    ax.legend(loc='upper left', numpoints=1, prop={'size':10})
+    ax.figure.savefig('test_{0:d}.png'.format(len(unique_probabilities)))
+    #import sys
+    #sys.exit(0)
     
-    # import scipy
-    # print("woo", len(winner_target_test), len(loser_target_test))
-    # winner_kernel = scipy.stats.gaussian_kde(winner_predicted_probabilities)
-    # print("one")
-    # loser_kernel = scipy.stats.gaussian_kde(loser_predicted_probabilities)
-    # print("two")
-    # import matplotlib.pyplot as plt
-    # ax = plt.figure().add_subplot(111)
-    # xvals = np.linspace(0,1,100)
-    # ax.plot(xvals,winner_kernel(xvals), ls='-', color='green', lw=3)
-    # ax.plot(xvals,loser_kernel(xvals), ls='-', color='red', lw=3)
-    # ax.figure.savefig('test.png')
-    # print(np.unique(target_test))
-    return 0
-    
+    return goodness_of_fit
+
+
+def _compute_probabilities(predicted_probabilities, target_test, num_mult, minlength=None):
+    '''
+    A method used by compute_goodness_of_fit to actually compute the test set
+    probabilities
+    '''
+    integer_predicted_probabilities = (predicted_probabilities*num_mult).astype(np.int)
+
+    is_winner = (target_test == 1)
+    winner_predicted_probabilities = integer_predicted_probabilities[is_winner]
+
+    #Count up all probabilities:
+    all_probability_counts = np.bincount(integer_predicted_probabilities, minlength=minlength)
+    winner_predicted_probability_counts = np.bincount(winner_predicted_probabilities, minlength=len(all_probability_counts))
+    winner_fraction = winner_predicted_probability_counts[all_probability_counts > 0]/all_probability_counts[all_probability_counts > 0]
+    unique_probabilities = np.nonzero(all_probability_counts)[0]/num_mult
+    return unique_probabilities, winner_fraction, all_probability_counts[all_probability_counts > 0]
 
 def make_model(n_neighbors_list=cf.DEFAULT_N_NEIGHBORS_LIST, test_frac=0.2, n_bootstrap=20):
     '''
