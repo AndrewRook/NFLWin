@@ -3,10 +3,10 @@ This module has functions to predict the Win Probability (WP)
 and Win Probability Added (WPA).
 '''
 from __future__ import print_function, division
-try:
-   import cPickle as pickle
-except ImportError:
-   import pickle
+# try:
+#    import cPickle as pickle
+# except ImportError:
+#    import pickle
 
 import numpy as np
 from sklearn.externals import joblib
