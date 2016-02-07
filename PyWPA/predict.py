@@ -9,6 +9,7 @@ from __future__ import print_function, division
 #    import pickle
 
 import numpy as np
+import pandas as pd
 from sklearn.externals import joblib
 
 import config as cf
@@ -60,25 +61,25 @@ def compute_wp(model, play_data):
         WP_error: The predicted uncertainty in the WP estimate based on
             sampling error.
     '''
-    rescaled_play_data = rescale_play_data(play_data)
+    rescaled_play_data = rescale_data(play_data)
     try:
-        #Start by assuming the play_data is a dictionary:
+        #Start by assuming the play_data is a dataframe:
         features = rescaled_play_data[cf.DATA_COLUMNS[:-1]].values
-        prediction = {}
+        prediction = pd.DataFrame(index=np.arange(features.shape[0]))
     except TypeError:
         feature_list = []
         for key in cf.DATA_COLUMNS[:-1]:
             feature_list.append(rescaled_play_data[key])
         features = np.array(feature_list).reshape(1,-1)
-        prediction = pd.DataFrame(index=np.arange(features.shape[0]))
+        prediction = {}
 
     win_prob = model['fit_model'].predict_proba(features)[:,1]
     win_prob_errors = np.std([bootstrapped_model.predict_proba(features)[:,1] \
                        for bootstrapped_model in model['bootstrapped_models']], axis=0, ddof=1)
     print(win_prob)
     print(win_prob_errors)
-    prediction['win_prob'] = win_prob
-    prediction['win_prob_errors'] = win_prob_errors
+    prediction['WP'] = win_prob
+    prediction['WP_error'] = win_prob_errors
 
     return prediction
 
