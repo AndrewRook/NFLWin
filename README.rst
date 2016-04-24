@@ -26,9 +26,6 @@ Then install a fresh version::
   $ brew install postgresql
 
 
-Shouldn't have to do an ``initdb -D /usr/local/var/postgres --locale=en_US.UTF-8 --encoding=UNICODE``.
-
-
 Start Postgres and Create a Default DB
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 You can choose to run Postgres at startup, but I don't use it that
@@ -103,3 +100,7 @@ uninstall/reinstall ``psycopg2``).
 Pretty simple - get ``conda``, then::
 
   $ conda env create -f environment.yml
+
+2b. Users
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This will depend on whether or not you want the nfldb dependencies.
