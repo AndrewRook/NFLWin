@@ -54,15 +54,14 @@ def connect_db():
     return engine
     
     
-def get_play_data(**kwargs):
+def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
     """"""
     engine = connect_db()
 
-    sql_string = _make_query_string(season_types=["Regular", "Postseason"])
+    sql_string = _make_query_string(season_years=season_years, season_types=season_types)
 
     plays_df = pd.read_sql(sql_string, engine)
     print(len(plays_df))
-    #TODO: add home team, away team, and winning team to query. 
 
 def _make_query_string(season_years=None, season_types=None):
     """Construct the query string to get all the play data.
@@ -174,5 +173,4 @@ def parse_plays(game):
     
     
 if __name__ == "__main__":
-    get_play_data(season_type=["Postseason"],
-                  season_year=[2015])
+    get_play_data(season_years=[2015])
