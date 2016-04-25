@@ -58,28 +58,13 @@ def get_play_data(**kwargs):
     """"""
     engine = connect_db()
 
-    sql_string = """SELECT play.gsis_id, play.drive_id, play.play_id,
-    play.time, play.pos_team, play.yardline, play.down, play.yards_to_go,
-    GREATEST((agg_play.defense_frec_tds * 6), (agg_play.defense_int_tds * 6),
-    (agg_play.defense_misc_tds * 6), (agg_play.fumbles_rec_tds * 6),
-    (agg_play.kicking_rec_tds * 6), (agg_play.kickret_tds * 6),
-    (agg_play.passing_tds * 6), (agg_play.puntret_tds * 6),
-    (agg_play.receiving_tds * 6), (agg_play.rushing_tds * 6),
-    (agg_play.kicking_xpmade * 1), (agg_play.passing_twoptm * 2),
-    (agg_play.receiving_twoptm * 2), (agg_play.rushing_twoptm * 2),
-    (agg_play.kicking_fgm * 3), (agg_play.defense_safe * 2)) AS play_points
-    FROM play
-    INNER JOIN agg_play
-    ON play.gsis_id = agg_play.gsis_id AND play.drive_id = agg_play.drive_id AND play.play_id = agg_play.play_id
-    ORDER BY play.gsis_id, play.drive_id, play.play_id;"""
-
-    _make_query_string([2015], ["Regular"])
+    sql_string = _make_query_string(season_types=["Regular", "Postseason"])
 
     plays_df = pd.read_sql(sql_string, engine)
     print(len(plays_df))
     #TODO: add home team, away team, and winning team to query. 
 
-def _make_query_string(season_years, season_type):
+def _make_query_string(season_years=None, season_types=None):
     """Construct the query string to get all the play data.
 
     This way is a little more compact and robust than specifying
@@ -106,17 +91,42 @@ def _make_query_string(season_years, season_type):
         "(agg_play.receiving_twoptm * 2), "
         "(agg_play.rushing_twoptm * 2), "
         "(agg_play.kicking_fgm * 3), "
-        "(agg_play.defense_safe * 2))")
+        "(agg_play.defense_safe * 2)) "
+        "AS play_points")
+
+    game_fields = ("game.home_team, game.away_team, "
+                   "(game.home_score > game.away_score) AS home_won")
+
+    where_clause = ("WHERE game.home_score != game.away_score "
+                    "AND game.finished = TRUE")
+
+    if season_years is not None:
+        where_clause += " AND game.season_year"# in ({0})"
+        if len(season_years) == 1:
+            where_clause += " = {0}".format(season_years[0])
+        else:
+            where_clause += (" in ({0})"
+                            "".format(",".join([str(year) for year in season_years])))
+    if season_types is not None:
+        where_clause += " AND game.season_type"
+        if len(season_types) == 1:
+            where_clause += " = '{0}'".format(season_types[0])
+        else:
+            where_clause += " in ('{0}')".format("','".join(season_types))
 
     query_string = "SELECT "
     query_string += "play." + ", play.".join(play_fields)
     query_string += ", " + play_points
+    query_string += ", " + game_fields
     query_string += " FROM play INNER JOIN agg_play"
     query_string += (" ON play.gsis_id = agg_play.gsis_id"
         " AND play.drive_id = agg_play.drive_id"
         " AND play.play_id = agg_play.play_id")
+    query_string += " INNER JOIN game on play.gsis_id = game.gsis_id"
+    query_string += " " + where_clause
     query_string += " ORDER BY play.gsis_id, play.drive_id, play.play_id;"
-    print(query_string)
+
+    return query_string
     
 
 def parse_plays(game):
