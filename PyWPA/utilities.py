@@ -61,6 +61,8 @@ def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
     sql_string = _make_query_string(season_years=season_years, season_types=season_types)
 
     plays_df = pd.read_sql(sql_string, engine)
+
+    #TODO: Go through each play to get the current aggregate home and away scores. 
     print(len(plays_df))
 
 def _make_query_string(season_years=None, season_types=None):
