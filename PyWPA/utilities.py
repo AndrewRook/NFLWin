@@ -16,8 +16,30 @@ QUARTER_MAPPING = {'Q1': 1,
                    'OT2': 5,
                    }
 
-def get_play_data(**kwargs):
-    """"""
+def connect_db():
+    """Connect to the nfldb database.
+
+    Rather than using the builtin method we make our own,
+    since we're going to use SQLAlchemy as the engine. However,
+    we can still make use of the information in the nfldb config
+    file to get information like username and password, which
+    means this function doesn't need any arguments.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    SQLAlchemy engine object
+        A connected engine, ready to be used to query the DB.
+
+    Raises
+    ------
+    IOError
+        If it can't find the config file.
+    """
+    
     db_config, paths_tried = nfldb.db.config()
     if db_config is None:
         raise IOError("get_play_data: could not find database config! Looked"
@@ -26,10 +48,15 @@ def get_play_data(**kwargs):
     db_config["username"] = db_config["user"]
     del db_config["user"]
     del db_config["timezone"]
-    #db = nfldb.connect()
-    #query = nfldb.Query(db)
 
     engine = sql.create_engine(sql.engine.url.URL(**db_config))
+
+    return engine
+    
+    
+def get_play_data(**kwargs):
+    """"""
+    engine = connect_db()
 
     sql_string = """SELECT play.gsis_id, play.drive_id, play.play_id,
     play.time, play.pos_team, play.yardline, play.down, play.yards_to_go,
@@ -46,17 +73,51 @@ def get_play_data(**kwargs):
     ON play.gsis_id = agg_play.gsis_id AND play.drive_id = agg_play.drive_id AND play.play_id = agg_play.play_id
     ORDER BY play.gsis_id, play.drive_id, play.play_id;"""
 
+    _make_query_string([2015], ["Regular"])
+
     plays_df = pd.read_sql(sql_string, engine)
     print(len(plays_df))
+    #TODO: add home team, away team, and winning team to query. 
 
-    # #Get all the games for the season:
-    # query.game(**kwargs).play(down__ge=0, pos_team__ne="UNK") #down__ge=0 pulls out kickoffs and stuff.
+def _make_query_string(season_years, season_type):
+    """Construct the query string to get all the play data.
 
-    # start = time.time()
-    # for i, game in enumerate(query.as_games()):
-    #     play_data = parse_plays(game)
-    #     break
-    # print(time.time()-start)
+    This way is a little more compact and robust than specifying
+    the string in the function that uses it.
+
+    """
+    
+    play_fields = ['gsis_id', 'drive_id', 'play_id',
+                   'time', 'pos_team', 'yardline', 'down',
+                   'yards_to_go']
+
+    play_points = ("GREATEST((agg_play.defense_frec_tds * 6),"
+        "(agg_play.defense_int_tds * 6), "
+        "(agg_play.defense_misc_tds * 6), "
+        "(agg_play.fumbles_rec_tds * 6), "
+        "(agg_play.kicking_rec_tds * 6), "
+        "(agg_play.kickret_tds * 6), "
+        "(agg_play.passing_tds * 6), "
+        "(agg_play.puntret_tds * 6), "
+        "(agg_play.receiving_tds * 6), "
+        "(agg_play.rushing_tds * 6), "
+        "(agg_play.kicking_xpmade * 1), "
+        "(agg_play.passing_twoptm * 2), "
+        "(agg_play.receiving_twoptm * 2), "
+        "(agg_play.rushing_twoptm * 2), "
+        "(agg_play.kicking_fgm * 3), "
+        "(agg_play.defense_safe * 2))")
+
+    query_string = "SELECT "
+    query_string += "play." + ", play.".join(play_fields)
+    query_string += ", " + play_points
+    query_string += " FROM play INNER JOIN agg_play"
+    query_string += (" ON play.gsis_id = agg_play.gsis_id"
+        " AND play.drive_id = agg_play.drive_id"
+        " AND play.play_id = agg_play.play_id")
+    query_string += " ORDER BY play.gsis_id, play.drive_id, play.play_id;"
+    print(query_string)
+    
 
 def parse_plays(game):
     """"""
