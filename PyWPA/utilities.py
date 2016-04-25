@@ -128,7 +128,8 @@ def _make_query_string(season_years=None, season_types=None):
     query_string += " ORDER BY play.gsis_id, play.drive_id, play.play_id;"
 
     return query_string
-    
+
+
 
 def parse_plays(game):
     """"""
