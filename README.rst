@@ -9,13 +9,14 @@ Installation Instructions
 
 1. Installing nfldb (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These steps are only necessary if you want to use nfldb as your data
-source. Most of these instructions can be found on the nfldb page, but
+These steps are only necessary if you want to re-build the model or
+use nfldb as your data source. Most of these instructions can be found on the nfldb page, but
 I've repeated them here in the order I followed them (on Mac OS 10.10).
 
 Installing Postgres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-I had an old install kicking around, so I first had to clean that upUsing Homebrew::
+I had an old install kicking around, so I first had to clean that up.
+Since I was using Homebrew::
 
   $ brew uninstall -force postgresql
   $ rm -rf /usr/local/var/postgres/ # where I'd installed the prior DB
