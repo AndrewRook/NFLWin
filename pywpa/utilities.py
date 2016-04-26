@@ -55,7 +55,19 @@ def connect_db():
     
     
 def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
-    """"""
+    """
+    
+
+    Parameters
+    ----------
+    season_years : list (default=None)
+        A list of all years to get data for (earliest year in nfldb is 2009).
+        If ``None``, get data from all available seasons.
+    season_types : list (default=["Regular", "Postseason"])
+        A list of all parts of seasons to get data for (acceptable values are
+        "Preseason", "Regular", and "Postseason"). If ``None``, get data from
+        all three season types.
+    """
     engine = connect_db()
 
     sql_string = _make_query_string(season_years=season_years, season_types=season_types)
@@ -177,4 +189,4 @@ def parse_plays(game):
     
     
 if __name__ == "__main__":
-    get_play_data(season_years=[2015])
+    get_play_data(season_years=[2015], season_types=["Postseason"])
