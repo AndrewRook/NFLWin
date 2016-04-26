@@ -59,6 +59,7 @@ def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
     engine = connect_db()
 
     sql_string = _make_query_string(season_years=season_years, season_types=season_types)
+    print(sql_string)
 
     plays_df = pd.read_sql(sql_string, engine)
 
@@ -77,7 +78,7 @@ def _make_query_string(season_years=None, season_types=None):
                    'time', 'pos_team', 'yardline', 'down',
                    'yards_to_go']
 
-    play_points = ("GREATEST((agg_play.defense_frec_tds * 6),"
+    play_points = ("GREATEST((agg_play.defense_frec_tds * 6), "
         "(agg_play.defense_int_tds * 6), "
         "(agg_play.defense_misc_tds * 6), "
         "(agg_play.fumbles_rec_tds * 6), "
@@ -102,7 +103,7 @@ def _make_query_string(season_years=None, season_types=None):
                     "AND game.finished = TRUE")
 
     if season_years is not None:
-        where_clause += " AND game.season_year"# in ({0})"
+        where_clause += " AND game.season_year"
         if len(season_years) == 1:
             where_clause += " = {0}".format(season_years[0])
         else:
