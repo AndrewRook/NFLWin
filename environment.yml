@@ -10,6 +10,7 @@ dependencies:
 - psycopg2=2.6.1=py27_1
 - py=1.4.31=py27_0
 - pytest=2.9.1=py27_0
+- pytest-cov=2.2.1=py27_0
 - python=2.7.11=0
 - python-dateutil=2.5.2=py27_0
 - pytz=2016.3=py27_0
