@@ -4,6 +4,7 @@ dist/
 build/
 *.egg-info/
 
+*.cache/
 *.coverage
 
 old_pywpa/
