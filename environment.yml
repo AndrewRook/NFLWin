@@ -1,5 +1,6 @@
 name: pywpa
 dependencies:
+- coverage=4.0.3=py27_0
 - enum34=1.1.3=py27_0
 - mkl=11.3.1=0
 - numpy=1.11.0=py27_0
@@ -7,6 +8,8 @@ dependencies:
 - pandas=0.18.0=np111py27_0
 - pip=8.1.1=py27_1
 - psycopg2=2.6.1=py27_1
+- py=1.4.31=py27_0
+- pytest=2.9.1=py27_0
 - python=2.7.11=0
 - python-dateutil=2.5.2=py27_0
 - pytz=2016.3=py27_0
@@ -15,6 +18,7 @@ dependencies:
 - scipy=0.17.0=np111py27_0
 - setuptools=20.7.0=py27_0
 - six=1.10.0=py27_0
+- sqlalchemy=1.0.12=py27_0
 - sqlite=3.9.2=0
 - tk=8.5.18=0
 - wheel=0.29.0=py27_0

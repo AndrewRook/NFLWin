@@ -3,32 +3,25 @@ from __future__ import print_function, division
 import os
 
 import nfldb
-from nose.tools import assert_equal
-from nose.tools import assert_in
-from nose.tools import raises
 import pandas as pd
+import pytest
 
 import pywpa.utilities as utils
 
-class TestMakeSQLString(object):
-    """testing the _make_query_string function"""
-
-    def setUp(self):
-        pass
 
 class TestConnectDB(object):
     """testing the connect_db function"""
-    def setUp(self):
+    def setup_method(self, method):
         self.curr_config_home = nfldb.db._config_home
         
-    def tearDown(self):
+    def teardown_method(self, method):
         nfldb.db._config_home = self.curr_config_home
 
-    @raises(IOError)
     def test_no_config_error(self):
         nfldb.db._config_home = "/boogaboogabooga"
 
-        utils.connect_db()
+        with pytest.raises(IOError):
+            utils.connect_db()
 
     def test_engine_works(self):
         engine = utils.connect_db()
@@ -38,8 +31,8 @@ class TestConnectDB(object):
         
         plays_df = pd.read_sql(test_query, engine)
         
-        assert_equal(plays_df.iloc[0]['description'],
-                     u'(6:55) L.White left guard for 3 yards, TOUCHDOWN.')
+        assert (plays_df.iloc[0]['description'] ==
+                u'(6:55) L.White left guard for 3 yards, TOUCHDOWN.')
 
 class TestMakeQueryString(object):
     """testing the _make_query_string function"""
@@ -73,38 +66,34 @@ class TestMakeQueryString(object):
                            "INNER JOIN game on play.gsis_id = game.gsis_id "
                            "WHERE game.home_score != game.away_score AND game.finished = TRUE "
                            "ORDER BY play.gsis_id, play.drive_id, play.play_id;")
-        assert_equal(expected_string, utils._make_query_string())
+        assert expected_string == utils._make_query_string()
 
-        def test_single_year(self):
-            """Test that adding a single year constraint works"""
-            expected_substring = ("WHERE game.home_score != game.away_score "
-                                  "AND game.finished = TRUE AND "
-                                  "game.season_year = 2013")
-            assert_in(expected_substring,
-                      utils._make_query_string(season_year=[2013]))
+    def test_single_year(self):
+        """Test that adding a single year constraint works"""
+        expected_substring = ("WHERE game.home_score != game.away_score "
+                              "AND game.finished = TRUE AND "
+                              "game.season_year = 2013")
+        assert expected_substring in utils._make_query_string(season_years=[2013])
 
-        def test_single_season_type(self):
-            """Test that adding a single season type constraint works"""
-            expected_substring = ("WHERE game.home_score != game.away_score "
-                                  "AND game.finished = TRUE AND "
-                                  "game.season_type = Regular")
-            assert_in(expected_substring,
-                      utils._make_query_string(season_type=["Regular"]))
+    def test_single_season_type(self):
+        """Test that adding a single season type constraint works"""
+        expected_substring = ("WHERE game.home_score != game.away_score "
+                              "AND game.finished = TRUE AND "
+                              "game.season_type = Regular")
+        assert expected_substring in utils._make_query_string(season_types=["Regular"])
 
-        def test_multiple_year(self):
-            """Test that adding a multiple year constraint works"""
-            expected_substring = ("WHERE game.home_score != game.away_score "
-                                  "AND game.finished = TRUE AND "
-                                  "game.season_year in (2013, 2010)")
-            assert_in(expected_substring,
-                      utils._make_query_string(season_year=[2013, 2010]))
+    def test_multiple_year(self):
+        """Test that adding a multiple year constraint works"""
+        expected_substring = ("WHERE game.home_score != game.away_score "
+                              "AND game.finished = TRUE AND "
+                              "game.season_year in (2013,2010)")
+        assert expected_substring in utils._make_query_string(season_years=[2013, 2010])
 
-        def test_single_season_type(self):
-            """Test that adding a single season type constraint works"""
-            expected_substring = ("WHERE game.home_score != game.away_score "
-                                  "AND game.finished = TRUE AND "
-                                  "game.season_type in (Regular, Postseason")
-            assert_in(expected_substring,
-                      utils._make_query_string(season_type=["Regular", "Postseason"]))
-            
+    def test_single_season_type(self):
+        """Test that adding a single season type constraint works"""
+        expected_substring = ("WHERE game.home_score != game.away_score "
+                              "AND game.finished = TRUE AND "
+                              "game.season_type in ('Regular','Postseason'")
+        assert expected_substring in utils._make_query_string(season_types=["Regular", "Postseason"])
+
             

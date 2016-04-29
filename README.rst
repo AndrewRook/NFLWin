@@ -105,3 +105,12 @@ Pretty simple - get ``conda``, then::
 2b. Users
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This will depend on whether or not you want the nfldb dependencies.
+
+
+3. Running Tests
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``PyWPA`` uses ``pytest`` to run unit tests. You can invoke ``pytest``
+like so::
+
+  $ python -m py.test pywpa/tests/
+
