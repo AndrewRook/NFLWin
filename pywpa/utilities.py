@@ -70,7 +70,7 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
     """
     engine = connect_nfldb()
 
-    sql_string = _make_query_string(season_years=season_years, season_types=season_types)
+    sql_string = _make_nfldb_query_string(season_years=season_years, season_types=season_types)
     print(sql_string)
 
     plays_df = pd.read_sql(sql_string, engine)
