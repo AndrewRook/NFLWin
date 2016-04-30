@@ -16,7 +16,7 @@ QUARTER_MAPPING = {'Q1': 1,
                    'OT2': 5,
                    }
 
-def connect_db():
+def connect_nfldb():
     """Connect to the nfldb database.
 
     Rather than using the builtin method we make our own,
@@ -54,7 +54,7 @@ def connect_db():
     return engine
     
     
-def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
+def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"]):
     """
     
 
@@ -68,7 +68,7 @@ def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
         "Preseason", "Regular", and "Postseason"). If ``None``, get data from
         all three season types.
     """
-    engine = connect_db()
+    engine = connect_nfldb()
 
     sql_string = _make_query_string(season_years=season_years, season_types=season_types)
     print(sql_string)
@@ -78,7 +78,7 @@ def get_play_data(season_years=None, season_types=["Regular", "Postseason"]):
     #TODO: Go through each play to get the current aggregate home and away scores. 
     print(len(plays_df))
 
-def _make_query_string(season_years=None, season_types=None):
+def _make_nfldb_query_string(season_years=None, season_types=None):
     """Construct the query string to get all the play data.
 
     This way is a little more compact and robust than specifying
@@ -189,4 +189,4 @@ def parse_plays(game):
     
     
 if __name__ == "__main__":
-    get_play_data(season_years=[2015], season_types=["Postseason"])
+    get_nfldb_play_data(season_years=[2015], season_types=["Postseason"])
