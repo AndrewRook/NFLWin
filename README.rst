@@ -112,5 +112,5 @@ This will depend on whether or not you want the nfldb dependencies.
 ``PyWPA`` uses ``pytest`` to run unit tests. You can invoke ``pytest``
 like so::
 
-  $ python -m py.test pywpa/tests/
+  $ python -m py.test --cov=pywpa --cov-config .coveragerc --cov-report term-missing pywpa/tests/[TEST FILE]
 
