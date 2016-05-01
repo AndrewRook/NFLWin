@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import time
 
 import nfldb
+import numpy as np
 import pandas as pd
 import sqlalchemy as sql
 
@@ -83,17 +84,15 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
     plays_df['yardline'] = plays_df.apply(yardline_fix, axis=1)
 
     #Fix quarter and time elapsed:
-    def quarter_fix(row):
-        split_time = row['time'].split(",")
-        return split_time[0][1:]
     def time_fix(row):
         split_time = row['time'].split(",")
-        return split_time[1][:-1]
-    plays_df['quarter'] = plays_df.apply(quarter_fix, axis=1)
-    plays_df['time'] = plays_df.apply(time_fix, axis=1)
+        return split_time[0][1:], float(split_time[1][:-1])
+    plays_df[['quarter', 'time']] = pd.DataFrame(plays_df.apply(time_fix, axis=1).values.tolist())
 
+    #Set NaN downs (kickoffs, etc) to 0:
+    plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
     #TODO: Go through each play to get the current aggregate home and away scores. 
-    _aggregate_nfldb_scores(plays_df)
+    plays_df = _aggregate_nfldb_scores(plays_df)
     return plays_df
 
 def _aggregate_nfldb_scores(play_df):
@@ -101,43 +100,32 @@ def _aggregate_nfldb_scores(play_df):
 
     # First, add the yardline of the subsequent play to the df
     play_df['next_yardline'] = play_df['yardline'].shift(-1)
-    
-    # #First, shift the df to line up prior and subsequent plays:
-    # prior_play_df = play_df.shift(1)
-    # next_play_df = play_df.shift(-1)
 
-    # #Get the data frame column names, then adjust them for the
-    # #prior and next frame column names:
-    # play_df_colnames = play_df.columns
-    # prior_play_df_colnames = ["prior_" + column for column in play_df_colnames]
-    # next_play_df_colnames = ["next_" + column for column in play_df_colnames]
-    # prior_play_df.columns = prior_play_df_colnames
-    # next_play_df.columns = next_play_df_colnames
-
-
-    # merged_play_df = pd.concat([play_df, prior_play_df, next_play_df],
-    #                            axis=1, ignore_index=False)
-
+    #Set up the dictionary to keep track of things:
     curr_home_score = 0
     curr_away_score = 0
     curr_gsis_id = play_df.iloc[0].gsis_id
     argdict = {"curr_home_score": 0, "curr_away_score": 0, "curr_gsis_id": play_df.iloc[0].gsis_id}
+
+    #Define an internal function to actually compute the score of a given play:
     def compute_current_scores(play, argdict):
+        #If new game, set scores to zero:
         if play.gsis_id != argdict['curr_gsis_id']:
             argdict['curr_home_score'] = 0
             argdict['curr_away_score'] = 0
             argdict['curr_gsis_id'] = play.gsis_id
+
+        #Get current score at start of play:
         home_score_to_return = argdict['curr_home_score']
         away_score_to_return = argdict['curr_away_score']
         
-        #Check if an extra point was missed:
-        print(play.offense_play_points, play.defense_play_points, play.next_yardline)
+        #Check if an extra point is missing from the data:
         if play.offense_play_points == 6 and play.next_yardline < 0:
             play.offense_play_points += 1
         if play.defense_play_points == 6 and play.next_yardline < 0:
-            print("IN")
             play.defense_play_points += 1
-            
+
+        #Update scores, if necessary:
         if play.pos_team == play.home_team:
             argdict['curr_home_score'] += play.offense_play_points
             argdict['curr_away_score'] += play.defense_play_points
@@ -145,15 +133,18 @@ def _aggregate_nfldb_scores(play_df):
             argdict['curr_home_score'] += play.defense_play_points
             argdict['curr_away_score'] += play.offense_play_points
         return home_score_to_return, away_score_to_return
-    
-    aggregate_scores = play_df.apply(compute_current_scores, axis=1, args=(argdict,))
-    #TODO (AndrewRook): figure out how to separate this into two separate columns
 
-    print(aggregate_scores.values)
-            
-    #print(play_df.head())
-    # for i in range(len(plays_df)):
-    #     pass
+    #Apply function to data:
+    aggregate_scores = play_df.apply(compute_current_scores, axis=1, args=(argdict,))
+    aggregate_scores = pd.DataFrame(aggregate_scores.values.tolist())
+    play_df[['curr_home_score', 'curr_away_score']] = aggregate_scores
+
+    #Drop unnecessary columns:
+    play_df.drop(labels=["next_yardline", "offense_play_points", "defense_play_points"],
+                 axis=1, inplace=True)
+
+    return play_df
+
 
 def _make_nfldb_query_string(season_years=None, season_types=None):
     """Construct the query string to get all the play data.
@@ -222,51 +213,6 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
     query_string += " ORDER BY play.gsis_id, play.drive_id, play.play_id;"
 
     return query_string
-
-
-
-def parse_plays(game):
-    """"""
-    home_team = game.home_team
-    winning_team = game.winner
-
-    data_dict = {"home_team": [],
-                 "winning_team": [],
-                 "offense_team": [],
-                 "down": [],
-                 "distance": [],
-                 "yardline": [],
-                 "quarter": [],
-                 "time_left": [],
-                 "home_score": [],
-                 "away_score": []
-                 }
-    for play in game.plays:
-        offense_team = play.pos_team
-
-        down = play.down
-        distance = play.yards_to_go
-
-        yardline = play.yardline._offset
-
-        #print(play.description)
-        quarter = play.time.phase.name
-        time_left = (15*60 - play.time.elapsed) #seconds
-        
-        home_score, away_score = play.score(before=True)
-        if offense_team != "UNK" and down is not None and quarter != "Half":
-            data_dict['offense_team'].append(offense_team)
-            data_dict['winning_team'].append(winning_team)
-            data_dict['home_team'].append(home_team)
-            data_dict['down'].append(down)
-            data_dict['distance'].append(distance)
-            data_dict['yardline'].append(yardline)
-            data_dict['quarter'].append(QUARTER_MAPPING[quarter])
-            data_dict['time_left'].append(time_left)
-            data_dict['home_score'].append(home_score)
-            data_dict['away_score'].append(away_score)
-
-    return pd.DataFrame(data_dict)
     
     
 if __name__ == "__main__":

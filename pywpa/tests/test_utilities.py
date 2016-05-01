@@ -81,7 +81,7 @@ class TestMakeNFLDBQueryString(object):
         """Test that adding a single season type constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
                               "AND game.finished = TRUE AND "
-                              "game.season_type = Regular")
+                              "game.season_type = 'Regular'")
         assert expected_substring in utils._make_nfldb_query_string(season_types=["Regular"])
 
     def test_multiple_year(self):
@@ -91,7 +91,7 @@ class TestMakeNFLDBQueryString(object):
                               "game.season_year in (2013,2010)")
         assert expected_substring in utils._make_nfldb_query_string(season_years=[2013, 2010])
 
-    def test_single_season_type(self):
+    def test_multiple_season_type(self):
         """Test that adding a single season type constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
                               "AND game.finished = TRUE AND "
@@ -99,3 +99,122 @@ class TestMakeNFLDBQueryString(object):
         assert expected_substring in utils._make_nfldb_query_string(season_types=["Regular", "Postseason"])
 
             
+class TestAggregateNFLDBScores(object):
+    """Testing the _aggregate_nfldb_scores function"""
+
+    def test_single_game_offense_points(self):
+        input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
+                                 'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_play_points': [0, 0, 3, 0, 0, 6, 1, 0],
+                                 'defense_play_points': [0, 0, 0, 0, 0, 0, 0, 0]
+                                 })
+        expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
+                                 'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE']
+                                 })
+        #Have to append the score columns manually:
+        expected_df[['curr_home_score', 'curr_away_score']] = pd.DataFrame([(0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (3, 0),
+                                                                            (3, 0),
+                                                                            (3, 0),
+                                                                            (3, 6),
+                                                                            (3, 7),])
+        
+        input_df = utils._aggregate_nfldb_scores(input_df)
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+
+    def test_single_game_defense_points(self):
+        input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'away_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
+                                 'home_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_play_points': [0, 0, 3, 0, 0, 6, 1, 0],
+                                 'defense_play_points': [0, 0, 0, 0, 0, 0, 0, 0]
+                                 })
+        expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'away_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
+                                 'home_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE']
+                                 })
+        #Have to append the score columns manually:
+        expected_df[['curr_home_score', 'curr_away_score']] = pd.DataFrame([(0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (0, 3),
+                                                                            (0, 3),
+                                                                            (0, 3),
+                                                                            (6, 3),
+                                                                            (7, 3),])
+        
+        input_df = utils._aggregate_nfldb_scores(input_df)
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+
+    def test_multiple_games(self):
+        input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 1, 1, 1, 1, 1],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'NYJ', 'NE', 'NE', 'NE', 'NE'],
+                                 'home_team': ['KC', 'KC', 'KC', 'NYJ', 'NYJ', 'NYJ', 'NYJ', 'NYJ'],
+                                 'away_team': ['DEN', 'DEN', 'DEN', 'NE', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_play_points': [0, 0, 3, 0, 0, 6, 1, 0],
+                                 'defense_play_points': [0, 0, 0, 0, 0, 0, 0, 0]
+                                 })
+        expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 1, 1, 1, 1, 1],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'NYJ', 'NE', 'NE', 'NE', 'NE'],
+                                 'home_team': ['KC', 'KC', 'KC', 'NYJ', 'NYJ', 'NYJ', 'NYJ', 'NYJ'],
+                                 'away_team': ['DEN', 'DEN', 'DEN', 'NE', 'NE', 'NE', 'NE', 'NE']
+                                 })
+        #Have to append the score columns manually:
+        expected_df[['curr_home_score', 'curr_away_score']] = pd.DataFrame([(0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (0, 6),
+                                                                            (0, 7),])
+        
+        input_df = utils._aggregate_nfldb_scores(input_df)
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+
+    def test_missing_xp(self):
+        input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'NE', 'KC', 'KC', 'KC', 'KC'],
+                                 'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
+                                 'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_play_points': [0, 0, 0, 0, 0, 0, 6, 0],
+                                 'defense_play_points': [0, 0, 6, 0, 0, 0, 0, 0]
+                                 })
+        expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
+                                 'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
+                                 'pos_team': ['KC', 'KC', 'KC', 'NE', 'KC', 'KC', 'KC', 'KC'],
+                                 'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
+                                 'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE']
+                                 })
+        #Have to append the score columns manually:
+        expected_df[['curr_home_score', 'curr_away_score']] = pd.DataFrame([(0, 0),
+                                                                            (0, 0),
+                                                                            (0, 0),
+                                                                            (0, 7),
+                                                                            (0, 7),
+                                                                            (0, 7),
+                                                                            (0, 7),
+                                                                            (7, 7),])
+        
+        input_df = utils._aggregate_nfldb_scores(input_df)
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+
+
+    
+
+        
