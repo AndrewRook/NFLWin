@@ -71,12 +71,89 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
     engine = connect_nfldb()
 
     sql_string = _make_nfldb_query_string(season_years=season_years, season_types=season_types)
-    print(sql_string)
 
     plays_df = pd.read_sql(sql_string, engine)
 
+    #Fix yardline:
+    def yardline_fix(row):
+        try:
+            return int(row['yardline'][1:-1])
+        except TypeError:
+            return row['yardline']
+    plays_df['yardline'] = plays_df.apply(yardline_fix, axis=1)
+
+    #Fix quarter and time elapsed:
+    def quarter_fix(row):
+        split_time = row['time'].split(",")
+        return split_time[0][1:]
+    def time_fix(row):
+        split_time = row['time'].split(",")
+        return split_time[1][:-1]
+    plays_df['quarter'] = plays_df.apply(quarter_fix, axis=1)
+    plays_df['time'] = plays_df.apply(time_fix, axis=1)
+
     #TODO: Go through each play to get the current aggregate home and away scores. 
-    print(len(plays_df))
+    _aggregate_nfldb_scores(plays_df)
+    return plays_df
+
+def _aggregate_nfldb_scores(play_df):
+    """Aggregate the raw nfldb data to get the score of every play."""
+
+    # First, add the yardline of the subsequent play to the df
+    play_df['next_yardline'] = play_df['yardline'].shift(-1)
+    
+    # #First, shift the df to line up prior and subsequent plays:
+    # prior_play_df = play_df.shift(1)
+    # next_play_df = play_df.shift(-1)
+
+    # #Get the data frame column names, then adjust them for the
+    # #prior and next frame column names:
+    # play_df_colnames = play_df.columns
+    # prior_play_df_colnames = ["prior_" + column for column in play_df_colnames]
+    # next_play_df_colnames = ["next_" + column for column in play_df_colnames]
+    # prior_play_df.columns = prior_play_df_colnames
+    # next_play_df.columns = next_play_df_colnames
+
+
+    # merged_play_df = pd.concat([play_df, prior_play_df, next_play_df],
+    #                            axis=1, ignore_index=False)
+
+    curr_home_score = 0
+    curr_away_score = 0
+    curr_gsis_id = play_df.iloc[0].gsis_id
+    argdict = {"curr_home_score": 0, "curr_away_score": 0, "curr_gsis_id": play_df.iloc[0].gsis_id}
+    def compute_current_scores(play, argdict):
+        if play.gsis_id != argdict['curr_gsis_id']:
+            argdict['curr_home_score'] = 0
+            argdict['curr_away_score'] = 0
+            argdict['curr_gsis_id'] = play.gsis_id
+        home_score_to_return = argdict['curr_home_score']
+        away_score_to_return = argdict['curr_away_score']
+        
+        #Check if an extra point was missed:
+        print(play.offense_play_points, play.defense_play_points, play.next_yardline)
+        if play.offense_play_points == 6 and play.next_yardline < 0:
+            play.offense_play_points += 1
+        if play.defense_play_points == 6 and play.next_yardline < 0:
+            print("IN")
+            play.defense_play_points += 1
+            
+        if play.pos_team == play.home_team:
+            argdict['curr_home_score'] += play.offense_play_points
+            argdict['curr_away_score'] += play.defense_play_points
+        else:
+            argdict['curr_home_score'] += play.defense_play_points
+            argdict['curr_away_score'] += play.offense_play_points
+        return home_score_to_return, away_score_to_return
+    
+    aggregate_scores = play_df.apply(compute_current_scores, axis=1, args=(argdict,))
+    #TODO (AndrewRook): figure out how to separate this into two separate columns
+
+    print(aggregate_scores.values)
+            
+    #print(play_df.head())
+    # for i in range(len(plays_df)):
+    #     pass
 
 def _make_nfldb_query_string(season_years=None, season_types=None):
     """Construct the query string to get all the play data.
@@ -90,23 +167,26 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
                    'time', 'pos_team', 'yardline', 'down',
                    'yards_to_go']
 
-    play_points = ("GREATEST((agg_play.defense_frec_tds * 6), "
-        "(agg_play.defense_int_tds * 6), "
-        "(agg_play.defense_misc_tds * 6), "
+    offense_play_points = ("GREATEST("
         "(agg_play.fumbles_rec_tds * 6), "
         "(agg_play.kicking_rec_tds * 6), "
-        "(agg_play.kickret_tds * 6), "
         "(agg_play.passing_tds * 6), "
-        "(agg_play.puntret_tds * 6), "
         "(agg_play.receiving_tds * 6), "
         "(agg_play.rushing_tds * 6), "
         "(agg_play.kicking_xpmade * 1), "
         "(agg_play.passing_twoptm * 2), "
         "(agg_play.receiving_twoptm * 2), "
         "(agg_play.rushing_twoptm * 2), "
-        "(agg_play.kicking_fgm * 3), "
+        "(agg_play.kicking_fgm * 3)) "
+        "AS offense_play_points")
+    defense_play_points = ("GREATEST("
+        "(agg_play.defense_frec_tds * 6), "
+        "(agg_play.defense_int_tds * 6), "
+        "(agg_play.defense_misc_tds * 6), "
+        "(agg_play.kickret_tds * 6), "
+        "(agg_play.puntret_tds * 6), "
         "(agg_play.defense_safe * 2)) "
-        "AS play_points")
+        "AS defense_play_points")
 
     game_fields = ("game.home_team, game.away_team, "
                    "(game.home_score > game.away_score) AS home_won")
@@ -130,7 +210,8 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
 
     query_string = "SELECT "
     query_string += "play." + ", play.".join(play_fields)
-    query_string += ", " + play_points
+    query_string += ", " + offense_play_points
+    query_string += ", " + defense_play_points
     query_string += ", " + game_fields
     query_string += " FROM play INNER JOIN agg_play"
     query_string += (" ON play.gsis_id = agg_play.gsis_id"
