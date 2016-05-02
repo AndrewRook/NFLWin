@@ -91,7 +91,12 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
 
     #Set NaN downs (kickoffs, etc) to 0:
     plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
+
+    #Aggregate scores:
     plays_df = _aggregate_nfldb_scores(plays_df)
+
+    #Drop some columns that are no longer needed:
+    plays_df.drop(["gsis_id", "drive_id", "play_id"], axis=1, inplace=True)
     return plays_df
 
 def _aggregate_nfldb_scores(play_df):
