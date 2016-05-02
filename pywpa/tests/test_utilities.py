@@ -18,7 +18,7 @@ class TestGetNFLDBPlayData(object):
                 'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
                 'time': ["(Q1,0)", "(Q1,152)", "(Q1,354)", "(Q1,354)", "(Q2,0)",
-                         "(Q4,840)", "(Q4,840)", "(Q4,875)", "(Q4,900)", "(Final,0)"],
+                         "(OT,840)", "(OT1,840)", "(OT2,875)", "(OT3,900)", "(Final,0)"],
                 'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
                 'yardline': ["(-15)", "(35)", "(-15)", "(-30)", "(-26)",
                              None, "(48)", "(-15)", "(-18)", None],
@@ -64,10 +64,10 @@ class TestGetNFLDBPlayData(object):
                                                                                        ("Q1", 0, 7),
                                                                                        ("Q1", 0, 7),
                                                                                        ("Q2", 0, 7),
-                                                                                       ("Q4", 0, 0),
-                                                                                       ("Q4", 0, 0),
-                                                                                       ("Q4", 7, 0),
-                                                                                       ("Q4", 7, 0),
+                                                                                       ("OT", 0, 0),
+                                                                                       ("OT", 0, 0),
+                                                                                       ("OT", 7, 0),
+                                                                                       ("OT", 7, 0),
                                                                                        ("Final", 7, 0)])
         #print(utils.get_nfldb_play_data())
         pd.util.testing.assert_frame_equal(utils.get_nfldb_play_data(), expected_df)

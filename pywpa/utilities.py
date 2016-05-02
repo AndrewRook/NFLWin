@@ -7,14 +7,6 @@ import pandas as pd
 import sqlalchemy as sql
 
 
-QUARTER_MAPPING = {'Q1': 1,
-                   'Q2': 2,
-                   'Q3': 3,
-                   'Q4': 4,
-                   'OT': 5,
-                   'OT2': 5,
-                   }
-
 def connect_nfldb():
     """Connect to the nfldb database.
 
@@ -54,8 +46,15 @@ def connect_nfldb():
     
     
 def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"]):
-    """
-    
+    """Get play-by-play data from the nfldb database.
+
+    We use a specialized query and then postprocessing because, while possible to
+    do using the objects created by ``nfldb``, it is *orders of magnitude slower*.
+    This is due to the more general nature of ``nfldb``, which is not really designed
+    for this kind of data mining. Since we need to get a lot of data in a single way,
+    it's much simpler to interact at a lower level with the underlying postgres
+    database.
+
 
     Parameters
     ----------
@@ -66,6 +65,34 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         A list of all parts of seasons to get data for (acceptable values are
         "Preseason", "Regular", and "Postseason"). If ``None``, get data from
         all three season types.
+
+    Returns
+    -------
+    Pandas DataFrame
+        The play by play data, with the following columns:
+        * **gsis_id:** The official NFL GSIS_ID for the game.
+        * **drive_id:** The id of the drive, starts at 1 and increases by 1 for each new drive.
+        * **play_id:** The id of the play in ``nfldb``. Note that sequential plays have increasing
+          **but not necessarily** sequential values. With ``drive_id`` and ``gsis_id``, works as a
+          unique identifier for a given play.
+        * **quarter:** The quarter, prepended with "Q" (e.g. ``Q1`` means the first quarter). Any
+          overtime has a value of ``OT``, regardless of which overtime period it is.
+        * **time:** seconds elapsed since the start of the quarter.
+        * **pos_team:** The abbreviation of the team currently with possession of the ball.
+        * **yardline:** The current field position. Goes from -49 to 49, where negative numbers
+          indicate that the team with possession is on its own side of the field.
+        * **down:** The down. kickoffs, extra points, and similar have a down of 0.
+        * **yards_to_go:** How many yards needed in order to get a first down (or touchdown).
+        * **home_team:** The abbreviation of the home team.
+        * **away_team:** The abbreviation of the away team.
+        * **curr_home_score:** The home team's score at the start of the play.
+        * **curr_away_score:** The away team's score at the start of the play. 
+        * **home_won:** A boolean - ``True`` if the home team won the game, ``False`` otherwise. (The
+          database query skips tied games.)
+
+        Note that ``gsis_id``, ``drive_id``, and ``play_id`` are not necessary to make the model, but
+        are included because they can be useful for computing things like WPA.
+          
     """
     engine = connect_nfldb()
 
@@ -80,12 +107,15 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         except TypeError:
             yardline = np.nan
         split_time = row['time'].split(",")
+        if split_time[0][:3] == "(OT":
+            split_time[0] = "(OT"
         return yardline, split_time[0][1:], float(split_time[1][:-1])
     
     plays_df[['yardline', 'quarter', 'time']] = pd.DataFrame(plays_df.apply(yardline_time_fix, axis=1).values.tolist())
 
     #Set NaN downs (kickoffs, etc) to 0:
     plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
+
 
     #Aggregate scores:
     plays_df = _aggregate_nfldb_scores(plays_df)
