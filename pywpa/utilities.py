@@ -80,7 +80,7 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         try:
             return int(row['yardline'][1:-1])
         except TypeError:
-            return row['yardline']
+            return np.nan
     plays_df['yardline'] = plays_df.apply(yardline_fix, axis=1)
 
     #Fix quarter and time elapsed:
@@ -91,7 +91,6 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
 
     #Set NaN downs (kickoffs, etc) to 0:
     plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
-    #TODO: Go through each play to get the current aggregate home and away scores. 
     plays_df = _aggregate_nfldb_scores(plays_df)
     return plays_df
 
@@ -216,4 +215,4 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
     
     
 if __name__ == "__main__":
-    get_nfldb_play_data(season_years=[2015], season_types=["Postseason"])
+    print(get_nfldb_play_data(season_years=[2015], season_types=["Postseason"]))

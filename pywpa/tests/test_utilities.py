@@ -3,10 +3,74 @@ from __future__ import print_function, division
 import os
 
 import nfldb
+import numpy as np
 import pandas as pd
 import pytest
 
 import pywpa.utilities as utils
+
+class TestGetNFLDBPlayData(object):
+    """Testing the ability to get play data from nfldb"""
+
+    def setup_method(self, method):
+        self.test_df = pd.DataFrame({
+                'gsis_id': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+                'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
+                'time': ["(Q1,0)", "(Q1,152)", "(Q1,354)", "(Q1,354)", "(Q2,0)",
+                         "(Q4,840)", "(Q4,840)", "(Q4,875)", "(Q4,900)", "(Final,0)"],
+                'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
+                'yardline': ["(-15)", "(35)", "(-15)", "(-30)", "(-26)",
+                             None, "(48)", "(-15)", "(-18)", None],
+                'down': [np.nan, np.nan, np.nan, 1.0, 2.0, np.nan, 1.0, np.nan, 1.0, np.nan],
+                'yards_to_go': [0, 0, 0, 10, 6, 0, 2, 0, 10, 0],
+                'offense_play_points': [0, 1, 0, 0, 0, 0, 6, 0, 0, 0],
+                'defense_play_points': [6, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                'home_team': ["HOU", "HOU", "HOU", "HOU", "HOU", "DEN", "DEN", "DEN", "DEN", "DEN"],
+                'away_team': ["KC", "KC", "KC", "KC", "KC", "CAR", "CAR", "CAR", "CAR", "CAR"],
+                'home_won': [False, False, False, False, False, True, True, True, True, True]
+                })
+        
+    def test_standard_play(self,monkeypatch):
+        def mockreturn_engine():
+            return True
+        def mockreturn_query_string(season_years, season_types):
+            return True
+        def mockreturn_read_sql(sql_string, engine):
+            return self.test_df
+        monkeypatch.setattr(utils, 'connect_nfldb', mockreturn_engine)
+        monkeypatch.setattr(utils, '_make_nfldb_query_string', mockreturn_query_string)
+        monkeypatch.setattr(pd, 'read_sql', mockreturn_read_sql)
+
+        expected_df = pd.DataFrame({
+                'gsis_id': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+                'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
+                'time': [0.0, 152.0, 354.0, 354.0, 0.0,
+                         840.0, 840.0, 875.0, 900.0, 0.0],
+                'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
+                'yardline': [-15, 35, -15, -30, -26,
+                             np.nan, 48, -15, -18, np.nan],
+                'down': [0, 0, 0, 1, 2, 0, 1, 0, 1, 0],
+                'yards_to_go': [0, 0, 0, 10, 6, 0, 2, 0, 10, 0],
+                'home_team': ["HOU", "HOU", "HOU", "HOU", "HOU", "DEN", "DEN", "DEN", "DEN", "DEN"],
+                'away_team': ["KC", "KC", "KC", "KC", "KC", "CAR", "CAR", "CAR", "CAR", "CAR"],
+                'home_won': [False, False, False, False, False, True, True, True, True, True]
+                })
+        expected_df['down'] = expected_df['down'].astype(np.int8)
+        #Have to append the score and quarter columns manually:
+        expected_df[['quarter', 'curr_home_score', 'curr_away_score']] = pd.DataFrame([("Q1", 0, 0),
+                                                                                       ("Q1", 0, 6),
+                                                                                       ("Q1", 0, 7),
+                                                                                       ("Q1", 0, 7),
+                                                                                       ("Q2", 0, 7),
+                                                                                       ("Q4", 0, 0),
+                                                                                       ("Q4", 0, 0),
+                                                                                       ("Q4", 7, 0),
+                                                                                       ("Q4", 7, 0),
+                                                                                       ("Final", 7, 0)])
+        #print(utils.get_nfldb_play_data())
+        pd.util.testing.assert_frame_equal(utils.get_nfldb_play_data(), expected_df)
 
 
 class TestConnectNFLDB(object):
