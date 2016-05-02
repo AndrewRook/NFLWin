@@ -43,6 +43,9 @@ class TestGetNFLDBPlayData(object):
         monkeypatch.setattr(pd, 'read_sql', mockreturn_read_sql)
 
         expected_df = pd.DataFrame({
+                'gsis_id': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+                'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
                 'time': [0.0, 152.0, 354.0, 354.0, 0.0,
                          840.0, 840.0, 875.0, 900.0, 0.0],
                 'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],

@@ -1,8 +1,6 @@
 """Utility functions that don't fit in the main modules"""
 from __future__ import print_function, division
 
-import time
-
 import nfldb
 import numpy as np
 import pandas as pd
@@ -73,30 +71,33 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
 
     sql_string = _make_nfldb_query_string(season_years=season_years, season_types=season_types)
 
+    import time
+    start = time.time()
     plays_df = pd.read_sql(sql_string, engine)
+    print("Took {0:.2f}s to do sql query".format(time.time() - start))
 
-    #Fix yardline:
-    def yardline_fix(row):
+    #Fix yardline, quarter and time elapsed:
+    def yardline_time_fix(row):
         try:
-            return int(row['yardline'][1:-1])
+            yardline = int(row['yardline'][1:-1])
         except TypeError:
-            return np.nan
-    plays_df['yardline'] = plays_df.apply(yardline_fix, axis=1)
-
-    #Fix quarter and time elapsed:
-    def time_fix(row):
+            yardline = np.nan
         split_time = row['time'].split(",")
-        return split_time[0][1:], float(split_time[1][:-1])
-    plays_df[['quarter', 'time']] = pd.DataFrame(plays_df.apply(time_fix, axis=1).values.tolist())
+        return yardline, split_time[0][1:], float(split_time[1][:-1])
+    start = time.time()
+    plays_df[['yardline', 'quarter', 'time']] = pd.DataFrame(plays_df.apply(yardline_time_fix, axis=1).values.tolist())
+    print("Took {0:.2f}s to fix yardline, quarter, and time".format(time.time() - start))
 
     #Set NaN downs (kickoffs, etc) to 0:
+    start = time.time()
     plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
+    print("Took {0:.2f}s to fill na for downs".format(time.time() - start))
 
     #Aggregate scores:
+    start = time.time()
     plays_df = _aggregate_nfldb_scores(plays_df)
-
-    #Drop some columns that are no longer needed:
-    plays_df.drop(["gsis_id", "drive_id", "play_id"], axis=1, inplace=True)
+    print("Took {0:.2f}s to aggregate scores".format(time.time() - start))
+    
     return plays_df
 
 def _aggregate_nfldb_scores(play_df):
@@ -220,4 +221,7 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
     
     
 if __name__ == "__main__":
-    print(get_nfldb_play_data(season_years=[2015], season_types=["Postseason"]))
+    import time
+    start = time.time()
+    print(len(get_nfldb_play_data()))
+    print("took {0:.2f}s".format(time.time() - start))
