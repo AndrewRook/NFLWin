@@ -71,10 +71,7 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
 
     sql_string = _make_nfldb_query_string(season_years=season_years, season_types=season_types)
 
-    import time
-    start = time.time()
     plays_df = pd.read_sql(sql_string, engine)
-    print("Took {0:.2f}s to do sql query".format(time.time() - start))
 
     #Fix yardline, quarter and time elapsed:
     def yardline_time_fix(row):
@@ -84,19 +81,14 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
             yardline = np.nan
         split_time = row['time'].split(",")
         return yardline, split_time[0][1:], float(split_time[1][:-1])
-    start = time.time()
+    
     plays_df[['yardline', 'quarter', 'time']] = pd.DataFrame(plays_df.apply(yardline_time_fix, axis=1).values.tolist())
-    print("Took {0:.2f}s to fix yardline, quarter, and time".format(time.time() - start))
 
     #Set NaN downs (kickoffs, etc) to 0:
-    start = time.time()
     plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
-    print("Took {0:.2f}s to fill na for downs".format(time.time() - start))
 
     #Aggregate scores:
-    start = time.time()
     plays_df = _aggregate_nfldb_scores(plays_df)
-    print("Took {0:.2f}s to aggregate scores".format(time.time() - start))
     
     return plays_df
 
@@ -140,6 +132,7 @@ def _aggregate_nfldb_scores(play_df):
         return home_score_to_return, away_score_to_return
 
     #Apply function to data:
+    #TODO (AndrewRook): Make the .apply function go faster, currently it's a large bottleneck
     aggregate_scores = play_df.apply(compute_current_scores, axis=1, args=(argdict,))
     aggregate_scores = pd.DataFrame(aggregate_scores.values.tolist())
     play_df[['curr_home_score', 'curr_away_score']] = aggregate_scores
@@ -223,5 +216,5 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
 if __name__ == "__main__":
     import time
     start = time.time()
-    print(len(get_nfldb_play_data()))
+    print(len(get_nfldb_play_data(season_years=[2015])))
     print("took {0:.2f}s".format(time.time() - start))
