@@ -1,7 +1,5 @@
 from __future__ import print_function, division
 
-import os
-
 import nfldb
 import numpy as np
 import pandas as pd
