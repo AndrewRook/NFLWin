@@ -246,5 +246,7 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
 if __name__ == "__main__":
     import time
     start = time.time()
-    print(len(get_nfldb_play_data(season_years=[2015])))
-    print("took {0:.2f}s".format(time.time() - start))
+    data_df = get_nfldb_play_data(season_years=[2015])
+    data_df['score_diff'] = data_df['curr_home_score'] - data_df['curr_away_score']
+    print(data_df['score_diff'].mean(), data_df['score_diff'].std(), data_df['score_diff'].skew(), data_df['score_diff'].kurtosis())
+    #print("took {0:.2f}s".format(time.time() - start))
