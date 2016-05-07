@@ -56,7 +56,7 @@ class CreateScoreDifferential(BaseEstimator):
         if self.score_differential_colname in X.columns:
             raise KeyError("CreateScoreDifferential: column {0} already in DataFrame, and can't "
                            "be used for the score differential".format(self.score_differential_colname))
-        if copy:
+        if self.copy:
             X = X.copy()
 
         X[self.score_differential_colname] = score_differential

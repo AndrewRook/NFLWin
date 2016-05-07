@@ -6,6 +6,88 @@ from sklearn.utils.validation import NotFittedError
 
 from pywpa import preprocessing
 
+class TestCreateScoreDifferential(object):
+    """Testing if score differentials are properly created."""
+
+    def test_bad_home_score_colname(self):
+        csd = preprocessing.CreateScoreDifferential("badcol", "away_score")
+        data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                             "away_score": [10, 0, 5, 15]})
+        with pytest.raises(KeyError):
+            csd.transform(data)
+            
+    def test_bad_away_score_colname(self):
+        csd = preprocessing.CreateScoreDifferential("home_score", "badcol")
+        data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                             "away_score": [10, 0, 5, 15]})
+        with pytest.raises(KeyError):
+            csd.fit(data)
+            csd.transform(data)
+            
+    def test_differential_column_already_exists(self):
+        csd = preprocessing.CreateScoreDifferential("home_score",
+                                                    "away_score",
+                                                    score_differential_colname="used_col")
+        data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                             "away_score": [10, 0, 5, 15],
+                             "used_col": [0, 0, 0, 0]})
+        with pytest.raises(KeyError):
+            csd.fit(data)
+            csd.transform(data)
+
+    def test_differential_actually_works(self):
+        csd = preprocessing.CreateScoreDifferential("home_score",
+                                                    "away_score",
+                                                    score_differential_colname="score_diff")
+        input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                   "away_score": [10, 0, 5, 15]})
+        expected_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                      "away_score": [10, 0, 5, 15],
+                                      "score_diff": [-9, 2, -2, -11]})
+        
+        csd.fit(input_data)
+        transformed_data = csd.transform(input_data)
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           transformed_data.sort_index(axis=1))
+
+    def test_differential_with_copied_data(self):
+        csd = preprocessing.CreateScoreDifferential("home_score",
+                                                    "away_score",
+                                                    score_differential_colname="score_diff",
+                                                    copy=True)
+        input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                   "away_score": [10, 0, 5, 15]})
+        expected_input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                            "away_score": [10, 0, 5, 15]})
+        expected_transformed_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                      "away_score": [10, 0, 5, 15],
+                                      "score_diff": [-9, 2, -2, -11]})
+        
+        csd.fit(input_data)
+        transformed_data = csd.transform(input_data)
+        pd.util.testing.assert_frame_equal(expected_input_data.sort_index(axis=1),
+                                           input_data.sort_index(axis=1))
+        pd.util.testing.assert_frame_equal(expected_transformed_data.sort_index(axis=1),
+                                           transformed_data.sort_index(axis=1))
+        
+    def test_differential_with_inplace_data(self):
+        csd = preprocessing.CreateScoreDifferential("home_score",
+                                                    "away_score",
+                                                    score_differential_colname="score_diff",
+                                                    copy=False)
+        input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                   "away_score": [10, 0, 5, 15]})
+        expected_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                      "away_score": [10, 0, 5, 15],
+                                      "score_diff": [-9, 2, -2, -11]})
+        csd.fit(input_data)
+        csd.transform(input_data)
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           input_data.sort_index(axis=1))
+        
+        
+
+
 class TestCheckColumnNames(object):
     """Testing whether column names are properly checked."""
 
