@@ -4,6 +4,67 @@ from __future__ import print_function, division
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import NotFittedError
 
+class CreateScoreDifferential(BaseEstimator):
+    """Convert home and away scores into a differential (home - away).
+
+    Parameters
+    ----------
+    home_score_colname : string
+        The name of the column containing the score of the home team.
+    away_score_colname : string
+        The name of the column containing the score of the away team.
+    score_differential_colname : string (default=``"score_differential"``)
+        The name of column containing the score differential. Must not already
+        exist in the DataFrame.
+    copy : boolean (default = ``True``)
+        If ``False``, add the score differential in place.
+    """
+    def __init__(self, home_score_colname,
+                 away_score_colname,
+                 score_differential_colname="score_differential",
+                 copy=True):
+        self.home_score_colname = home_score_colname
+        self.away_score_colname = away_score_colname
+        self.score_differential_colname = score_differential_colname
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        """Create the score differential column.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, number of features + 1)
+            The input DataFrame, with the score differential column added.
+        """
+        try:
+            score_differential = X[self.home_score_colname] - X[self.away_score_colname]
+        except KeyError:
+            raise KeyError("CreateScoreDifferential: data missing required column. Must "
+                           "include columns named {0} and {1}".format(self.home_score_colname,
+                                                                      self.away_score_colname))
+        if self.score_differential_colname in X.columns:
+            raise KeyError("CreateScoreDifferential: column {0} already in DataFrame, and can't "
+                           "be used for the score differential".format(self.score_differential_colname))
+        if copy:
+            X = X.copy()
+
+        X[self.score_differential_colname] = score_differential
+
+        return X
+        
+
+
 class CheckColumnNames(BaseEstimator):
     """Make sure user has the right column names, in the right order.
 
