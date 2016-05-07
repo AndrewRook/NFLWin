@@ -10,13 +10,15 @@ import pywpa.utilities as utils
 class TestGetNFLDBPlayData(object):
     """Testing the ability to get play data from nfldb"""
 
+    #TODO (AndrewRook): Need to test if the sql query actually works
+
     def setup_method(self, method):
         self.test_df = pd.DataFrame({
                 'gsis_id': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
                 'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
                 'time': ["(Q1,0)", "(Q1,152)", "(Q1,354)", "(Q1,354)", "(Q2,0)",
-                         "(OT,840)", "(OT1,840)", "(OT2,875)", "(OT3,900)", "(Final,0)"],
+                         "(OT,840)", "(OT1,840)", "(OT2,875)", "(OT3,900)", "(OT,900)"],
                 'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
                 'yardline': ["(-15)", "(35)", "(-15)", "(-30)", "(-26)",
                              None, "(48)", "(-15)", "(-18)", None],
@@ -44,8 +46,8 @@ class TestGetNFLDBPlayData(object):
                 'gsis_id': [0, 0, 0, 0, 0, 1, 1, 1, 1, 1],
                 'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
-                'time': [0.0, 152.0, 354.0, 354.0, 0.0,
-                         840.0, 840.0, 875.0, 900.0, 0.0],
+                'seconds_elapsed': [0.0, 152.0, 354.0, 354.0, 0.0,
+                         840.0, 840.0, 875.0, 900.0, 900.0],
                 'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
                 'yardline': [-15, 35, -15, -30, -26,
                              np.nan, 48, -15, -18, np.nan],
@@ -53,22 +55,15 @@ class TestGetNFLDBPlayData(object):
                 'yards_to_go': [0, 0, 0, 10, 6, 0, 2, 0, 10, 0],
                 'home_team': ["HOU", "HOU", "HOU", "HOU", "HOU", "DEN", "DEN", "DEN", "DEN", "DEN"],
                 'away_team': ["KC", "KC", "KC", "KC", "KC", "CAR", "CAR", "CAR", "CAR", "CAR"],
-                'home_won': [False, False, False, False, False, True, True, True, True, True]
+                'home_won': [False, False, False, False, False, True, True, True, True, True],
+                'quarter': ["Q1", "Q1", "Q1", "Q1", "Q2", "OT", "OT", "OT", "OT", "OT"],
+                'curr_home_score': [0, 0, 0, 0, 0, 0, 0, 7, 7, 7],
+                'curr_away_score': [0, 6, 7, 7, 7, 0, 0, 0, 0, 0]
                 })
         expected_df['down'] = expected_df['down'].astype(np.int8)
-        #Have to append the score and quarter columns manually:
-        expected_df[['quarter', 'curr_home_score', 'curr_away_score']] = pd.DataFrame([("Q1", 0, 0),
-                                                                                       ("Q1", 0, 6),
-                                                                                       ("Q1", 0, 7),
-                                                                                       ("Q1", 0, 7),
-                                                                                       ("Q2", 0, 7),
-                                                                                       ("OT", 0, 0),
-                                                                                       ("OT", 0, 0),
-                                                                                       ("OT", 7, 0),
-                                                                                       ("OT", 7, 0),
-                                                                                       ("Final", 7, 0)])
-        #print(utils.get_nfldb_play_data())
-        pd.util.testing.assert_frame_equal(utils.get_nfldb_play_data(), expected_df)
+        
+        pd.util.testing.assert_frame_equal(utils.get_nfldb_play_data().sort_index(axis=1),
+                                           expected_df.sort_index(axis=1))
 
 
 class TestConnectNFLDB(object):
@@ -129,35 +124,40 @@ class TestMakeNFLDBQueryString(object):
                            "AND play.play_id = agg_play.play_id "
                            "INNER JOIN game on play.gsis_id = game.gsis_id "
                            "WHERE game.home_score != game.away_score AND game.finished = TRUE "
+                           "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
                            "ORDER BY play.gsis_id, play.drive_id, play.play_id;")
         assert expected_string == utils._make_nfldb_query_string()
 
     def test_single_year(self):
         """Test that adding a single year constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
-                              "AND game.finished = TRUE AND "
-                              "game.season_year = 2013")
+                              "AND game.finished = TRUE "
+                              "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
+                              "AND game.season_year = 2013")
         assert expected_substring in utils._make_nfldb_query_string(season_years=[2013])
 
     def test_single_season_type(self):
         """Test that adding a single season type constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
-                              "AND game.finished = TRUE AND "
-                              "game.season_type = 'Regular'")
+                              "AND game.finished = TRUE "
+                              "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
+                              "AND game.season_type = 'Regular'")
         assert expected_substring in utils._make_nfldb_query_string(season_types=["Regular"])
 
     def test_multiple_year(self):
         """Test that adding a multiple year constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
-                              "AND game.finished = TRUE AND "
-                              "game.season_year in (2013,2010)")
+                              "AND game.finished = TRUE "
+                              "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
+                              "AND game.season_year in (2013,2010)")
         assert expected_substring in utils._make_nfldb_query_string(season_years=[2013, 2010])
 
     def test_multiple_season_type(self):
         """Test that adding a single season type constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
-                              "AND game.finished = TRUE AND "
-                              "game.season_type in ('Regular','Postseason'")
+                              "AND game.finished = TRUE "
+                              "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
+                              "AND game.season_type in ('Regular','Postseason'")
         assert expected_substring in utils._make_nfldb_query_string(season_types=["Regular", "Postseason"])
 
             

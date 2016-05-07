@@ -103,7 +103,7 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
     #Fix yardline, quarter and time elapsed:
     def yardline_time_fix(row):
         try:
-            yardline = int(row['yardline'][1:-1])
+            yardline = float(row['yardline'][1:-1])
         except TypeError:
             yardline = np.nan
         split_time = row['time'].split(",")
@@ -111,7 +111,8 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
             split_time[0] = "(OT"
         return yardline, split_time[0][1:], float(split_time[1][:-1])
     
-    plays_df[['yardline', 'quarter', 'time']] = pd.DataFrame(plays_df.apply(yardline_time_fix, axis=1).values.tolist())
+    plays_df[['yardline', 'quarter', 'seconds_elapsed']] = pd.DataFrame(plays_df.apply(yardline_time_fix, axis=1).values.tolist())
+    plays_df.drop('time', axis=1, inplace=True)
 
     #Set NaN downs (kickoffs, etc) to 0:
     plays_df['down'] = plays_df['down'].fillna(value=0).astype(np.int8)
@@ -211,7 +212,8 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
                    "(game.home_score > game.away_score) AS home_won")
 
     where_clause = ("WHERE game.home_score != game.away_score "
-                    "AND game.finished = TRUE")
+                    "AND game.finished = TRUE "
+                    "AND (play.time).phase not in ('Pregame', 'Half', 'Final')")
 
     if season_years is not None:
         where_clause += " AND game.season_year"
