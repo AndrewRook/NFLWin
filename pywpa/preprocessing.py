@@ -2,6 +2,7 @@
 from __future__ import print_function, division
 
 import numpy as np
+import pandas as pd
 
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
@@ -29,14 +30,6 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
     """
 
     @property
-    def categorical_features(self):
-        return self._categorical_features
-    @categorical_features.setter
-    def categorical_features(self, categorical_features):
-        self._categorical_features = categorical_features
-        self.onehot.categorical_features = self._categorical_features
-
-    @property
     def dtype(self):
         return self._dtype
     @dtype.setter
@@ -57,9 +50,9 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
                  dtype=np.float,
                  handle_unknown="error",
                  copy=True):
-        self.onehot = OneHotEncoder(sparse=False, n_values="auto")
+        self.onehot = OneHotEncoder(sparse=False, n_values="auto",
+                                    categorical_features="all") #We'll subset the DF
         self.categorical_feature_names = categorical_feature_names
-        self.categorical_features = "all" #Always all because we'll subset the DF
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.copy = copy
@@ -85,6 +78,7 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
 
         #Get all columns that need to be encoded:
         data_to_encode = X[self.categorical_feature_names]
+            
 
         self.onehot.fit(data_to_encode)
 
@@ -104,11 +98,6 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         X.drop(self.categorical_feature_names, axis=1, inplace=True)
 
         return pd.concat([X, transformed_df], axis=1)
-        
-        # print(transformed_data)
-        # print(self.onehot.active_features_)
-        # print(self.onehot.feature_indices_)
-        # print(self.onehot.n_values_)
             
     
 

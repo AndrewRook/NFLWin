@@ -1,10 +1,57 @@
 from __future__ import print_function, division
 
+import numpy as np
 import pandas as pd
 import pytest
 from sklearn.utils.validation import NotFittedError
 
 from pywpa import preprocessing
+
+class TestOneHotEncoderFromDataFrame(object):
+    """Testing if the one-hot encoder wrapper works."""
+
+    def setup_method(self, method):
+        self.data = pd.DataFrame({"one": [1, 2, 3, 1],
+                                  "two": [2, 2, 2, 5],
+                                  "three": [0, 5, 0, 5]})
+        self.data = self.data[["one", "two", "three"]]
+
+    def test_correct_dtype_passed(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(dtype=np.int)
+        assert ohe.dtype == np.int
+
+    def test_correct_handle_unknown_string_passed(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(handle_unknown="ignore")
+        assert ohe.handle_unknown == "ignore"
+
+    def test_encode_all_columns(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names="all")
+        ohe.fit(self.data)
+        transformed_data = ohe.transform(self.data)
+        expected_data = pd.DataFrame({"onehot_col1": [1., 0, 0, 1],
+                                      "onehot_col2": [0., 1, 0, 0],
+                                      "onehot_col3": [0., 0, 1, 0],
+                                      "onehot_col4": [1., 1, 1, 0],
+                                      "onehot_col5": [0., 0, 0, 1],
+                                      "onehot_col6": [1., 0, 1, 0],
+                                      "onehot_col7": [0., 1, 0, 1]})
+
+        pd.util.testing.assert_frame_equal(transformed_data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
+
+    def test_encode_some_columns(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names=["one", "three"])
+        ohe.fit(self.data)
+        transformed_data = ohe.transform(self.data)
+        expected_data = pd.DataFrame({"two": [2, 2, 2, 5],
+                                      "onehot_col1": [1., 0, 0, 1],
+                                      "onehot_col2": [0., 1, 0, 0],
+                                      "onehot_col3": [0., 0, 1, 0],
+                                      "onehot_col4": [1., 0, 1, 0],
+                                      "onehot_col5": [0., 1, 0, 1]})
+
+        pd.util.testing.assert_frame_equal(transformed_data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
 
 class TestCreateScoreDifferential(object):
     """Testing if score differentials are properly created."""
