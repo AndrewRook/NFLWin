@@ -1,8 +1,127 @@
 """Tools to get raw data ready for modeling."""
 from __future__ import print_function, division
 
+import numpy as np
+
 from sklearn.base import BaseEstimator
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
+
+class OneHotEncoderFromDataFrame(BaseEstimator):
+    """One-hot encode a DataFrame.
+
+    This cleaner wraps the standard scikit-learn OneHotEncoder,
+    handling the transfer between column name and column index.
+
+    Parameters
+    ----------
+    n_values : "auto", int or array of ints
+        Number of values per feature
+        * "auto" (default): determine value range from training data.
+        * int: maximimum value for all features.
+        * array: maximum value per feature.
+    categorical_feature_names : "all" or array of column names.
+        Specify what features are treated as categorical.
+        * "all" (default): All features are treated as categorical.
+        * array of column names: Array of categorical feature names.
+    dtype : number type, default=np.float.
+        Desired dtype of output.
+    handle_unknown : str, "error" (default) or "ignore".
+        Whether to raise an error or ignore if an unknown categorical feature
+        is present during transform.
+    copy : boolean (default=True)
+        If ``False``, apply the encoding in-place.
+    """
+
+    @property
+    def n_values(self):
+        return self._n_values
+    @n_values.setter
+    def n_values(self, n_values):
+        self._n_values = n_values
+        self.onehot.n_values = self._n_values
+
+    @property
+    def categorical_features(self):
+        return self._categorical_features
+    @categorical_features.setter
+    def categorical_features(self, categorical_features):
+        self._categorical_features = categorical_features
+        self.onehot.categorical_features = self._categorical_features
+
+    @property
+    def dtype(self):
+        return self._dtype
+    @dtype.setter
+    def dtype(self, dtype):
+        self._dtype = dtype
+        self.onehot.dtype = self._dtype
+
+    @property
+    def handle_unknown(self):
+        return self._handle_unknown
+    @handle_unknown.setter
+    def handle_unknown(self, handle_unknown):
+        self._handle_unknown = handle_unknown
+        self.onehot.handle_unknown = self._handle_unknown
+        
+    def __init__(self, n_values="auto",
+                 categorical_feature_names="all",
+                 dtype=np.float,
+                 handle_unknown="error",
+                 copy=True):
+        self.onehot = OneHotEncoder(sparse=False)
+        self.n_values = n_values
+        self.categorical_feature_names = categorical_feature_names
+        self.categorical_features = "all" #Always all because we'll subset the DF
+        self.dtype = dtype
+        self.handle_unknown = handle_unknown
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Convert the column names to indices, then compute the one hot encoding.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        self : For compatibility with Scikit-learn's ``Pipeline``.
+        """
+
+        if self.categorical_feature_names == "all":
+            self.categorical_feature_names = X.columns
+
+        #Get all columns that need to be encoded:
+        data_to_encode = X[self.categorical_feature_names]
+
+        self.onehot.fit(data_to_encode)
+
+        return self
+
+    def transform(self, X, y=None):
+        if self.copy:
+            X = X.copy()
+        
+        data_to_transform = X[self.categorical_feature_names]
+        transformed_data = self.onehot.transform(data_to_transform)
+        
+        X.drop(self.categorical_feature_names, axis=1, inplace=True)
+
+        #TODO: make intelligent column names, add one hot encoded data
+        #to dataframe
+        
+        print(transformed_data)
+        print(self.onehot.active_features_)
+        print(self.onehot.feature_indices_)
+        print(self.onehot.n_values_)
+            
+    
 
 class CreateScoreDifferential(BaseEstimator):
     """Convert home and away scores into a differential (home - away).
@@ -137,6 +256,19 @@ class CheckColumnNames(BaseEstimator):
             raise KeyError("CheckColumnName: DataFrame does not have required columns. "
                            "Must contain at least {0}".format(self.column_names))
         
+if __name__ == "__main__":
+    import pandas as pd
+    input_df = pd.DataFrame({"one": [0, 1, 2, 1, 0],
+                             "two": ["a", "b", "c", "d", "e"],
+                             "three": [0.5, 1, 2.5, 4, 10],
+                             "four": [10, 10, 10, 5, 1]})
+    transform_df = pd.DataFrame({"one": [0, 1, 2, 1, 0],
+                                 "two": ["a", "b", "c", "d", "e"],
+                                 "three": [0.5, 1, 2.5, 4, 10],
+                                 "four": [7, 2, 10, 5, 1]})
 
-class ConvertToNumpy(BaseEstimator):
-    """Preserve the right column order between fitting and predicting"""
+    onehot = OneHotEncoderFromDataFrame(categorical_feature_names = ["one","four"])
+    onehot.fit(input_df)
+    onehot.transform(input_df)
+    onehot.transform(transform_df)
+    print(dir(onehot.onehot))
