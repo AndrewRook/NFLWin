@@ -15,11 +15,6 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
 
     Parameters
     ----------
-    n_values : "auto", int or array of ints
-        Number of values per feature
-        * "auto" (default): determine value range from training data.
-        * int: maximimum value for all features.
-        * array: maximum value per feature.
     categorical_feature_names : "all" or array of column names.
         Specify what features are treated as categorical.
         * "all" (default): All features are treated as categorical.
@@ -32,14 +27,6 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
     copy : boolean (default=True)
         If ``False``, apply the encoding in-place.
     """
-
-    @property
-    def n_values(self):
-        return self._n_values
-    @n_values.setter
-    def n_values(self, n_values):
-        self._n_values = n_values
-        self.onehot.n_values = self._n_values
 
     @property
     def categorical_features(self):
@@ -65,13 +52,12 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         self._handle_unknown = handle_unknown
         self.onehot.handle_unknown = self._handle_unknown
         
-    def __init__(self, n_values="auto",
+    def __init__(self,
                  categorical_feature_names="all",
                  dtype=np.float,
                  handle_unknown="error",
                  copy=True):
-        self.onehot = OneHotEncoder(sparse=False)
-        self.n_values = n_values
+        self.onehot = OneHotEncoder(sparse=False, n_values="auto")
         self.categorical_feature_names = categorical_feature_names
         self.categorical_features = "all" #Always all because we'll subset the DF
         self.dtype = dtype
@@ -110,16 +96,19 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         
         data_to_transform = X[self.categorical_feature_names]
         transformed_data = self.onehot.transform(data_to_transform)
+
+        #TODO (AndrewRook): Find good column names for the encoded columns.
+        colnames = ["onehot_col{0}".format(i+1) for i in range(transformed_data.shape[1])]
+        transformed_df = pd.DataFrame(transformed_data, columns=colnames)
         
         X.drop(self.categorical_feature_names, axis=1, inplace=True)
 
-        #TODO: make intelligent column names, add one hot encoded data
-        #to dataframe
+        return pd.concat([X, transformed_df], axis=1)
         
-        print(transformed_data)
-        print(self.onehot.active_features_)
-        print(self.onehot.feature_indices_)
-        print(self.onehot.n_values_)
+        # print(transformed_data)
+        # print(self.onehot.active_features_)
+        # print(self.onehot.feature_indices_)
+        # print(self.onehot.n_values_)
             
     
 
@@ -269,6 +258,5 @@ if __name__ == "__main__":
 
     onehot = OneHotEncoderFromDataFrame(categorical_feature_names = ["one","four"])
     onehot.fit(input_df)
-    onehot.transform(input_df)
-    onehot.transform(transform_df)
-    print(dir(onehot.onehot))
+    print(onehot.transform(input_df))
+    print(onehot.transform(transform_df))
