@@ -53,6 +53,36 @@ class TestOneHotEncoderFromDataFrame(object):
         pd.util.testing.assert_frame_equal(transformed_data.sort_index(axis=1),
                                            expected_data.sort_index(axis=1))
 
+    def test_copy_data_works(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names=["one", "three"],
+                                                       copy=True)
+        ohe.fit(self.data)
+        transformed_data = ohe.transform(self.data)
+        expected_data = pd.DataFrame({"one": [1, 2, 3, 1],
+                                      "two": [2, 2, 2, 5],
+                                      "three": [0, 5, 0, 5]})
+
+        pd.util.testing.assert_frame_equal(self.data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
+        
+
+    def test_inplace_transform_works(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names=["one", "three"],
+                                                       copy=False)
+        data = self.data.copy()
+        ohe.fit(self.data)
+        ohe.transform(self.data)
+        expected_data = pd.DataFrame({"two": [2, 2, 2, 5],
+                                      "onehot_col1": [1., 0, 0, 1],
+                                      "onehot_col2": [0., 1, 0, 0],
+                                      "onehot_col3": [0., 0, 1, 0],
+                                      "onehot_col4": [1., 0, 1, 0],
+                                      "onehot_col5": [0., 1, 0, 1]})
+
+        pd.util.testing.assert_frame_equal(self.data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
+        
+
 class TestCreateScoreDifferential(object):
     """Testing if score differentials are properly created."""
 

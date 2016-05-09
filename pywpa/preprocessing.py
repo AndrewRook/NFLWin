@@ -8,6 +8,48 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
 
+class MapStringToInt(BaseEstimator):
+    """Map a column of strings to integers.
+
+    Parameters
+    ----------
+    colname : string
+        The name of the column to perform the mapping on.
+    mapper : dict
+        A dictionary of string -> int mappings.
+    copy : boolean (default=True)
+
+    """
+
+    def __init__(self, colname, mapper):
+        self.colname = colname
+        self.mapper = mapper
+
+    def fit(self, X, y=None):
+        """Not necessary, since this is a deterministic transform.
+        """
+        return self
+
+    def transform(self, X, y=None):
+        """Apply the mapping to the data.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            The input DataFrame, with the mapping applied.
+        """
+        
+        
+
+    
 class OneHotEncoderFromDataFrame(BaseEstimator):
     """One-hot encode a DataFrame.
 
@@ -85,6 +127,21 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         return self
 
     def transform(self, X, y=None):
+        """Apply the encoding to the data.
+        
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, number of new features)
+            The input DataFrame, with the encoding applied.
+        """
         if self.copy:
             X = X.copy()
         
@@ -96,8 +153,10 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         transformed_df = pd.DataFrame(transformed_data, columns=colnames)
         
         X.drop(self.categorical_feature_names, axis=1, inplace=True)
+        X[transformed_df.columns] = transformed_df
+        
 
-        return pd.concat([X, transformed_df], axis=1)
+        return X
             
     
 
