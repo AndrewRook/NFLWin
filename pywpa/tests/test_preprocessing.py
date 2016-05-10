@@ -7,6 +7,35 @@ from sklearn.utils.validation import NotFittedError
 
 from pywpa import preprocessing
 
+class TestMapToInt(object):
+    """Testing if the integer mapper works."""
+
+    def test_pass_bad_colname_produces_error(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        mti = preprocessing.MapToInt("blahblahblah")
+
+        with pytest.raises(KeyError):
+            mti.fit(input_df)
+        
+
+    def test_mapping_without_nans(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        mti = preprocessing.MapToInt("one")
+        mti.fit(input_df)
+        expected_output = {"one": 0, "two": 1, "four": 2, "six": 3}
+        assert mti.mapping == expected_output
+
+    def test_mapping_with_nans(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", np.nan, "one", "one"]})
+        mti = preprocessing.MapToInt("one")
+        mti.fit(input_df)
+        expected_output = {"one": 0, "two": 1, "four": 2, "six": 3}
+        assert mti.mapping == expected_output
+        
+
 class TestOneHotEncoderFromDataFrame(object):
     """Testing if the one-hot encoder wrapper works."""
 
