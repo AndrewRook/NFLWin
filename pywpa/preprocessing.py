@@ -8,26 +8,71 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
 
-class MapStringToInt(BaseEstimator):
-    """Map a column of strings to integers.
+class MapToInt(BaseEstimator):
+    """Map a column of values to integers.
+
+    Mapping to integer is nice if you know a column
+    only has a few specific values in it, but you need
+    to convert it to integers before one-hot encoding it.
 
     Parameters
     ----------
     colname : string
         The name of the column to perform the mapping on.
-    mapper : dict
-        A dictionary of string -> int mappings.
     copy : boolean (default=True)
+        If ``False``, apply the mapping in-place.
 
+    Attributes
+    ----------
+    mapping : dict
+        Keys are the unique values of the column, values are the
+        integers those values will be mapped to.
+
+    Note
+    ----
+    The ``transform`` method DOES NOT CHECK to see if the input
+    DataFrame only contains values in ``mapping``. Any values not
+    in ``mapping`` will be left alone, which can cause subtle bugs
+    if you're not careful.
     """
 
-    def __init__(self, colname, mapper):
+    def __init__(self, colname, copy=True):
         self.colname = colname
-        self.mapper = mapper
+        self.copy = copy
 
     def fit(self, X, y=None):
-        """Not necessary, since this is a deterministic transform.
+        """Find all unique strings and construct the mapping.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        self : For compatibility with Scikit-learn's ``Pipeline``.
+
+        Raises
+        ------
+        KeyError
+            If ``colname`` is not in ``X``.
+
         """
+        if self.colname not in X.columns:
+            raise KeyError("MapStringsToInt: Required column {0} "
+                           "not present in data".format(self.colname))
+        unique_values = X[self.colname].unique()
+        
+        self.mapping = {unique_values[i]: i for i in range(len(unique_values))}
+        
+        try:
+            del self.mapping[np.nan]
+        except KeyError:
+            pass
+        
         return self
 
     def transform(self, X, y=None):
@@ -45,7 +90,28 @@ class MapStringToInt(BaseEstimator):
         -------
         X : Pandas DataFrame, of shape(number of plays, number of features)
             The input DataFrame, with the mapping applied.
+
+        Raises
+        ------
+        NotFittedError
+            If ``transform`` is called before ``fit``.
+        KeyError
+            If ``colname`` is not in ``X``.
         """
+        if not self.mapping:
+            raise NotFittedError("MapStringsToInt: Must fit before transform.")
+        
+        if self.colname not in X.columns:
+            raise KeyError("MapStringsToInt: Required column {0} "
+                           "not present in data".format(self.colname))
+
+        if self.copy:
+            X = X.copy()
+
+        X[self.colname].replace(self.mapping, inplace=True)
+
+        return X
+        
         
         
 
