@@ -10,7 +10,7 @@ from pywpa import preprocessing
 class TestMapToInt(object):
     """Testing if the integer mapper works."""
 
-    def test_pass_bad_colname_produces_error(self):
+    def test_fit_bad_colname_produces_error(self):
         input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
                                          "six", "two", "one", "one"]})
         mti = preprocessing.MapToInt("blahblahblah")
@@ -34,6 +34,62 @@ class TestMapToInt(object):
         mti.fit(input_df)
         expected_output = {"one": 0, "two": 1, "four": 2, "six": 3}
         assert mti.mapping == expected_output
+
+    def test_transform_before_fit_produces_error(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        mti = preprocessing.MapToInt("one")
+
+        with pytest.raises(NotFittedError):
+            mti.transform(input_df)
+
+    def test_transform_bad_colname_produces_error(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        mti = preprocessing.MapToInt("one")
+        mti.fit(input_df)
+        transform_df = pd.DataFrame({"blahblahblah": ["one", "two", "one", "four",
+                                                      "six", "two", "one", "one"]})
+        with pytest.raises(KeyError):
+            mti.transform(transform_df)
+
+    def test_transform_without_nans(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        mti = preprocessing.MapToInt("one")
+        mti.fit(input_df)
+        transformed_df = mti.transform(input_df)
+        expected_df = pd.DataFrame({"one": [0, 1, 0, 2, 3, 1, 0, 0]})
+        pd.util.testing.assert_frame_equal(transformed_df, expected_df)
+
+    def test_transform_with_nans(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", np.nan, "one"]})
+        mti = preprocessing.MapToInt("one")
+        mti.fit(input_df)
+        transformed_df = mti.transform(input_df)
+        expected_df = pd.DataFrame({"one": [0, 1, 0, 2, 3, 1, np.nan, 0]})
+        pd.util.testing.assert_frame_equal(transformed_df, expected_df)
+
+    def test_transform_inplace(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        mti = preprocessing.MapToInt("one", copy=False)
+        mti.fit(input_df)
+        mti.transform(input_df)
+        expected_df = pd.DataFrame({"one": [0, 1, 0, 2, 3, 1, 0, 0]})
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+
+    def test_transform_copy(self):
+        input_df = pd.DataFrame({"one": ["one", "two", "one", "four",
+                                         "six", "two", "one", "one"]})
+        expected_df = input_df.copy()
+        mti = preprocessing.MapToInt("one", copy=True)
+        mti.fit(input_df)
+        transformed_data = mti.transform(input_df)
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+        
+        
         
 
 class TestOneHotEncoderFromDataFrame(object):

@@ -39,6 +39,7 @@ class MapToInt(BaseEstimator):
     def __init__(self, colname, copy=True):
         self.colname = colname
         self.copy = copy
+        self.mapping = None
 
     def fit(self, X, y=None):
         """Find all unique strings and construct the mapping.
@@ -112,10 +113,7 @@ class MapToInt(BaseEstimator):
 
         return X
         
-        
-        
 
-    
 class OneHotEncoderFromDataFrame(BaseEstimator):
     """One-hot encode a DataFrame.
 
