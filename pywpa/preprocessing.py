@@ -8,6 +8,16 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
 
+class ComputeIfHome(BaseEstimator):
+    """Determine if a given column contains the home team.
+
+    """
+
+class DropCols(BaseEstimator):
+    """Drop a given set of columns.
+
+    """
+
 class MapToInt(BaseEstimator):
     """Map a column of values to integers.
 
