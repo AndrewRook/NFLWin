@@ -19,7 +19,7 @@ class TestGetNFLDBPlayData(object):
                 'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
                 'time': ["(Q1,0)", "(Q1,152)", "(Q1,354)", "(Q1,354)", "(Q2,0)",
                          "(OT,840)", "(OT1,840)", "(OT2,875)", "(OT3,900)", "(OT,900)"],
-                'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
+                'offense_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
                 'yardline': ["(-15)", "(35)", "(-15)", "(-30)", "(-26)",
                              None, "(48)", "(-15)", "(-18)", None],
                 'down': [np.nan, np.nan, np.nan, 1.0, 2.0, np.nan, 1.0, np.nan, 1.0, np.nan],
@@ -28,7 +28,7 @@ class TestGetNFLDBPlayData(object):
                 'defense_play_points': [6, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 'home_team': ["HOU", "HOU", "HOU", "HOU", "HOU", "DEN", "DEN", "DEN", "DEN", "DEN"],
                 'away_team': ["KC", "KC", "KC", "KC", "KC", "CAR", "CAR", "CAR", "CAR", "CAR"],
-                'home_won': [False, False, False, False, False, True, True, True, True, True]
+                'offense_won': [False, False, False, False, False, True, True, True, True, True]
                 })
         
     def test_standard_play(self,monkeypatch):
@@ -48,14 +48,14 @@ class TestGetNFLDBPlayData(object):
                 'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
                 'seconds_elapsed': [0.0, 152.0, 354.0, 354.0, 0.0,
                          840.0, 840.0, 875.0, 900.0, 900.0],
-                'pos_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
+                'offense_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
                 'yardline': [-15, 35, -15, -30, -26,
                              np.nan, 48, -15, -18, np.nan],
                 'down': [0, 0, 0, 1, 2, 0, 1, 0, 1, 0],
                 'yards_to_go': [0, 0, 0, 10, 6, 0, 2, 0, 10, 0],
                 'home_team': ["HOU", "HOU", "HOU", "HOU", "HOU", "DEN", "DEN", "DEN", "DEN", "DEN"],
                 'away_team': ["KC", "KC", "KC", "KC", "KC", "CAR", "CAR", "CAR", "CAR", "CAR"],
-                'home_won': [False, False, False, False, False, True, True, True, True, True],
+                'offense_won': [False, False, False, False, False, True, True, True, True, True],
                 'quarter': ["Q1", "Q1", "Q1", "Q1", "Q2", "OT", "OT", "OT", "OT", "OT"],
                 'curr_home_score': [0, 0, 0, 0, 0, 0, 0, 7, 7, 7],
                 'curr_away_score': [0, 6, 7, 7, 7, 0, 0, 0, 0, 0]
@@ -96,7 +96,7 @@ class TestMakeNFLDBQueryString(object):
     
     def test_no_args(self):
         expected_string = ("SELECT play.gsis_id, play.drive_id, "
-                           "play.play_id, play.time, play.pos_team, "
+                           "play.play_id, play.time, play.pos_team AS offense_team, "
                            "play.yardline, play.down, play.yards_to_go, "
                            "GREATEST("
                            "(agg_play.fumbles_rec_tds * 6), "
@@ -117,7 +117,7 @@ class TestMakeNFLDBQueryString(object):
                            "(agg_play.puntret_tds * 6), "
                            "(agg_play.defense_safe * 2)) AS defense_play_points, "
                            "game.home_team, game.away_team, "
-                           "(game.home_score > game.away_score) AS home_won "
+                           "(game.home_score > game.away_score AND play.pos_team = game.home_team) AS offense_won "
                            "FROM play INNER JOIN agg_play "
                            "ON play.gsis_id = agg_play.gsis_id "
                            "AND play.drive_id = agg_play.drive_id "
@@ -167,7 +167,7 @@ class TestAggregateNFLDBScores(object):
     def test_single_game_offense_points(self):
         input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
                                  'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
                                  'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE'],
                                  'offense_play_points': [0, 0, 3, 0, 0, 6, 1, 0],
@@ -175,7 +175,7 @@ class TestAggregateNFLDBScores(object):
                                  })
         expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
                                  'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
                                  'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE']
                                  })
@@ -195,7 +195,7 @@ class TestAggregateNFLDBScores(object):
     def test_single_game_defense_points(self):
         input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
                                  'away_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
                                  'home_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE'],
                                  'offense_play_points': [0, 0, 3, 0, 0, 6, 1, 0],
@@ -203,7 +203,7 @@ class TestAggregateNFLDBScores(object):
                                  })
         expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'KC', 'NE', 'NE', 'NE', 'NE'],
                                  'away_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
                                  'home_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE']
                                  })
@@ -223,7 +223,7 @@ class TestAggregateNFLDBScores(object):
     def test_multiple_games(self):
         input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 1, 1, 1, 1, 1],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'NYJ', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'NYJ', 'NE', 'NE', 'NE', 'NE'],
                                  'home_team': ['KC', 'KC', 'KC', 'NYJ', 'NYJ', 'NYJ', 'NYJ', 'NYJ'],
                                  'away_team': ['DEN', 'DEN', 'DEN', 'NE', 'NE', 'NE', 'NE', 'NE'],
                                  'offense_play_points': [0, 0, 3, 0, 0, 6, 1, 0],
@@ -231,7 +231,7 @@ class TestAggregateNFLDBScores(object):
                                  })
         expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 1, 1, 1, 1, 1],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'NYJ', 'NE', 'NE', 'NE', 'NE'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'NYJ', 'NE', 'NE', 'NE', 'NE'],
                                  'home_team': ['KC', 'KC', 'KC', 'NYJ', 'NYJ', 'NYJ', 'NYJ', 'NYJ'],
                                  'away_team': ['DEN', 'DEN', 'DEN', 'NE', 'NE', 'NE', 'NE', 'NE']
                                  })
@@ -251,7 +251,7 @@ class TestAggregateNFLDBScores(object):
     def test_missing_xp(self):
         input_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'NE', 'KC', 'KC', 'KC', 'KC'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'NE', 'KC', 'KC', 'KC', 'KC'],
                                  'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
                                  'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE'],
                                  'offense_play_points': [0, 0, 0, 0, 0, 0, 6, 0],
@@ -259,7 +259,7 @@ class TestAggregateNFLDBScores(object):
                                  })
         expected_df = pd.DataFrame({'gsis_id': [0, 0, 0, 0, 0, 0, 0, 0],
                                  'yardline': [0, 0, 0, -15, 0, 0, 0, -15],
-                                 'pos_team': ['KC', 'KC', 'KC', 'NE', 'KC', 'KC', 'KC', 'KC'],
+                                 'offense_team': ['KC', 'KC', 'KC', 'NE', 'KC', 'KC', 'KC', 'KC'],
                                  'home_team': ['KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC', 'KC'],
                                  'away_team': ['NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE', 'NE']
                                  })

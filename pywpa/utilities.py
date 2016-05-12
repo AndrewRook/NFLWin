@@ -154,7 +154,7 @@ def _aggregate_nfldb_scores(play_df):
             play.defense_play_points += 1
 
         #Update scores, if necessary:
-        if play.pos_team == play.home_team:
+        if play.offense_team == play.home_team:
             argdict['curr_home_score'] += play.offense_play_points
             argdict['curr_away_score'] += play.defense_play_points
         else:
@@ -184,7 +184,7 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
     """
     
     play_fields = ['gsis_id', 'drive_id', 'play_id',
-                   'time', 'pos_team', 'yardline', 'down',
+                   'time', 'pos_team AS offense_team', 'yardline', 'down',
                    'yards_to_go']
 
     offense_play_points = ("GREATEST("
@@ -209,7 +209,7 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
         "AS defense_play_points")
 
     game_fields = ("game.home_team, game.away_team, "
-                   "(game.home_score > game.away_score) AS home_won")
+                   "(game.home_score > game.away_score AND play.pos_team = game.home_team) AS offense_won")
 
     where_clause = ("WHERE game.home_score != game.away_score "
                     "AND game.finished = TRUE "
