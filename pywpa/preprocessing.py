@@ -8,10 +8,75 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
 
-class ComputeIfHome(BaseEstimator):
-    """Determine if a given column contains the home team.
+class ComputeIfOffenseIsHome(BaseEstimator):
+    """Determine if the team currently with possession is the home team.
 
+
+    Parameters
+    ----------
+    offense_team_colname : string
+        Which column indicates what team was on offense.
+    home_team_colname : string
+        Which column indicates what team was the home team.
+    offense_home_team_colname : string (default="is_offense_home")
+        What column to store whether or not the offense was the home team.
+    copy : boolean (default=True)
+        Whether to add the new column in place.
     """
+    def __init__(self, offense_team_colname,
+                 home_team_colname,
+                 offense_home_team_colname="is_offense_home",
+                 copy=True):
+        self.offense_team_colname = offense_team_colname
+        self.home_team_colname = home_team_colname
+        self.offense_home_team_colname = offense_home_team_colname
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        """Create the new column.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, number of features + 1)
+            The input DataFrame, with the new column added.
+
+        Raises
+        ------
+        KeyError
+            If ``offense_team_colname`` or ``home_team_colname`` don't exist, or
+            if ``offense_home_team_colname`` **does** exist.
+        """
+
+        if self.home_team_colname not in X.columns:
+            raise KeyError("ComputeIfOffenseWon: home_team_colname {0} does not exist in dataset."
+                           .format(self.home_team_colname))
+        if self.offense_team_colname not in X.columns:
+            raise KeyError("ComputeIfOffenseWon: offense_team_colname {0} does not exist in dataset."
+                           .format(self.offense_team_colname))
+
+        if self.offense_home_team_colname in X.columns:
+            raise KeyError("ComputeIfOffenseWon: offense_home_team_colname {0} already exists in dataset."
+                           .format(self.offense_home_team_colname))
+
+        if self.copy:
+            X = X.copy()
+
+        X[self.offense_home_team_colname] = (X[self.home_team_colname] == X[self.offense_team_colname])
+
+        return X
+
+        
 
 class DropCols(BaseEstimator):
     """Drop a given set of columns.

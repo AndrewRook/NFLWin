@@ -7,6 +7,64 @@ from sklearn.utils.validation import NotFittedError
 
 from pywpa import preprocessing
 
+class TestComputeIfOffenseIsHome(object):
+    """Testing if we can correctly compute if the offense is the home team."""
+
+    def test_bad_offense_colname_produces_error(self):
+        input_df = pd.DataFrame({"home_team": ["a", "a", "a"],
+                                 "blahblahblah": ["a", "b", "a"]})
+        ciow = preprocessing.ComputeIfOffenseIsHome("offense_team", "home_team")
+        ciow.fit(input_df)
+
+        with pytest.raises(KeyError):
+            ciow.transform(input_df)
+            
+    def test_bad_home_team_colname_produces_error(self):
+        input_df = pd.DataFrame({"blahblahblah": ["a", "a", "a"],
+                                 "offense_team": ["a", "b", "a"]})
+        ciow = preprocessing.ComputeIfOffenseIsHome("offense_team", "home_team")
+        ciow.fit(input_df)
+
+        with pytest.raises(KeyError):
+            ciow.transform(input_df)
+            
+    def test_existing_offense_home_team_colname_produces_error(self):
+        input_df = pd.DataFrame({"home_team": ["a", "a", "a"],
+                                 "offense_team": ["a", "b", "a"]})
+        ciow = preprocessing.ComputeIfOffenseIsHome("offense_team", "home_team",
+                                                 offense_home_team_colname="home_team")
+        ciow.fit(input_df)
+
+        with pytest.raises(KeyError):
+            ciow.transform(input_df)
+
+    def test_correct_answer_with_copy(self):
+        input_df = pd.DataFrame({"home_team": ["a", "a", "a"],
+                                 "offense_team": ["a", "b", "a"]})
+        expected_input_df = input_df.copy()
+        expected_transformed_df = pd.DataFrame({"home_team": ["a", "a", "a"],
+                                 "offense_team": ["a", "b", "a"],
+                                 "offense_home_team": [True, False, True]})
+        ciow = preprocessing.ComputeIfOffenseIsHome("offense_team", "home_team",
+                                                 offense_home_team_colname="offense_home_team",
+                                                 copy=True)
+        transformed_df = ciow.transform(input_df)
+        pd.util.testing.assert_frame_equal(input_df.sort_index(axis=1), expected_input_df.sort_index(axis=1))
+        pd.util.testing.assert_frame_equal(transformed_df.sort_index(axis=1), expected_transformed_df.sort_index(axis=1))
+
+    def test_correct_answer_without_copy(self):
+        input_df = pd.DataFrame({"home_team": ["a", "a", "a"],
+                                 "offense_team": ["a", "b", "a"]})
+        expected_transformed_df = pd.DataFrame({"home_team": ["a", "a", "a"],
+                                 "offense_team": ["a", "b", "a"],
+                                 "offense_home_team": [True, False, True]})
+        ciow = preprocessing.ComputeIfOffenseIsHome("offense_team", "home_team",
+                                                 offense_home_team_colname="offense_home_team",
+                                                 copy=False)
+        ciow.transform(input_df)
+        pd.util.testing.assert_frame_equal(input_df.sort_index(axis=1), expected_transformed_df.sort_index(axis=1))
+        
+
 class TestMapToInt(object):
     """Testing if the integer mapper works."""
 
