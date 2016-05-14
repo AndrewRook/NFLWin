@@ -431,19 +431,3 @@ class CheckColumnNames(BaseEstimator):
         except KeyError:
             raise KeyError("CheckColumnName: DataFrame does not have required columns. "
                            "Must contain at least {0}".format(self.column_names))
-        
-if __name__ == "__main__":
-    import pandas as pd
-    input_df = pd.DataFrame({"one": [0, 1, 2, 1, 0],
-                             "two": ["a", "b", "c", "d", "e"],
-                             "three": [0.5, 1, 2.5, 4, 10],
-                             "four": [10, 10, 10, 5, 1]})
-    transform_df = pd.DataFrame({"one": [0, 1, 2, 1, 0],
-                                 "two": ["a", "b", "c", "d", "e"],
-                                 "three": [0.5, 1, 2.5, 4, 10],
-                                 "four": [7, 2, 10, 5, 1]})
-
-    onehot = OneHotEncoderFromDataFrame(categorical_feature_names = ["one","four"])
-    onehot.fit(input_df)
-    print(onehot.transform(input_df))
-    print(onehot.transform(transform_df))

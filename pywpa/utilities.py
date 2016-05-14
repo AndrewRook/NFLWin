@@ -243,12 +243,3 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
     query_string += " ORDER BY play.gsis_id, play.drive_id, play.play_id;"
 
     return query_string
-    
-    
-if __name__ == "__main__":
-    import time
-    start = time.time()
-    data_df = get_nfldb_play_data(season_years=[2015])
-    data_df['score_diff'] = data_df['curr_home_score'] - data_df['curr_away_score']
-    print(data_df['score_diff'].mean(), data_df['score_diff'].std(), data_df['score_diff'].skew(), data_df['score_diff'].kurtosis())
-    #print("took {0:.2f}s".format(time.time() - start))
