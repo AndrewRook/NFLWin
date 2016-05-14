@@ -76,12 +76,6 @@ class ComputeIfOffenseIsHome(BaseEstimator):
 
         return X
 
-        
-
-class DropCols(BaseEstimator):
-    """Drop a given set of columns.
-
-    """
 
 class MapToInt(BaseEstimator):
     """Map a column of values to integers.
@@ -364,20 +358,26 @@ class CheckColumnNames(BaseEstimator):
     """Make sure user has the right column names, in the right order.
 
     This is a useful first step to make sure that nothing
-    is going to break downstream.
+    is going to break downstream, but can also be used effectively
+    to drop columns that are no longer necessary.
 
-    Attributes
+    Parameters
     ----------
-    column_names : list of strings
+    column_names : ``None``, or list of strings
         A list of column names that need to be present in the scoring
         data. All other columns will be stripped out. The order of the
         columns will be applied to any scoring
         data as well, in order to handle the fact that pandas lets
-        you play fast and loose with column order.
+        you play fast and loose with column order. If ``None``,
+        will obtain every column in the DataFrame passed to the
+        ``fit`` method.
     """
-    def __init__(self):
-        self.column_names = None
-        self._fit = False
+    def __init__(self, column_names=None):
+        self.column_names = column_names
+        self._fit = True
+        if self.column_names is None:
+            self._fit = False
+            
 
     def fit(self, X, y=None):
         """Grab the column names from a Pandas DataFrame.

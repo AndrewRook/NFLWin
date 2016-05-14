@@ -369,3 +369,17 @@ class TestCheckColumnNames(object):
         ccn.fit(input_data)
         pd.util.testing.assert_frame_equal(ccn.transform(test_data), expected_data)
         
+
+    def test_transform_with_user_specified_colums(self):
+        ccn = preprocessing.CheckColumnNames(column_names=["c", "b", "a"])
+        input_data = pd.DataFrame({"e": [-2, -1, 0],
+                                   "a": [1, 2, 3],
+                                   "b": [4, 5, 6],
+                                   "c": [7, 8, 9],
+                                   "d": [10, 11, 12]})
+        expected_data = pd.DataFrame({"c": [7, 8, 9],
+                                      "b": [4, 5, 6],
+                                      "a": [1, 2, 3]})
+        expected_data = expected_data[["c", "b", "a"]]
+        transformed_data = ccn.transform(input_data)
+        pd.util.testing.assert_frame_equal(expected_data, transformed_data)
