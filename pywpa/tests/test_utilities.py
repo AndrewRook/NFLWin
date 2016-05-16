@@ -8,7 +8,7 @@ import pytest
 import pywpa.utilities as utils
 
 class TestGetNFLDBPlayData(object):
-    """Testing the ability to get play data from nfldb"""
+    """Testing the ability to get play data from nfldb."""
 
     #TODO (AndrewRook): Need to test if the sql query actually works
 
@@ -31,7 +31,7 @@ class TestGetNFLDBPlayData(object):
                 'offense_won': [False, False, False, False, False, True, True, True, True, True]
                 })
         
-    def test_standard_play(self,monkeypatch):
+    def test_standard_play_mock(self,monkeypatch):
         def mockreturn_engine():
             return True
         def mockreturn_query_string(season_years, season_types):
@@ -65,6 +65,52 @@ class TestGetNFLDBPlayData(object):
         pd.util.testing.assert_frame_equal(utils.get_nfldb_play_data().sort_index(axis=1),
                                            expected_df.sort_index(axis=1))
 
+    @pytest.mark.requires_db
+    def test_2015_playoffs_query(self):
+        queried_df = utils.get_nfldb_play_data(season_years=[2015], season_types=["Postseason"])
+        expected_df = pd.DataFrame({
+            'gsis_id': ['2016010900', '2016010900', '2016010900', '2016010900', '2016010900'],
+            'drive_id': [1, 1, 2, 2, 2],
+            'play_id': [36, 54, 70, 88, 109],
+            'seconds_elapsed': [0., 11., 11., 11., 45.],
+            'offense_team': ['HOU', 'KC', 'KC', 'HOU', 'HOU'],
+            'yardline': [-15., 35, -15, -30, -26],
+            'down': [0, 0, 0, 1, 2],
+            'yards_to_go': [0, 0, 0, 10, 6],
+            'home_team': ['HOU', 'HOU', 'HOU', 'HOU', 'HOU'],
+            'away_team': ['KC', 'KC', 'KC', 'KC', 'KC'],
+            'offense_won': [False, True, True, False, False],
+            'quarter': ['Q1', 'Q1', 'Q1', 'Q1', 'Q1'],
+            'curr_home_score': [0, 0, 0, 0, 0],
+            'curr_away_score': [0, 6, 7, 7, 7]
+            })
+        expected_df['down'] = expected_df['down'].astype(np.int8)
+        pd.util.testing.assert_frame_equal(queried_df[:5].sort_index(axis=1),
+                                           expected_df.sort_index(axis=1), check_column_type=False)
+
+    @pytest.mark.requires_db
+    def test_2009_regular_season_query(self):
+        queried_df = utils.get_nfldb_play_data(season_years=[2009], season_types=["Regular"])
+        expected_df = pd.DataFrame({
+            'gsis_id': ['2009091000', '2009091000', '2009091000', '2009091000', '2009091000'],
+            'drive_id': [1, 1, 1, 1, 1],
+            'play_id': [46, 68, 92, 113, 139],
+            'seconds_elapsed': [0., 7, 44, 85, 93],
+            'offense_team': ['TEN', 'PIT', 'PIT', 'PIT', 'PIT'],
+            'yardline': [-20., -8, -3, -6, -6],
+            'down': [0, 1, 2, 3, 4],
+            'yards_to_go': [0, 10, 5, 8, 8],
+            'home_team': ['PIT', 'PIT', 'PIT', 'PIT', 'PIT'],
+            'away_team': ['TEN', 'TEN', 'TEN', 'TEN', 'TEN'],
+            'offense_won': [False, True, True, True, True],
+            'quarter': ['Q1', 'Q1', 'Q1', 'Q1', 'Q1'],
+            'curr_home_score': [0, 0, 0, 0, 0],
+            'curr_away_score': [0, 0, 0, 0, 0]
+            })
+        expected_df['down'] = expected_df['down'].astype(np.int8)
+        pd.util.testing.assert_frame_equal(queried_df[:5].sort_index(axis=1),
+                                           expected_df.sort_index(axis=1), check_column_type=False)
+
 
 class TestConnectNFLDB(object):
     """testing the connect_nfldb function"""
@@ -80,6 +126,7 @@ class TestConnectNFLDB(object):
         with pytest.raises(IOError):
             utils.connect_nfldb()
 
+    @pytest.mark.requires_db
     def test_engine_works(self):
         engine = utils.connect_nfldb()
         test_query = ("SELECT play.description "
