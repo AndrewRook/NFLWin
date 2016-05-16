@@ -87,7 +87,7 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         * **away_team:** The abbreviation of the away team.
         * **curr_home_score:** The home team's score at the start of the play.
         * **curr_away_score:** The away team's score at the start of the play. 
-        * **home_won:** A boolean - ``True`` if the home team won the game, ``False`` otherwise. (The
+        * **offense_won:** A boolean - ``True`` if the offense won the game, ``False`` otherwise. (The
           database query skips tied games.)
 
         Note that ``gsis_id``, ``drive_id``, and ``play_id`` are not necessary to make the model, but
@@ -209,7 +209,8 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
         "AS defense_play_points")
 
     game_fields = ("game.home_team, game.away_team, "
-                   "(game.home_score > game.away_score AND play.pos_team = game.home_team) AS offense_won")
+                   "((game.home_score > game.away_score AND play.pos_team = game.home_team) "
+                   "OR (game.away_score > game.home_score AND play.pos_team = game.away_team)) AS offense_won")
 
     where_clause = ("WHERE game.home_score != game.away_score "
                     "AND game.finished = TRUE "
