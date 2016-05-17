@@ -371,12 +371,19 @@ class CheckColumnNames(BaseEstimator):
         you play fast and loose with column order. If ``None``,
         will obtain every column in the DataFrame passed to the
         ``fit`` method.
+    copy : boolean (default=``True``)
+        If ``False``, add the score differential in place.
+       
     """
-    def __init__(self, column_names=None):
+    def __init__(self, column_names=None, copy=True):
         self.column_names = column_names
+        self.copy = copy
         self._fit = True
+        self.user_specified_columns = False
         if self.column_names is None:
             self._fit = False
+        else:
+            self.user_specified_columns = True
             
 
     def fit(self, X, y=None):
@@ -394,8 +401,9 @@ class CheckColumnNames(BaseEstimator):
         -------
         self : For compatibility with Scikit-learn's ``Pipeline``. 
         """
-        self.column_names = X.columns
-        self._fit = True
+        if not self.user_specified_columns:
+            self.column_names = X.columns
+            self._fit = True
 
         return self
 
@@ -426,7 +434,12 @@ class CheckColumnNames(BaseEstimator):
         """
         if not self._fit:
             raise NotFittedError("CheckColumnName: Call 'fit' before 'transform")
+        
+        if self.copy:
+            X = X.copy()
+
         try:
+                
             return X[self.column_names]
         except KeyError:
             raise KeyError("CheckColumnName: DataFrame does not have required columns. "
