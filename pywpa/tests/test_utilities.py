@@ -173,6 +173,7 @@ class TestMakeNFLDBQueryString(object):
                            "AND play.play_id = agg_play.play_id "
                            "INNER JOIN game on play.gsis_id = game.gsis_id "
                            "WHERE game.home_score != game.away_score AND game.finished = TRUE "
+                           "AND play.pos_team != 'UNK' "
                            "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
                            "ORDER BY play.gsis_id, play.drive_id, play.play_id;")
         assert expected_string == utils._make_nfldb_query_string()
@@ -181,6 +182,7 @@ class TestMakeNFLDBQueryString(object):
         """Test that adding a single year constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
                               "AND game.finished = TRUE "
+                              "AND play.pos_team != 'UNK' "
                               "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
                               "AND game.season_year = 2013")
         assert expected_substring in utils._make_nfldb_query_string(season_years=[2013])
@@ -189,6 +191,7 @@ class TestMakeNFLDBQueryString(object):
         """Test that adding a single season type constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
                               "AND game.finished = TRUE "
+                              "AND play.pos_team != 'UNK' "
                               "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
                               "AND game.season_type = 'Regular'")
         assert expected_substring in utils._make_nfldb_query_string(season_types=["Regular"])
@@ -197,6 +200,7 @@ class TestMakeNFLDBQueryString(object):
         """Test that adding a multiple year constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
                               "AND game.finished = TRUE "
+                              "AND play.pos_team != 'UNK' "
                               "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
                               "AND game.season_year in (2013,2010)")
         assert expected_substring in utils._make_nfldb_query_string(season_years=[2013, 2010])
@@ -205,6 +209,7 @@ class TestMakeNFLDBQueryString(object):
         """Test that adding a single season type constraint works"""
         expected_substring = ("WHERE game.home_score != game.away_score "
                               "AND game.finished = TRUE "
+                              "AND play.pos_team != 'UNK' "
                               "AND (play.time).phase not in ('Pregame', 'Half', 'Final') "
                               "AND game.season_type in ('Regular','Postseason'")
         assert expected_substring in utils._make_nfldb_query_string(season_types=["Regular", "Postseason"])

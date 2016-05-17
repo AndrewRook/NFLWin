@@ -214,6 +214,7 @@ def _make_nfldb_query_string(season_years=None, season_types=None):
 
     where_clause = ("WHERE game.home_score != game.away_score "
                     "AND game.finished = TRUE "
+                    "AND play.pos_team != 'UNK' "
                     "AND (play.time).phase not in ('Pregame', 'Half', 'Final')")
 
     if season_years is not None:
