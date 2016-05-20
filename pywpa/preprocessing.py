@@ -283,12 +283,13 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
 
         #TODO (AndrewRook): Find good column names for the encoded columns.
         colnames = ["onehot_col{0}".format(i+1) for i in range(transformed_data.shape[1])]
-        transformed_df = pd.DataFrame(transformed_data, columns=colnames)
+        #Create a dataframe from the transformed columns (setting the index is critical for
+        #merging with data containing non-standard indexes)
+        transformed_df = pd.DataFrame(transformed_data, columns=colnames, index=X.index)
         
         X.drop(self.categorical_feature_names, axis=1, inplace=True)
         X[transformed_df.columns] = transformed_df
         
-
         return X
             
     

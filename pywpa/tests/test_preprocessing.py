@@ -4,8 +4,24 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.utils.validation import NotFittedError
+from sklearn.pipeline import Pipeline
 
 from pywpa import preprocessing
+
+class TestPipelines(object):
+    """Testing if pipelining cleaning steps works."""
+    def test_map_to_int_to_onehot(self):
+        fit_df = pd.DataFrame({"quarter": ["Q1", "Q1", "Q1", "Q2", "Q2"]})
+        transform_df = fit_df.copy()
+
+        mti = preprocessing.MapToInt("quarter", copy=True)
+        ohe = preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names=["quarter"], copy=True)
+        pipe = Pipeline(steps=[("one", mti), ("two", ohe)])
+        pipe.fit(fit_df)
+        output_df = pipe.transform(transform_df)
+
+        expected_df = pd.DataFrame({"onehot_col1": [1.0, 1, 1, 0, 0], "onehot_col2": [0.0, 0, 0, 1, 1]})
+        pd.util.testing.assert_frame_equal(output_df, expected_df)
 
 class TestComputeIfOffenseIsHome(object):
     """Testing if we can correctly compute if the offense is the home team."""
@@ -224,6 +240,28 @@ class TestOneHotEncoderFromDataFrame(object):
 
         pd.util.testing.assert_frame_equal(self.data.sort_index(axis=1),
                                            expected_data.sort_index(axis=1))
+
+    def test_encoding_subset_columns(self):
+        ohe = preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names=["one", "three"],
+                                                       copy=True)
+        shifted_data = self.data[2:]
+        ohe.fit(shifted_data)
+        transformed_data = ohe.transform(shifted_data)
+        self.data = pd.DataFrame({"one": [1, 2, 3, 1],
+                                  "two": [2, 2, 2, 5],
+                                  "three": [0, 5, 0, 5]})
+        expected_data = pd.DataFrame({"two": [2, 5],
+                                      "onehot_col1": [0., 1],
+                                      "onehot_col2": [1., 0],
+                                      "onehot_col3": [1., 0],
+                                      "onehot_col4": [0., 1]},
+                                      index=[2, 3])
+        print(transformed_data)
+        print(expected_data)
+        pd.util.testing.assert_frame_equal(transformed_data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
+        
+        
         
 
 class TestCreateScoreDifferential(object):
