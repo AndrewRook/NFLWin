@@ -295,7 +295,7 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
     
 
 class CreateScoreDifferential(BaseEstimator):
-    """Convert home and away scores into a differential (home - away).
+    """Convert offense and defense scores into a differential (offense - defense).
 
     Parameters
     ----------
@@ -303,6 +303,8 @@ class CreateScoreDifferential(BaseEstimator):
         The name of the column containing the score of the home team.
     away_score_colname : string
         The name of the column containing the score of the away team.
+    offense_home_colname : string
+        The name of the column indicating if the offense is home.
     score_differential_colname : string (default=``"score_differential"``)
         The name of column containing the score differential. Must not already
         exist in the DataFrame.
@@ -311,10 +313,12 @@ class CreateScoreDifferential(BaseEstimator):
     """
     def __init__(self, home_score_colname,
                  away_score_colname,
+                 offense_home_colname,
                  score_differential_colname="score_differential",
                  copy=True):
         self.home_score_colname = home_score_colname
         self.away_score_colname = away_score_colname
+        self.offense_home_colname = offense_home_colname
         self.score_differential_colname = score_differential_colname
         self.copy = copy
 
@@ -338,14 +342,17 @@ class CreateScoreDifferential(BaseEstimator):
             The input DataFrame, with the score differential column added.
         """
         try:
-            score_differential = X[self.home_score_colname] - X[self.away_score_colname]
+            score_differential = ((X[self.home_score_colname] - X[self.away_score_colname]) *
+                                  (2 * X[self.offense_home_colname] - 1))
         except KeyError:
             raise KeyError("CreateScoreDifferential: data missing required column. Must "
-                           "include columns named {0} and {1}".format(self.home_score_colname,
-                                                                      self.away_score_colname))
+                           "include columns named {0}, {1}, and {2}".format(self.home_score_colname,
+                                                                            self.away_score_colname,
+                                                                            self.offense_home_colname))
         if self.score_differential_colname in X.columns:
             raise KeyError("CreateScoreDifferential: column {0} already in DataFrame, and can't "
                            "be used for the score differential".format(self.score_differential_colname))
+
         if self.copy:
             X = X.copy()
 

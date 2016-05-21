@@ -268,16 +268,27 @@ class TestCreateScoreDifferential(object):
     """Testing if score differentials are properly created."""
 
     def test_bad_home_score_colname(self):
-        csd = preprocessing.CreateScoreDifferential("badcol", "away_score")
+        csd = preprocessing.CreateScoreDifferential("badcol", "away_score", "offense_home")
         data = pd.DataFrame({"home_score": [1, 2, 3, 4],
-                             "away_score": [10, 0, 5, 15]})
+                             "away_score": [10, 0, 5, 15],
+                             "offense_home": [True, True, True, True]})
         with pytest.raises(KeyError):
             csd.transform(data)
             
     def test_bad_away_score_colname(self):
-        csd = preprocessing.CreateScoreDifferential("home_score", "badcol")
+        csd = preprocessing.CreateScoreDifferential("home_score", "badcol", "offense_home")
         data = pd.DataFrame({"home_score": [1, 2, 3, 4],
-                             "away_score": [10, 0, 5, 15]})
+                             "away_score": [10, 0, 5, 15],
+                             "offense_home": [True, True, True, True]})
+        with pytest.raises(KeyError):
+            csd.fit(data)
+            csd.transform(data)
+            
+    def test_bad_offense_home_colname(self):
+        csd = preprocessing.CreateScoreDifferential("home_score", "away_score", "badcol")
+        data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                             "away_score": [10, 0, 5, 15],
+                             "offense_home": [True, True, True, True]})
         with pytest.raises(KeyError):
             csd.fit(data)
             csd.transform(data)
@@ -285,23 +296,64 @@ class TestCreateScoreDifferential(object):
     def test_differential_column_already_exists(self):
         csd = preprocessing.CreateScoreDifferential("home_score",
                                                     "away_score",
+                                                    "offense_home",
                                                     score_differential_colname="used_col")
         data = pd.DataFrame({"home_score": [1, 2, 3, 4],
                              "away_score": [10, 0, 5, 15],
+                             "offense_home": [True, True, True, True],
                              "used_col": [0, 0, 0, 0]})
         with pytest.raises(KeyError):
             csd.fit(data)
             csd.transform(data)
 
-    def test_differential_actually_works(self):
+    def test_differential_works_offense_is_home(self):
         csd = preprocessing.CreateScoreDifferential("home_score",
                                                     "away_score",
+                                                    "offense_home",
                                                     score_differential_colname="score_diff")
         input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
-                                   "away_score": [10, 0, 5, 15]})
+                                   "away_score": [10, 0, 5, 15],
+                                   "offense_home": [True, True, True, True]})
         expected_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
                                       "away_score": [10, 0, 5, 15],
+                                      "offense_home": [True, True, True, True],
                                       "score_diff": [-9, 2, -2, -11]})
+        
+        csd.fit(input_data)
+        transformed_data = csd.transform(input_data)
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           transformed_data.sort_index(axis=1))
+
+    def test_differential_works_offense_is_away(self):
+        csd = preprocessing.CreateScoreDifferential("home_score",
+                                                    "away_score",
+                                                    "offense_home",
+                                                    score_differential_colname="score_diff")
+        input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                   "away_score": [10, 0, 5, 15],
+                                   "offense_home": [False, False, False, False]})
+        expected_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                      "away_score": [10, 0, 5, 15],
+                                      "offense_home": [False, False, False, False],
+                                      "score_diff": [9, -2, 2, 11]})
+        
+        csd.fit(input_data)
+        transformed_data = csd.transform(input_data)
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           transformed_data.sort_index(axis=1))
+
+    def test_differential_works_offense_is_mix(self):
+        csd = preprocessing.CreateScoreDifferential("home_score",
+                                                    "away_score",
+                                                    "offense_home",
+                                                    score_differential_colname="score_diff")
+        input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                   "away_score": [10, 0, 5, 15],
+                                   "offense_home": [True, True, False, False]})
+        expected_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
+                                      "away_score": [10, 0, 5, 15],
+                                      "offense_home": [True, True, False, False],
+                                      "score_diff": [-9, 2, 2, 11]})
         
         csd.fit(input_data)
         transformed_data = csd.transform(input_data)
@@ -311,14 +363,18 @@ class TestCreateScoreDifferential(object):
     def test_differential_with_copied_data(self):
         csd = preprocessing.CreateScoreDifferential("home_score",
                                                     "away_score",
+                                                    "offense_home",
                                                     score_differential_colname="score_diff",
                                                     copy=True)
         input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
-                                   "away_score": [10, 0, 5, 15]})
+                                   "away_score": [10, 0, 5, 15],
+                                   "offense_home": [True, True, True, True]})
         expected_input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
-                                            "away_score": [10, 0, 5, 15]})
+                                            "away_score": [10, 0, 5, 15],
+                                            "offense_home": [True, True, True, True]})
         expected_transformed_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
                                       "away_score": [10, 0, 5, 15],
+                                      "offense_home": [True, True, True, True],
                                       "score_diff": [-9, 2, -2, -11]})
         
         csd.fit(input_data)
@@ -331,12 +387,15 @@ class TestCreateScoreDifferential(object):
     def test_differential_with_inplace_data(self):
         csd = preprocessing.CreateScoreDifferential("home_score",
                                                     "away_score",
+                                                    "offense_home",
                                                     score_differential_colname="score_diff",
                                                     copy=False)
         input_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
-                                   "away_score": [10, 0, 5, 15]})
+                                   "away_score": [10, 0, 5, 15],
+                                   "offense_home": [True, True, True, True]})
         expected_data = pd.DataFrame({"home_score": [1, 2, 3, 4],
                                       "away_score": [10, 0, 5, 15],
+                                      "offense_home": [True, True, True, True],
                                       "score_diff": [-9, 2, -2, -11]})
         csd.fit(input_data)
         csd.transform(input_data)
