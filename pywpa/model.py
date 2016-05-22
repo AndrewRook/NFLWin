@@ -3,12 +3,15 @@ from __future__ import print_function, division
 
 import numpy as np
 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
+from sklearn.metrics import brier_score_loss
 from sklearn.neighbors import KernelDensity
 from sklearn.pipeline import Pipeline
+from sklearn.utils.validation import NotFittedError
 
 import preprocessing
 import utilities
@@ -94,6 +97,8 @@ class WPModel(object):
 
         self.model = self.create_pipeline()
 
+        self._fit = False
+
 
     def create_pipeline(self):
         """Create the win probability estimation pipeline.
@@ -134,7 +139,8 @@ class WPModel(object):
         model = self.model_class(**self.model_kwargs)
         model = CalibratedClassifierCV(model, cv=2, method="isotonic")
         if self.parameter_search_grid is not None:
-            model = GridSearchCV(model, self.parameter_search_grid)
+            model = GridSearchCV(model, self.parameter_search_grid,
+                                 scoring=self._brier_loss_scorer)
         else:
             model = model
         steps.append(("compute_model", model))
@@ -142,11 +148,74 @@ class WPModel(object):
         pipe = Pipeline(steps)
         return pipe
 
+    @staticmethod
+    def _brier_loss_scorer(estimator, X, y):
+        """Use the Brier loss to estimate model score.
+
+        For use in GridSearchCV, instead of accuracy.
+        """
+        predicted_positive_probabilities = estimator.predict_proba(X)[:, 1]
+        return 1. - brier_score_loss(y, predicted_positive_probabilities)
+
+    def fit(self, X, y):
+        """Fit the model to data.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape (n_plays, n_features)
+            The plays to be used to fit the model.
+        y : numpy array or Pandas Series, of length n_plays
+            The result of the game (offense win/lose) for each play.
+
+        Returns
+        -------
+        self
+            Preserving the Scikit-learn idiom.
+        """
+        
+        self.model.fit(X, y)
+        self._fit = True
+        return self
+
+    def get_model_params(self):
+        """Return the hyperparameters used in the fitted model.
+
+        This wrapper is necessary because the API changes if you
+        use ``GridSearchCV`` instead of a bare classifier.
+
+        Returns
+        -------
+        dict
+            The parameter names and their values.
+
+        Raises
+        ------
+        NotFittedError
+            If ``fit`` has not been called yet.
+
+        Notes
+        -----
+        Because the classifier is wrapped to force better probability estimates,
+        the parameters of the classifier will be prepended with "best_estimator__".
+        """
+        if not self._fit:
+            raise NotFittedError("WPModel.get_model_params: Must run 'fit' first!")
+
+        last_step = self.model.steps[-1][1]
+
+        try:
+            best_hyperparams_dict = last_step.best_params_
+            params_dict = last_step.estimator.get_params()
+            for param in best_hyperparams_dict:
+                params_dict[param] = best_hyperparams_dict[param]
+            return params_dict
+        except AttributeError:
+            return last_step.get_params()
 
 if __name__ == "__main__":
     import time
     start = time.time()
-    play_df = utilities.get_nfldb_play_data(season_years=[2009, 2010, 2011, 2012, 2013, 2014])
+    play_df = utilities.get_nfldb_play_data(season_years=[2013, 2014])
     target_col = play_df["offense_won"]
     play_df.drop("offense_won", axis=1, inplace=True)
     play_df_train, play_df_test, target_col_train, target_col_test = (
@@ -154,16 +223,21 @@ if __name__ == "__main__":
     
     print("Took {0:.2f}s to query data".format(time.time() - start))
     start = time.time()
-    win_probability_model = WPModel()
-    # win_probability_model = WPModel(parameter_search_grid={'base_estimator__penalty': ['l1', 'l2'],
+    #win_probability_model = WPModel()
+    # win_probability_model = WPModel(model_class=LogisticRegression,
+    #                                 parameter_search_grid={'base_estimator__penalty': ['l1', 'l2'],
     #                                                        'base_estimator__C': [0.1, 1, 10],
     #                                                        'method': ['isotonic']})
+    win_probability_model = WPModel(model_class=RandomForestClassifier,
+                                    parameter_search_grid={'base_estimator__n_estimators': [5, 40],
+                                                           'method': ['isotonic']})
     pipe = win_probability_model.model
     print("Took {0:.2f}s to create pipeline".format(time.time() - start))
 
     start = time.time()
-    pipe.fit(play_df_train, target_col_train)
+    win_probability_model.fit(play_df_train, target_col_train)
     print("Took {0:.2f}s to fit pipeline".format(time.time() - start))
+    print(win_probability_model.get_model_params())
 
     predicted_win_probabilities = pipe.predict_proba(play_df_test)[:,1]
 
