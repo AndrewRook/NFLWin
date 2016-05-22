@@ -6,64 +6,102 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cross_validation import train_test_split
+from sklearn.grid_search import GridSearchCV
 from sklearn.neighbors import KernelDensity
 from sklearn.pipeline import Pipeline
 
 import preprocessing
 import utilities
 
-def create_pipeline(home_score_colname="curr_home_score",
-                    away_score_colname="curr_away_score",
-                    quarter_colname="quarter",
-                    time_colname = "seconds_elapsed",
-                    down_colname="down",
-                    yards_to_go_colname="yards_to_go",
-                    yardline_colname="yardline",
-                    offense_team_colname="offense_team",
-                    home_team_colname = "home_team",
-                    copy=True,
-                    model_class=LogisticRegression,
-                    **kwargs):
+class WPModel(object):
+    """The object that computes win probabilities.
 
-    steps = []
 
-    is_offense_home = preprocessing.ComputeIfOffenseIsHome(offense_team_colname,
-                                                           home_team_colname,
-                                                           copy=copy)
-    steps.append(("compute_offense_home", is_offense_home))
-    score_differential = preprocessing.CreateScoreDifferential(home_score_colname,
-                                                               away_score_colname,
-                                                               is_offense_home.offense_home_team_colname,
-                                                               copy=copy)
-    steps.append(("create_score_differential", score_differential))
-    steps.append(("map_downs_to_int", preprocessing.MapToInt(down_colname, copy=copy)))
-    total_time_elapsed = preprocessing.ComputeElapsedTime(quarter_colname, time_colname, copy=copy)
-    steps.append(("compute_total_time_elapsed", total_time_elapsed))
-    steps.append(("map_quarters_to_int", preprocessing.MapToInt(quarter_colname, copy=copy)))
-    steps.append(("remove_unnecessary_columns", preprocessing.CheckColumnNames(
-        column_names=[is_offense_home.offense_home_team_colname,
-                      score_differential.score_differential_colname,
-                      total_time_elapsed.total_time_colname,
-                      yardline_colname,
-                      yards_to_go_colname,
-                      quarter_colname,
-                      down_colname],
-        copy=copy)))
-    steps.append(("encode_categorical_columns", preprocessing.OneHotEncoderFromDataFrame(
-        categorical_feature_names=[down_colname, quarter_colname],
-        copy=copy)))
-    
-    model = model_class(**kwargs)
-    steps.append(("compute_model", model))
-    
-    pipe = Pipeline(steps)
-    return pipe
+    """
+
+    def __init__(self,
+                 home_score_colname="curr_home_score",
+                 away_score_colname="curr_away_score",
+                 quarter_colname="quarter",
+                 time_colname = "seconds_elapsed",
+                 down_colname="down",
+                 yards_to_go_colname="yards_to_go",
+                 yardline_colname="yardline",
+                 offense_team_colname="offense_team",
+                 home_team_colname = "home_team",
+                 copy=True,
+                 model_class=LogisticRegression,
+                 model_kwargs={},
+                 parameter_search_grid=None):
+        self.home_score_colname = home_score_colname
+        self.away_score_colname = away_score_colname
+        self.quarter_colname = quarter_colname
+        self.time_colname = time_colname
+        self.down_colname = down_colname
+        self.yards_to_go_colname = yards_to_go_colname
+        self.yardline_colname = yardline_colname
+        self.offense_team_colname = offense_team_colname
+        self.home_team_colname = home_team_colname
+        self.copy = copy
+        self.model_class = model_class
+        self.model_kwargs = model_kwargs
+        self.parameter_search_grid = parameter_search_grid
+
+        self.model = self.create_pipeline()
+
+
+    def create_pipeline(self):
+        """Create the win probability estimation pipeline.
+
+
+        Returns
+        -------
+        sklearn.pipeline.Pipeline
+            A pipeline object containing all the steps in the model.
+        """
+
+        steps = []
+
+        is_offense_home = preprocessing.ComputeIfOffenseIsHome(self.offense_team_colname,
+                                                               self.home_team_colname,
+                                                               copy=self.copy)
+        steps.append(("compute_offense_home", is_offense_home))
+        score_differential = preprocessing.CreateScoreDifferential(self.home_score_colname,
+                                                                   self.away_score_colname,
+                                                                   is_offense_home.offense_home_team_colname,
+                                                                   copy=self.copy)
+        steps.append(("create_score_differential", score_differential))
+        steps.append(("map_downs_to_int", preprocessing.MapToInt(self.down_colname, copy=self.copy)))
+        total_time_elapsed = preprocessing.ComputeElapsedTime(self.quarter_colname, self.time_colname, copy=self.copy)
+        steps.append(("compute_total_time_elapsed", total_time_elapsed))
+        steps.append(("remove_unnecessary_columns", preprocessing.CheckColumnNames(
+            column_names=[is_offense_home.offense_home_team_colname,
+                          score_differential.score_differential_colname,
+                          total_time_elapsed.total_time_colname,
+                          self.yardline_colname,
+                          self.yards_to_go_colname,
+                          self.down_colname],
+            copy=self.copy)))
+        steps.append(("encode_categorical_columns", preprocessing.OneHotEncoderFromDataFrame(
+            categorical_feature_names=[self.down_colname],
+            copy=self.copy)))
+
+        learning_model = self.model_class(**self.model_kwargs)
+        if self.parameter_search_grid is not None:
+            model = GridSearchCV(learning_model, self.parameter_search_grid)
+        else:
+            model = learning_model
+        model = CalibratedClassifierCV(model, cv=2, method="isotonic")
+        steps.append(("compute_model", model))
+
+        pipe = Pipeline(steps)
+        return pipe
 
 
 if __name__ == "__main__":
     import time
     start = time.time()
-    play_df = utilities.get_nfldb_play_data(season_years=[2009, 2010, 2011, 2012, 2013, 2014, 2015])
+    play_df = utilities.get_nfldb_play_data(season_years=[2009, 2010, 2011, 2012, 2013, 2014])
     target_col = play_df["offense_won"]
     play_df.drop("offense_won", axis=1, inplace=True)
     play_df_train, play_df_test, target_col_train, target_col_test = (
@@ -71,7 +109,8 @@ if __name__ == "__main__":
     
     print("Took {0:.2f}s to query data".format(time.time() - start))
     start = time.time()
-    pipe = create_pipeline()
+    win_probability_model = WPModel()#parameter_search_grid={'penalty': ['l1', 'l2'], 'C': [0.1, 1, 10, 100]})
+    pipe = win_probability_model.model
     print("Took {0:.2f}s to create pipeline".format(time.time() - start))
 
     start = time.time()
@@ -86,10 +125,11 @@ if __name__ == "__main__":
         predicted_win_probabilities[:, np.newaxis])
     sample_probabilities = np.linspace(0, 1, 101)[:, np.newaxis]
     number_offense_won = np.exp(kde_offense_won.score_samples(sample_probabilities)) * np.sum((target_col_test))
-    number_total = np.exp(kde_total.score_samples(sample_probabilities)) * len(target_col_test)
+    number_total = np.exp(kde_total.score_samples(sample_probabilities)) * len(target_col_test) #actually number density
     predicted_win_percents = number_offense_won / number_total
     max_deviation = np.max(np.abs(predicted_win_percents - sample_probabilities[:, 0]))
     print("Max deviation: {0:.2f}%".format(max_deviation * 100))
+    print("DEBUG: ", len(target_col_test))
     
     import matplotlib.pyplot as plt
     ax = plt.figure().add_subplot(111)
@@ -99,6 +139,10 @@ if __name__ == "__main__":
     ax.set_xlabel("Predicted WP")
     ax.set_ylabel("Actual WP")
     ax.legend(loc="lower right")
+    ax2 = ax.twinx()
+    ax2.fill_between(sample_probabilities[:, 0], number_total,
+                     facecolor="gray", alpha=0.25, interpolate=True)
+    ax2.set_ylabel("Number of Plays")
     # ax.fill_between(sample_probabilities[:,0], number_total,
     #                 facecolor="blue", alpha=0.25, interpolate=True, label="all_probabilities")
     # ax.fill_between(sample_probabilities[:,0], number_offense_won,
