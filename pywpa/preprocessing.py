@@ -8,6 +8,88 @@ from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
 
+class ComputeElapsedTime(BaseEstimator):
+    """Compute the total elapsed time from the start of the game.
+
+    Parameters
+    quarter_colname : string
+        Which column indicates what quarter it is.
+    quarter_time_colname : string
+        Which column indicates how much time has elapsed in the current quarter.
+    quarter_to_second_mapping : dict (default=``{"Q1": 0, "Q2": 900, "Q3": 1800, "Q4": 2700,
+                                                 "OT": 3600, "OT2": 4500, "OT3": 5400}``)
+        What mapping to use between the string values in the quarter column and the seconds they
+        correspond to. Mostly useful if your data had quarters listed as something like "Quarter 1"
+        or "q1" instead of the values from ``nfldb``.
+    total_time_colname : string (default="total_elapsed_time")
+        What column name to store the total elapsed time under.
+    copy : boolean (default=True)
+        Whether to add the new column in place.
+    """
+    def __init__(self, quarter_colname, quarter_time_colname,
+                 quarter_to_second_mapping={"Q1": 0, "Q2": 900, "Q3": 1800, "Q4": 2700,
+                                            "OT": 3600, "OT2": 4500, "OT3": 5400},
+                 total_time_colname="total_elapsed_time", copy=True):
+        self.quarter_colname = quarter_colname
+        self.quarter_time_colname = quarter_time_colname
+        self.quarter_to_second_mapping = quarter_to_second_mapping
+        self.total_time_colname = total_time_colname
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        return self
+
+    
+    def transform(self, X, y=None):
+        """Create the new column.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, number of features + 1)
+            The input DataFrame, with the new column added.
+
+        Raises
+        ------
+        KeyError
+            If ``quarter_colname`` or ``quarter_time_colname`` don't exist, or
+            if ``total_time_colname`` **does** exist.
+        TypeError
+            If the total time elapsed is not a numeric column, which typically indicates
+            that the mapping did not apply to every row.
+        """
+
+        if self.quarter_colname not in X.columns:
+            raise KeyError("ComputeElapsedTime: quarter_colname {0} does not exist in dataset."
+                           .format(self.quarter_colname))
+        if self.quarter_time_colname not in X.columns:
+            raise KeyError("ComputeElapsedTime: quarter_time_colname {0} does not exist in dataset."
+                           .format(self.quarter_time_colname))
+
+        if self.total_time_colname in X.columns:
+            raise KeyError("ComputeElapsedTime: total_time_colname {0} already exists in dataset."
+                           .format(self.total_time_colname))
+
+        if self.copy:
+            X = X.copy()
+
+        try:
+            time_elapsed = X[self.quarter_colname].replace(self.quarter_to_second_mapping) + X[self.quarter_time_colname]
+        except TypeError:
+            raise TypeError("ComputeElapsedTime: Total time elapsed not numeric. Check your mapping from quarter name to time.")
+
+        X[self.total_time_colname] = time_elapsed
+
+        return X
+    
+
 class ComputeIfOffenseIsHome(BaseEstimator):
     """Determine if the team currently with possession is the home team.
 

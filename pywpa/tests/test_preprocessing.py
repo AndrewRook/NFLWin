@@ -23,6 +23,95 @@ class TestPipelines(object):
         expected_df = pd.DataFrame({"onehot_col1": [1.0, 1, 1, 0, 0], "onehot_col2": [0.0, 0, 0, 1, 1]})
         pd.util.testing.assert_frame_equal(output_df, expected_df)
 
+class TestComputeElapsedTime(object):
+    """Testing if we can properly map quarters and time elapsed to a total time elapsed."""
+
+    def test_bad_quarter_colname_produces_error(self):
+        input_df = pd.DataFrame({"blahblahblah": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                 "time_elapsed": [200, 0, 50, 850, 40]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed")
+        cet.fit(input_df)
+
+        with pytest.raises(KeyError):
+            cet.transform(input_df)
+
+    def test_bad_time_elapsed_colname_produces_error(self):
+        input_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                 "blahblahblah": [200, 0, 50, 850, 40]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed")
+        cet.fit(input_df)
+
+        with pytest.raises(KeyError):
+            cet.transform(input_df)
+
+    def test_preexisting_output_colname_produces_error(self):
+        input_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                 "time_elapsed": [200, 0, 50, 850, 40],
+                                 "total_time_elapsed": [0, 0, 0, 0, 0]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed",
+                                               total_time_colname="total_time_elapsed")
+        cet.fit(input_df)
+
+        with pytest.raises(KeyError):
+            cet.transform(input_df)
+
+    def test_incomplete_quarter_mapping(self):
+        input_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT1"],
+                                 "time_elapsed": [200, 0, 50, 850, 40]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed",
+                                               quarter_to_second_mapping={
+                                                   "Q1": 0,
+                                                   "Q2": 900,
+                                                   "Q4": 2700,
+                                                   "OT1":3600} )
+        cet.fit(input_df)
+
+        with pytest.raises(TypeError):
+            cet.transform(input_df)
+
+    def test_simple_working_case(self):
+        input_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                 "time_elapsed": [200, 0, 50, 850, 40]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed")
+        cet.fit(input_df)
+
+        transformed_df = cet.transform(input_df)
+        expected_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                    "time_elapsed": [200, 0, 50, 850, 40],
+                                    "total_elapsed_time": [200, 900, 1850, 3550, 3640]})
+        pd.util.testing.assert_frame_equal(transformed_df, expected_df)
+
+    def test_inplace_transform(self):
+        input_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                 "time_elapsed": [200, 0, 50, 850, 40]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed", copy=False)
+        cet.fit(input_df)
+
+        cet.transform(input_df)
+        expected_df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4", "OT"],
+                                    "time_elapsed": [200, 0, 50, 850, 40],
+                                    "total_elapsed_time": [200, 900, 1850, 3550, 3640]})
+        pd.util.testing.assert_frame_equal(input_df, expected_df)
+
+    def test_custom_mapping(self):
+        input_df = pd.DataFrame({"quarter": ["quarter1", "Q2", "Q3", "Q4", "OT1"],
+                                 "time_elapsed": [200, 0, 50, 850, 40]})
+        cet = preprocessing.ComputeElapsedTime("quarter", "time_elapsed",
+                                               quarter_to_second_mapping={
+                                                   "quarter1": 0,
+                                                   "Q2": 500,
+                                                   "Q3": 1800,
+                                                   "Q4": 2700,
+                                                   "OT1":3600})
+        cet.fit(input_df)
+
+        transformed_df = cet.transform(input_df)
+        expected_df = pd.DataFrame({"quarter": ["quarter1", "Q2", "Q3", "Q4", "OT1"],
+                                    "time_elapsed": [200, 0, 50, 850, 40],
+                                    "total_elapsed_time": [200, 500, 1850, 3550, 3640]})
+        pd.util.testing.assert_frame_equal(transformed_df, expected_df)
+        
+
 class TestComputeIfOffenseIsHome(object):
     """Testing if we can correctly compute if the offense is the home team."""
 
