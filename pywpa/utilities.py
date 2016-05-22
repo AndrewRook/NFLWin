@@ -75,8 +75,9 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         * **play_id:** The id of the play in ``nfldb``. Note that sequential plays have increasing
           **but not necessarily** sequential values. With ``drive_id`` and ``gsis_id``, works as a
           unique identifier for a given play.
-        * **quarter:** The quarter, prepended with "Q" (e.g. ``Q1`` means the first quarter). Any
-          overtime has a value of ``OT``, regardless of which overtime period it is.
+        * **quarter:** The quarter, prepended with "Q" (e.g. ``Q1`` means the first quarter). 
+          Overtime periods are denoted as ``OT``, ``OT2``, and theoretically ``OT3`` if one were to
+          ever be played.
         * **time:** seconds elapsed since the start of the quarter.
         * **pos_team:** The abbreviation of the team currently with possession of the ball.
         * **yardline:** The current field position. Goes from -49 to 49, where negative numbers
@@ -107,8 +108,6 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         except TypeError:
             yardline = np.nan
         split_time = row['time'].split(",")
-        if split_time[0][:3] == "(OT":
-            split_time[0] = "(OT"
         return yardline, split_time[0][1:], float(split_time[1][:-1])
     
     plays_df[['yardline', 'quarter', 'seconds_elapsed']] = pd.DataFrame(plays_df.apply(yardline_time_fix, axis=1).values.tolist())

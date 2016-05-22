@@ -18,7 +18,7 @@ class TestGetNFLDBPlayData(object):
                 'drive_id': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 'play_id': [1, 2, 3, 4, 5, 1, 2, 3, 4, 5],
                 'time': ["(Q1,0)", "(Q1,152)", "(Q1,354)", "(Q1,354)", "(Q2,0)",
-                         "(OT,840)", "(OT1,840)", "(OT2,875)", "(OT3,900)", "(OT,900)"],
+                         "(OT,840)", "(OT,840)", "(OT2,875)", "(OT3,900)", "(OT,900)"],
                 'offense_team': ["HOU", "KC", "KC", "HOU", "HOU", "UNK", "DEN", "DEN", "CAR", "UNK"],
                 'yardline': ["(-15)", "(35)", "(-15)", "(-30)", "(-26)",
                              None, "(48)", "(-15)", "(-18)", None],
@@ -56,7 +56,7 @@ class TestGetNFLDBPlayData(object):
                 'home_team': ["HOU", "HOU", "HOU", "HOU", "HOU", "DEN", "DEN", "DEN", "DEN", "DEN"],
                 'away_team': ["KC", "KC", "KC", "KC", "KC", "CAR", "CAR", "CAR", "CAR", "CAR"],
                 'offense_won': [False, False, False, False, False, True, True, True, True, True],
-                'quarter': ["Q1", "Q1", "Q1", "Q1", "Q2", "OT", "OT", "OT", "OT", "OT"],
+                'quarter': ["Q1", "Q1", "Q1", "Q1", "Q2", "OT", "OT", "OT2", "OT3", "OT"],
                 'curr_home_score': [0, 0, 0, 0, 0, 0, 0, 7, 7, 7],
                 'curr_away_score': [0, 6, 7, 7, 7, 0, 0, 0, 0, 0]
                 })
