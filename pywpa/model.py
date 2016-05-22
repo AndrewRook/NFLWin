@@ -17,6 +17,51 @@ class WPModel(object):
     """The object that computes win probabilities.
 
 
+    Parameters
+    ----------
+    home_score_colname : string (default="curr_home_score")
+        The name of the column containing the current home score at the start of a play.
+    away_score_colname : string (default="curr_away_score")
+        The name of the column containing the current away score at the start of a play.
+    quarter_colname : string (default="quarter")
+        The name of the column containing the quarter the play took place in.
+    time_colname : string (default="seconds_elapsed")
+        The name of the column containing the time elapsed (in seconds) from the start
+        of the quarter when the play began.
+    down_colname : string (default="down")
+        The name of the column containing the current down number, with zeros for plays like
+        kickoffs and extra points.
+    yards_to_go_colname : string (default="yards_to_go")
+        The name of the column containing the number of yards to go in order to get a first down.
+    offense_team_colname : string (default="offense_team")
+        The name of the column containing the abbreviation for the team currently on offense.
+    home_team_colname : string (default="home_team")
+        The name of the column containing the abbreviation for the home team.
+    copy : boolean (default=``True``)
+        Whether or not to copy data at each step in the modeling pipeline. Setting this to ``False``
+        can speed up execution time but will also overwrite your input data.
+    model_class : A valid Scikit-Learn classifier (default=``sklearn.linear_model.LogisticRegression``)
+        The type of classifier to be used to make the predictions.
+    model_kwargs : dict (default=``{}``)
+        Keyword arguments for ``model_class``. 
+    parameter_search_grid : ``None`` or dict (default=``None``)
+        If not ``None``, then ``sklearn.grid_search.GridSearchCV`` will be
+        used and this parameter should contain a dictionary with the ``param_grid``
+        positional argument for that estimator. See note below about naming conventions,
+        which are slightly nonstandard.
+
+
+    Notes
+    -----
+    When using the ``parameter_search_grid`` parameter, in order to adjust the hyperparameters
+    of the selected ``model_class`` you'll need to prepend them with ``base_estimator``. For
+    instance, in the case of ``sklearn.linear_model.LogisticRegression`` you could have
+    ``{'base_estimator__penalty': ['l1', 'l2'], 'base_estimator__C': [0.1, 1, 10]}``. This is
+    necessary because ``WPModel`` wraps the ``model_class`` with an instances of
+    ``sklearn.calibration.CalibratedClassifierCV`` to attempt to provide a better fit to the
+    probabilities, rather than just optimizing on predictive accuracy. If you want to run
+    cross-validation on the ``CalibratedClassifierCV`` hyperparameters you can: those you **don't**
+    need to preface with ``base_estimator__``. 
     """
 
     def __init__(self,
@@ -86,12 +131,12 @@ class WPModel(object):
             categorical_feature_names=[self.down_colname],
             copy=self.copy)))
 
-        learning_model = self.model_class(**self.model_kwargs)
-        if self.parameter_search_grid is not None:
-            model = GridSearchCV(learning_model, self.parameter_search_grid)
-        else:
-            model = learning_model
+        model = self.model_class(**self.model_kwargs)
         model = CalibratedClassifierCV(model, cv=2, method="isotonic")
+        if self.parameter_search_grid is not None:
+            model = GridSearchCV(model, self.parameter_search_grid)
+        else:
+            model = model
         steps.append(("compute_model", model))
 
         pipe = Pipeline(steps)
@@ -109,7 +154,10 @@ if __name__ == "__main__":
     
     print("Took {0:.2f}s to query data".format(time.time() - start))
     start = time.time()
-    win_probability_model = WPModel()#parameter_search_grid={'penalty': ['l1', 'l2'], 'C': [0.1, 1, 10, 100]})
+    win_probability_model = WPModel()
+    # win_probability_model = WPModel(parameter_search_grid={'base_estimator__penalty': ['l1', 'l2'],
+    #                                                        'base_estimator__C': [0.1, 1, 10],
+    #                                                        'method': ['isotonic']})
     pipe = win_probability_model.model
     print("Took {0:.2f}s to create pipeline".format(time.time() - start))
 
