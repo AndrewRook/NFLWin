@@ -6,6 +6,7 @@ dependencies:
 - numpy=1.11.0=py27_0
 - openssl=1.0.2g=0
 - pandas=0.18.0=np111py27_0
+- patsy=0.4.1=py27_0
 - pip=8.1.1=py27_1
 - psycopg2=2.6.1=py27_1
 - py=1.4.31=py27_0
@@ -21,6 +22,7 @@ dependencies:
 - six=1.10.0=py27_0
 - sqlalchemy=1.0.12=py27_0
 - sqlite=3.9.2=0
+- statsmodels=0.6.1=np111py27_0
 - tk=8.5.18=0
 - wheel=0.29.0=py27_0
 - zlib=1.2.8=0
