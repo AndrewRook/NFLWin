@@ -19,6 +19,9 @@ import utilities
 class WPModel(object):
     """The object that computes win probabilities.
 
+    In addition to holding the model itself, it defines some columns names likely to be
+    used in the model as parameters to allow other users to more easily figure out which
+    columns go into the model.
 
     Parameters
     ----------
@@ -40,6 +43,8 @@ class WPModel(object):
         The name of the column containing the abbreviation for the team currently on offense.
     home_team_colname : string (default="home_team")
         The name of the column containing the abbreviation for the home team.
+    offense_won_colname : string (default="offense_won")
+        The name of the column containing whether or not the offense ended up winning the game.
     copy_data : boolean (default=``True``)
         Whether or not to copy data when fitting and applying the model. Running the model
         in-place (``copy_data=False``) will be faster and have a smaller memory footprint,
@@ -63,6 +68,7 @@ class WPModel(object):
                  yardline_colname="yardline",
                  offense_team_colname="offense_team",
                  home_team_colname="home_team",
+                 offense_won_colname="offense_won",
                  copy_data=True
                 ):
         self.home_score_colname = home_score_colname
@@ -74,16 +80,80 @@ class WPModel(object):
         self.yardline_colname = yardline_colname
         self.offense_team_colname = offense_team_colname
         self.home_team_colname = home_team_colname
+        self.offense_won_colname = offense_won_colname
         self.copy_data = copy_data
 
-        self.model = None
+        self.model = self.create_default_pipeline()
 
+    def train_model(self,
+                    source_data="nfldb",
+                    training_seasons=[2009, 2010, 2011, 2012, 2013, 2014],
+                    training_season_types=["Regular", "Postseason"]):
+        """Train the model.
+
+        Once a modeling pipeline is set up (either the default or something
+        custom-generated), historical data needs to be fed into it in order to
+        "fit" the model so that it can then be used to predict future results.
+        This method implements a simple wrapper around the core Scikit-learn functionality
+        which does this.
+
+        The default is to use data from the nfldb database, however that can be changed
+        to a simple Pandas DataFrame if desired (for instance if you wish to use data
+        from another source).
+
+        There is no particular output from this function, rather the parameters governing
+        the fit of the model are saved inside the model object itself. If you want to get an
+        estimate of the quality of the fit, use the ``validate_model`` method after running
+        this method.
+
+        Notes
+        -----
+        If you are loading in the default model, **there is no need to re-run this method**.
+        In fact, doing so will likely result in weird errors and could corrupt the model if you
+        were to try to save it back to disk.
+
+        Parameters
+        ----------
+        source_data : the string ``"nfldb"`` or a Pandas DataFrame (default=``"nfldb"``)
+            The data to be used to train the model. If ``"nfldb"``, will query the nfldb
+            database for the training data (note that this requires a correctly configured
+            installation of nfldb's database).
+        training_seasons : list of ints (default=``[2009, 2010, 2011, 2012, 2013, 2014]``)
+            What seasons to use to train the model if getting data from the nfldb database.
+            If ``source_data`` is not ``"nfldb"``, this argument will be ignored.
+            **NOTE:** it is critical not to use all possible data in order to train the
+            model - some will need to be reserved for a final validation (see the
+            ``validate_model`` method). A good dataset to reserve
+            for validation is the most recent one or two NFL seasons.
+        training_season_types : list of strings (default=``["Regular", "Postseason"]``)
+            If querying from the nfldb database, what parts of the seasons to use.
+            Options are "Preseason", "Regular", and "Postseason". If ``source_data`` is not
+            ``"nfldb"``, this argument will be ignored.
+
+        Returns
+        -------
+        ``None``
+        """
+        if source_data == "nfldb":
+            source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
+                                                        season_types=training_season_types)
+        target_col = source_data[self.offense_won_colname]
+        feature_cols = source_data.drop(self.offense_won_colname, axis=1)
+        self.model.fit(feature_cols, target_col)
+        
 
     def create_default_pipeline(self):
         """Create the default win probability estimation pipeline.
 
-        This sets the ``model`` attribute of the class, so be aware that
-        if you run it it will overwrite any model you have stored already.
+
+        Returns
+        -------
+        Scikit-learn pipeline
+            The default pipeline, suitable for computing win probabilities
+            but by no means the best possible model.
+
+        This can be run any time a new default pipeline is required,
+        and either set to the ``model`` attribute or used independently.
         """
 
         steps = []
@@ -112,17 +182,17 @@ class WPModel(object):
             categorical_feature_names=[self.down_colname],
             copy=self.copy_data)))
 
-        model = self.model_class(**self.model_kwargs)
-        model = CalibratedClassifierCV(model, cv=2, method="isotonic")
-        if self.parameter_search_grid is not None:
-            model = GridSearchCV(model, self.parameter_search_grid,
-                                 scoring=self._brier_loss_scorer)
-        else:
-            model = model
-        steps.append(("compute_model", model))
+        search_grid = {'base_estimator__penalty': ['l1', 'l2'],
+                       'base_estimator__C': [0.01, 0.1, 1, 10, 100]
+                      }
+        base_model = LogisticRegression()
+        calibrated_model = CalibratedClassifierCV(base_model, cv=2, method="isotonic")
+        grid_search_model = GridSearchCV(calibrated_model, search_grid,
+                             scoring=self._brier_loss_scorer)
+        steps.append(("compute_model", grid_search_model))
 
         pipe = Pipeline(steps)
-        self.model = pipe
+        return pipe
 
     @staticmethod
     def _brier_loss_scorer(estimator, X, y):
@@ -137,86 +207,66 @@ class WPModel(object):
 if __name__ == "__main__":
     import time
     start = time.time()
-    play_df = utilities.get_nfldb_play_data(season_years=[2009, 2010, 2011, 2012, 2013, 2014])
-    target_col = play_df["offense_won"]
-    play_df.drop("offense_won", axis=1, inplace=True)
-    play_df_train, play_df_test, target_col_train, target_col_test = (
-       train_test_split(play_df, target_col, test_size=0.2, random_state=891))
+    win_probability_model = WPModel()
+    win_probability_model.train_model()
+    print("Took {0:.2f}s to build model".format(time.time() - start))
+    # play_df = utilities.get_nfldb_play_data(season_years=[2009, 2010, 2011, 2012, 2013, 2014])
+    # target_col = play_df["offense_won"]
+    # play_df.drop("offense_won", axis=1, inplace=True)
+    # play_df_train, play_df_test, target_col_train, target_col_test = (
+    #    train_test_split(play_df, target_col, test_size=0.2, random_state=891))
     
-    print("Took {0:.2f}s to query data".format(time.time() - start))
-    start = time.time()
-    # win_probability_model = WPModel()
-    win_probability_model = WPModel(model_class=LogisticRegression,
-                                    parameter_search_grid={'base_estimator__penalty': ['l1', 'l2'],
-                                                           'base_estimator__C': [0.01, 0.1, 1, 10, 100],
-                                                           'method': ['isotonic', 'sigmoid']})
-    # win_probability_model = WPModel(model_class=RandomForestClassifier,
-    #                                 parameter_search_grid={'base_estimator__n_estimators': [10, 50, 100, 150, 200],
-    #                                                        'method': ['isotonic']})
-    pipe = win_probability_model.model
-    print("Took {0:.2f}s to create pipeline".format(time.time() - start))
-
-    start = time.time()
-    win_probability_model.fit(play_df_train, target_col_train)
-    print("Took {0:.2f}s to fit pipeline".format(time.time() - start))
-    print(win_probability_model.get_model_params())
-
-    predicted_win_probabilities = pipe.predict_proba(play_df_test)[:,1]
-
-
-    kde_offense_won = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
-        (predicted_win_probabilities[(target_col_test.values == 1)])[:, np.newaxis])
-    kde_total = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
-        predicted_win_probabilities[:, np.newaxis])
-    sample_probabilities = np.linspace(0, 1, 101)[:, np.newaxis]
-    number_density_offense_won = np.exp(kde_offense_won.score_samples(sample_probabilities)) * np.sum((target_col_test))
-    number_density_total = np.exp(kde_total.score_samples(sample_probabilities)) * len(target_col_test)
-    number_offense_won = number_density_offense_won * np.sum(target_col_test) / np.sum(number_density_offense_won)
-    number_total = number_density_total * len(target_col_test) / np.sum(number_density_total)
-    predicted_win_percents = number_offense_won / number_total
-    from statsmodels.stats.proportion import proportion_confint
-    win_pct_errors = np.array([proportion_confint(sample_probabilities[i,0]*number_total[i], number_total[i], method="jeffrey", alpha=0.333) for i in range(len(number_total))])
-    max_deviation = np.max(np.abs(predicted_win_percents - sample_probabilities[:, 0]))
-    print("Max deviation: {0:.2f}%".format(max_deviation * 100))
-    
-    import matplotlib.pyplot as plt
-    plt.style.use('ggplot')
-    ax = plt.figure().add_subplot(111)
-    ax.plot([0, 1], [0, 1], ls="--", lw=2, color="black")
-    ax.fill_between(sample_probabilities[:, 0],
-                    win_pct_errors[:,0],
-                    win_pct_errors[:,1],
-                    facecolor="blue", alpha=0.25)
-    ax.plot(sample_probabilities[:, 0], predicted_win_percents, ls="-", color="blue",
-            label="Max Deviation = {0:.2f}%".format(max_deviation * 100))
-    ax.set_xlabel("Predicted WP")
-    ax.set_ylabel("Actual WP")
-    ax.legend(loc="lower right")
-    ax2 = ax.twinx()
-    ax2.fill_between(sample_probabilities[:, 0], number_total,
-                     facecolor="gray", alpha=0.25, interpolate=True)
-    ax2.set_ylabel("Number of Plays in Test Set")
-    # ax.fill_between(sample_probabilities[:,0], number_total,
-    #                 facecolor="blue", alpha=0.25, interpolate=True, label="all_probabilities")
-    # ax.fill_between(sample_probabilities[:,0], number_offense_won,
-    #                 facecolor="red", alpha=0.25, interpolate=True, label="offense_won")
-    # ax.legend(loc="upper right")
-    ax.figure.savefig("test.png")
-
-    
-    # for i in range(len(sample_probabilities)):
-    #     print(sample_probabilities[i], predicted_win_percents[i])
-
-    
-    #pipe.transform(play_df[nrows:nrows+20])
+    # print("Took {0:.2f}s to query data".format(time.time() - start))
     # start = time.time()
-    # predicted_probabilities = pipe.predict_proba(play_df_test)[:, 0]
-    # print("Took {0:.2f}s to make predictions".format(time.time() - start))
-    # print(len(predicted_probabilities), predicted_probabilities.max())
+    # # win_probability_model = WPModel()
+    # win_probability_model = WPModel(model_class=LogisticRegression,
+    #                                 parameter_search_grid={'base_estimator__penalty': ['l1', 'l2'],
+    #                                                        'base_estimator__C': [0.01, 0.1, 1, 10, 100],
+    #                                                        'method': ['isotonic', 'sigmoid']})
+    # # win_probability_model = WPModel(model_class=RandomForestClassifier,
+    # #                                 parameter_search_grid={'base_estimator__n_estimators': [10, 50, 100, 150, 200],
+    # #                                                        'method': ['isotonic']})
+    # pipe = win_probability_model.model
+    # print("Took {0:.2f}s to create pipeline".format(time.time() - start))
 
-    # pipe_sigmoid = CalibratedClassifierCV(pipe, cv=3, method='sigmoid')
-    # pipe_sigmoid.fit(play_df_train, target_col_train)
-    # predicted_probabilities_sigmoid = pipe_sigmoid.predict_proba(play_df_test)[:, 0]
-    # print(len(predicted_probabilities), predicted_probabilities.max())
-    # # for i in range(len(play_df)):
-    #     print(play_df.ix[i], predictions[i])
+    # start = time.time()
+    # win_probability_model.fit(play_df_train, target_col_train)
+    # print("Took {0:.2f}s to fit pipeline".format(time.time() - start))
+    # print(win_probability_model.get_model_params())
+
+    # predicted_win_probabilities = pipe.predict_proba(play_df_test)[:,1]
+
+
+    # kde_offense_won = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
+    #     (predicted_win_probabilities[(target_col_test.values == 1)])[:, np.newaxis])
+    # kde_total = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
+    #     predicted_win_probabilities[:, np.newaxis])
+    # sample_probabilities = np.linspace(0, 1, 101)[:, np.newaxis]
+    # number_density_offense_won = np.exp(kde_offense_won.score_samples(sample_probabilities)) * np.sum((target_col_test))
+    # number_density_total = np.exp(kde_total.score_samples(sample_probabilities)) * len(target_col_test)
+    # number_offense_won = number_density_offense_won * np.sum(target_col_test) / np.sum(number_density_offense_won)
+    # number_total = number_density_total * len(target_col_test) / np.sum(number_density_total)
+    # predicted_win_percents = number_offense_won / number_total
+    # from statsmodels.stats.proportion import proportion_confint
+    # win_pct_errors = np.array([proportion_confint(sample_probabilities[i,0]*number_total[i], number_total[i], method="jeffrey", alpha=0.333) for i in range(len(number_total))])
+    # max_deviation = np.max(np.abs(predicted_win_percents - sample_probabilities[:, 0]))
+    # print("Max deviation: {0:.2f}%".format(max_deviation * 100))
+    
+    # import matplotlib.pyplot as plt
+    # plt.style.use('ggplot')
+    # ax = plt.figure().add_subplot(111)
+    # ax.plot([0, 1], [0, 1], ls="--", lw=2, color="black")
+    # ax.fill_between(sample_probabilities[:, 0],
+    #                 win_pct_errors[:,0],
+    #                 win_pct_errors[:,1],
+    #                 facecolor="blue", alpha=0.25)
+    # ax.plot(sample_probabilities[:, 0], predicted_win_percents, ls="-", color="blue",
+    #         label="Max Deviation = {0:.2f}%".format(max_deviation * 100))
+    # ax.set_xlabel("Predicted WP")
+    # ax.set_ylabel("Actual WP")
+    # ax.legend(loc="lower right")
+    # ax2 = ax.twinx()
+    # ax2.fill_between(sample_probabilities[:, 0], number_total,
+    #                  facecolor="gray", alpha=0.25, interpolate=True)
+    # ax2.set_ylabel("Number of Plays in Test Set")
+    # ax.figure.savefig("test.png")
