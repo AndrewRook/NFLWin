@@ -55,6 +55,13 @@ class WPModel(object):
     model : A Scikit-learn pipeline (or equivalent)
         The actual model used to compute WP. Upon initialization it will be set to
         a default model, but can be overridden by the user.
+    training_seasons : A list of ints, or ``None`` (default=``None``)
+        If the model was trained using data downloaded from nfldb, a list of the seasons
+        used to train the model. If nfldb was **not** used, an empty list. If no model
+        has been trained yet, ``None``.
+    training_season_types : A list of strings or ``None`` (default=``None``)
+        Same as ``training_seasons``, except for the portions of the seasons used in training the
+        model ("Preseason", "Regular", and/or "Postseason").
 
     """
 
@@ -84,6 +91,8 @@ class WPModel(object):
         self.copy_data = copy_data
 
         self.model = self.create_default_pipeline()
+        self.training_seasons = None
+        self.training_season_types = None
 
     def train_model(self,
                     source_data="nfldb",
@@ -134,12 +143,56 @@ class WPModel(object):
         -------
         ``None``
         """
+        self.training_seasons = []
+        self.training_season_types = []
         if source_data == "nfldb":
             source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
                                                         season_types=training_season_types)
+            self.training_seasons = training_seasons
+            self.training_season_types = training_season_types
         target_col = source_data[self.offense_won_colname]
         feature_cols = source_data.drop(self.offense_won_colname, axis=1)
         self.model.fit(feature_cols, target_col)
+
+    def validate_model(self,
+                       source_data="nfldb",
+                       validation_seasons=[2015],
+                       validation_season_types=["Regular", "Postseason"]):
+        """Validate the model.
+
+        Once a modeling pipeline is trained, a different dataset must be fed into the trained model
+        to validate the quality of the fit.
+        This method implements a simple wrapper around the core Scikit-learn functionality
+        which does this.
+
+        The default is to use data from the nfldb database, however that can be changed
+        to a simple Pandas DataFrame if desired (for instance if you wish to use data
+        from another source).
+
+        The output of this method are metrics.
+
+
+        Parameters
+        ----------
+        source_data : the string ``"nfldb"`` or a Pandas DataFrame (default=``"nfldb"``)
+            The data to be used to train the model. If ``"nfldb"``, will query the nfldb
+            database for the training data (note that this requires a correctly configured
+            installation of nfldb's database).
+        training_seasons : list of ints (default=``[2015]``)
+            What seasons to use to validate the model if getting data from the nfldb database.
+            If ``source_data`` is not ``"nfldb"``, this argument will be ignored.
+            **NOTE:** it is critical not to use the same data to validate the model as was used
+            in the fit. Generally a good data set to use for validation is one from a time
+            period more recent than was used to train the model. For instance, if the model was trained
+            on data from 2009-2014, data from the 2015 season would be a sensible choice to validate the model.
+        training_season_types : list of strings (default=``["Regular", "Postseason"]``)
+            If querying from the nfldb database, what parts of the seasons to use.
+            Options are "Preseason", "Regular", and "Postseason". If ``source_data`` is not
+            ``"nfldb"``, this argument will be ignored.
+
+        Returns
+        -------
+        """
         
 
     def create_default_pipeline(self):
