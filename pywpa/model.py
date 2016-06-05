@@ -2,6 +2,7 @@
 from __future__ import print_function, division
 
 import numpy as np
+from scipy import stats
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -62,6 +63,8 @@ class WPModel(object):
     training_season_types : A list of strings or ``None`` (default=``None``)
         Same as ``training_seasons``, except for the portions of the seasons used in training the
         model ("Preseason", "Regular", and/or "Postseason").
+    validation_seasons : same as ``training_seasons``, but for validation data.
+    validation_season_types : same as ``training_season_types``, but for validation data.
 
     """
 
@@ -91,8 +94,23 @@ class WPModel(object):
         self.copy_data = copy_data
 
         self.model = self.create_default_pipeline()
-        self.training_seasons = None
-        self.training_season_types = None
+        self._training_seasons = None
+        self._training_season_types = None
+        self._validation_seasons = None
+        self._validation_season_types = None
+
+    @property
+    def training_seasons(self):
+        return self._training_seasons
+    @property
+    def training_seasons_types(self):
+        return self._training_season_types
+    @property
+    def validation_seasons(self):
+        return self._validation_seasons
+    @property
+    def validation_seasons_types(self):
+        return self._validation_season_types
 
     def train_model(self,
                     source_data="nfldb",
@@ -143,13 +161,13 @@ class WPModel(object):
         -------
         ``None``
         """
-        self.training_seasons = []
-        self.training_season_types = []
+        self._training_seasons = []
+        self._training_season_types = []
         if source_data == "nfldb":
             source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
                                                         season_types=training_season_types)
-            self.training_seasons = training_seasons
-            self.training_season_types = training_season_types
+            self._training_seasons = training_seasons
+            self._training_season_types = training_season_types
         target_col = source_data[self.offense_won_colname]
         feature_cols = source_data.drop(self.offense_won_colname, axis=1)
         self.model.fit(feature_cols, target_col)
@@ -169,8 +187,18 @@ class WPModel(object):
         to a simple Pandas DataFrame if desired (for instance if you wish to use data
         from another source).
 
-        The output of this method are metrics.
-
+        The output of this method is a p value which represents the confidence at which
+        we can reject the null hypothesis that the model predicts the appropriate win
+        probabilities. This number is computed by first smoothing the predicted win probabilities of both all test data and
+        just the data where the offense won with a gaussian `kernel density
+        estimate <http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html#sklearn.neighbors.KernelDensity>`_
+        with standard deviation = 0.01. Once the data is smooth, ratios at each percentage point from 1% to 99% are computed (i.e.
+        what fraction of the time did the offense win when the model says they have a 1% chance of winning, 2% chance, etc.). Each of
+        these ratios should be well approximated by the binomial distribution, since they are essentially independent (not perfectly
+        but hopefully close enough) weighted coin flips, giving a p value. From there `Fisher's method <https://en.wikipedia.org/wiki/Fisher%27s_method>`_
+        is used to combine the p values into a global p value. A p value close to zero means that the model is unlikely to be
+        properly predicting the correct win probabilities. A p value close to one, **while not proof that the model is correct**,
+        means that the model is at least not inconsistent with the hypothesis that it predicts good win probabilities.
 
         Parameters
         ----------
@@ -192,9 +220,74 @@ class WPModel(object):
 
         Returns
         -------
-        """
-        
+        float, between 0 and 1
+            The combined p value, where smaller values indicate that the model is not accurately predicting win
+            probabilities.
 
+        Notes
+        -----
+        Probabilities are computed between 1 and 99 percent because a single incorrect prediction at 100% or 0% automatically drives
+        the global p value to zero. Since the model is being smoothed this situation can occur even when there are no model predictions
+        at those extreme values, and therefore leads to erroneous p values.
+
+        While it seems reasonable (to me at least), I am not totally certain that this approach is entirely correct.
+        It's certainly sub-optimal in that you would ideally reject the null hypothesis that the model predictions
+        **aren't** appropriate, but that seems to be a much harder problem (and one that would need much more test
+        data to beat down the uncertainties involved). I'm also not sure if using Fisher's method is appropriate here,
+        and I wonder if it might be necessary to Monte Carlo this. I would welcome input from others on better ways to do this.
+        
+        """
+        self._validation_seasons = []
+        self._validation_season_types = []
+        if source_data == "nfldb":
+            source_data = utilities.get_nfldb_play_data(season_years=validation_seasons,
+                                                        season_types=validation_season_types)
+            self._validation_seasons = validation_seasons
+            self._validation_season_types = validation_season_types
+            
+        target_col = source_data[self.offense_won_colname]
+        feature_cols = source_data.drop(self.offense_won_colname, axis=1)
+        predicted_probabilities = self.model.predict_proba(feature_cols)[:,1]
+
+        self.sample_probabilities, self.predicted_win_percents, self.num_plays_used = (
+            WPModel._compute_predicted_percentages(target_col.values, predicted_probabilities))
+
+        #Compute p-values for each where null hypothesis is that distributions are same, then combine
+        #them all to make sure data is not inconsistent with accurate predictions.
+        combined_pvalue = self._test_distribution(self.sample_probabilities,
+                                                  self.predicted_win_percents,
+                                                  self.num_plays_used)
+        
+        return combined_pvalue
+
+    @staticmethod
+    def _test_distribution(sample_probabilities, predicted_win_percents, num_plays_used):
+        """Based off assuming the data at each probability is a Bernoulli distribution."""
+
+        #Get the p-values:
+        p_values = [stats.binom_test(np.round(predicted_win_percents[i] * num_plays_used[i]),
+                                     np.round(num_plays_used[i]),
+                                     p=sample_probabilities[i]) for i in range(len(sample_probabilities))]
+        combined_p_value = stats.combine_pvalues(p_values)[1]
+        return(combined_p_value)
+
+    @staticmethod
+    def _compute_predicted_percentages(actual_results, predicted_win_probabilities):
+        """Compute the sample percentages from a validation data set.
+        """
+        kde_offense_won = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
+            (predicted_win_probabilities[(actual_results == 1)])[:, np.newaxis])
+        kde_total = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
+            predicted_win_probabilities[:, np.newaxis])
+        sample_probabilities = np.linspace(0, 1, 101)
+        number_density_offense_won = np.exp(kde_offense_won.score_samples(sample_probabilities[:, np.newaxis])) * np.sum((actual_results))
+        number_density_total = np.exp(kde_total.score_samples(sample_probabilities[:, np.newaxis])) * len(actual_results)
+        number_offense_won = number_density_offense_won * np.sum(actual_results) / np.sum(number_density_offense_won)
+        number_total = number_density_total * len(actual_results) / np.sum(number_density_total)
+        predicted_win_percents = number_offense_won / number_total
+
+        return sample_probabilities, predicted_win_percents, number_total
+    
     def create_default_pipeline(self):
         """Create the default win probability estimation pipeline.
 
@@ -242,7 +335,8 @@ class WPModel(object):
         calibrated_model = CalibratedClassifierCV(base_model, cv=2, method="isotonic")
         grid_search_model = GridSearchCV(calibrated_model, search_grid,
                              scoring=self._brier_loss_scorer)
-        steps.append(("compute_model", grid_search_model))
+        #steps.append(("compute_model", grid_search_model))
+        steps.append(("compute_model", calibrated_model))
 
         pipe = Pipeline(steps)
         return pipe
@@ -261,33 +355,11 @@ if __name__ == "__main__":
     import time
     start = time.time()
     win_probability_model = WPModel()
-    win_probability_model.train_model()
+    win_probability_model.train_model(training_seasons=[2009, 2010, 2011, 2012, 2013])
     print("Took {0:.2f}s to build model".format(time.time() - start))
-    # play_df = utilities.get_nfldb_play_data(season_years=[2009, 2010, 2011, 2012, 2013, 2014])
-    # target_col = play_df["offense_won"]
-    # play_df.drop("offense_won", axis=1, inplace=True)
-    # play_df_train, play_df_test, target_col_train, target_col_test = (
-    #    train_test_split(play_df, target_col, test_size=0.2, random_state=891))
-    
-    # print("Took {0:.2f}s to query data".format(time.time() - start))
-    # start = time.time()
-    # # win_probability_model = WPModel()
-    # win_probability_model = WPModel(model_class=LogisticRegression,
-    #                                 parameter_search_grid={'base_estimator__penalty': ['l1', 'l2'],
-    #                                                        'base_estimator__C': [0.01, 0.1, 1, 10, 100],
-    #                                                        'method': ['isotonic', 'sigmoid']})
-    # # win_probability_model = WPModel(model_class=RandomForestClassifier,
-    # #                                 parameter_search_grid={'base_estimator__n_estimators': [10, 50, 100, 150, 200],
-    # #                                                        'method': ['isotonic']})
-    # pipe = win_probability_model.model
-    # print("Took {0:.2f}s to create pipeline".format(time.time() - start))
-
-    # start = time.time()
-    # win_probability_model.fit(play_df_train, target_col_train)
-    # print("Took {0:.2f}s to fit pipeline".format(time.time() - start))
-    # print(win_probability_model.get_model_params())
-
-    # predicted_win_probabilities = pipe.predict_proba(play_df_test)[:,1]
+    start = time.time()
+    combined_pvalue = win_probability_model.validate_model(validation_seasons=[2014])
+    print("Took {0:.2f}s to validate model, with combined p_value of {1:.2f}".format(time.time() - start), combined_pvalue)
 
 
     # kde_offense_won = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
