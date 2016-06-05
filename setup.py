@@ -24,7 +24,6 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = ['nfldb',
                     'numpy',
                     'scipy',
-                    'statsmodels',
                     'pandas',
                     'scikit-learn']
 
