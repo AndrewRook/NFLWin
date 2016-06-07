@@ -1,4 +1,4 @@
-name: pywpa
+name: nflwin
 dependencies:
 - coverage=4.0.3=py27_0
 - enum34=1.1.3=py27_0
