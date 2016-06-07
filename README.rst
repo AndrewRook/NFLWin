@@ -1,8 +1,7 @@
-PyWPA
+NFLWin
 -------------
 
-A package designed to compute Win Percentage (WP) and Win Percentage
-Added (WPA) for NFL plays.
+A package designed to compute Win Percentage (WP) for NFL plays.
 
 Installation Instructions
 ---------------------------------------------
@@ -109,8 +108,15 @@ This will depend on whether or not you want the nfldb dependencies.
 
 3. Running Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``PyWPA`` uses ``pytest`` to run unit tests. You can invoke ``pytest``
+``NFLWin`` uses ``pytest`` to run unit tests. You can invoke ``pytest``
 like so::
 
-  $ python -m py.test --cov=pywpa --cov-config .coveragerc --cov-report term-missing pywpa/tests/[TEST FILE]
+  $ ./run_tests.sh
+
+This will run the test suite on all modules and print out the results
+as well as a coverage report. If you have ``nfldb`` properly installed
+and wish to run additional tests specifically relating to querying the
+database (will take longer), use the ``-d`` flag::
+
+  $ ./run_tests.sh -d
 
