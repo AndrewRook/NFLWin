@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import pywpa.utilities as utils
+import nflwin.utilities as utils
 
 class TestGetNFLDBPlayData(object):
     """Testing the ability to get play data from nfldb."""

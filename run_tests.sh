@@ -23,4 +23,4 @@ while getopts ":d" opt; do
     esac
 done
 
-python -m py.test${mflag}"${mflagval}" --cov=pywpa --cov-config .coveragerc --cov-report term-missing pywpa/tests/
+python -m py.test${mflag}"${mflagval}" --cov=nflwin --cov-config .coveragerc --cov-report term-missing nflwin/tests/

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pywpa import model
+from nflwin import model
 
 class TestTestDistribution(object):
     """Tests the _test_distribution static method of WPModel."""

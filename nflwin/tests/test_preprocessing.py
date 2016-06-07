@@ -6,7 +6,7 @@ import pytest
 from sklearn.utils.validation import NotFittedError
 from sklearn.pipeline import Pipeline
 
-from pywpa import preprocessing
+from nflwin import preprocessing
 
 class TestPipelines(object):
     """Testing if pipelining cleaning steps works."""
