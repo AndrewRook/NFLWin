@@ -65,6 +65,15 @@ class WPModel(object):
         model ("Preseason", "Regular", and/or "Postseason").
     validation_seasons : same as ``training_seasons``, but for validation data.
     validation_season_types : same as ``training_season_types``, but for validation data.
+    sample_probabilities : A numpy array of floats or ``None`` (default=``None``)
+        After the model has been validated, contains the sampled predicted probabilities used to
+        compute the validation statistic.
+    predicted_win_percents : A numpy array of floats or ``None`` (default=``None``)
+        After the model has been validated, contains the actual probabilities in the test
+        set at each probability in ``sample_probabilities``.
+    num_plays_used : A numpy array of floats or ``None`` (default=``None``)
+        After the model has been validated, contains the number of plays used to compute each
+        element of ``predicted_win_percents``.
 
     """
 
@@ -99,6 +108,10 @@ class WPModel(object):
         self._validation_seasons = None
         self._validation_season_types = None
 
+        self._sample_probabilities = None
+        self._predicted_win_percents = None
+        self._num_plays_used = None
+
     @property
     def training_seasons(self):
         return self._training_seasons
@@ -111,6 +124,16 @@ class WPModel(object):
     @property
     def validation_seasons_types(self):
         return self._validation_season_types
+
+    @property
+    def sample_probabilities(self):
+        return self._sample_probabilities
+    @property
+    def predicted_win_percents(self):
+        return self._predicted_win_percents
+    @property
+    def num_plays_used(self):
+        return self._num_plays_used
 
     def train_model(self,
                     source_data="nfldb",
@@ -249,7 +272,7 @@ class WPModel(object):
         feature_cols = source_data.drop(self.offense_won_colname, axis=1)
         predicted_probabilities = self.model.predict_proba(feature_cols)[:,1]
 
-        self.sample_probabilities, self.predicted_win_percents, self.num_plays_used = (
+        self._sample_probabilities, self._predicted_win_percents, self._num_plays_used = (
             WPModel._compute_predicted_percentages(target_col.values, predicted_probabilities))
 
         #Compute p-values for each where null hypothesis is that distributions are same, then combine
@@ -259,6 +282,36 @@ class WPModel(object):
                                                   self.num_plays_used)
         
         return combined_pvalue
+
+    def plot_validation(self, axis=None, **kwargs):
+        """Plot the validation data.
+
+        Parameters
+        ----------
+        axis : matplotlib.pyplot.axis object or ``None`` (default=``None``)
+            If provided, the validation line will be overlaid on ``axis``.
+            Otherwise, a new figure and axis will be generated and plotted on.
+        **kwargs
+            Arguments to ``axis.plot``.
+
+        Returns
+        -------
+        matplotlib.pylot.axis
+            The axis the plot was made on.
+        """
+
+        import matplotlib.pyplot as plt
+        if axis is None:
+            axis = plt.figure().add_subplot(111)
+            axis.plot([0, 1], [0, 1], ls="--", lw=2, color="black")
+            axis.set_xlabel("Predicted WP")
+            axis.set_ylabel("Actual WP")
+        axis.plot(self.sample_probabilities,
+                  self.predicted_win_percents,
+                  **kwargs)
+
+        return axis
+            
 
     @staticmethod
     def _test_distribution(sample_probabilities, predicted_win_percents, num_plays_used):
@@ -279,7 +332,7 @@ class WPModel(object):
             (predicted_win_probabilities[(actual_results == 1)])[:, np.newaxis])
         kde_total = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
             predicted_win_probabilities[:, np.newaxis])
-        sample_probabilities = np.linspace(0, 1, 101)
+        sample_probabilities = np.linspace(0.01, 0.99, 99)
         number_density_offense_won = np.exp(kde_offense_won.score_samples(sample_probabilities[:, np.newaxis])) * np.sum((actual_results))
         number_density_total = np.exp(kde_total.score_samples(sample_probabilities[:, np.newaxis])) * len(actual_results)
         number_offense_won = number_density_offense_won * np.sum(actual_results) / np.sum(number_density_offense_won)
@@ -359,8 +412,13 @@ if __name__ == "__main__":
     print("Took {0:.2f}s to build model".format(time.time() - start))
     start = time.time()
     combined_pvalue = win_probability_model.validate_model(validation_seasons=[2014])
-    print("Took {0:.2f}s to validate model, with combined p_value of {1:.2f}".format(time.time() - start), combined_pvalue)
-
+    print("Took {0:.2f}s to validate model, with combined p_value of {1:.2f}".format(time.time() - start, combined_pvalue))
+    
+    import matplotlib.pyplot as plt
+    plt.style.use('ggplot')
+    ax = win_probability_model.plot_validation(ls="-", color="blue", label="p value = {0:.2f}".format(combined_pvalue))
+    ax.legend(loc="lower right")
+    ax.figure.savefig("test.png")
 
     # kde_offense_won = KernelDensity(kernel='gaussian', bandwidth=0.01).fit(
     #     (predicted_win_probabilities[(target_col_test.values == 1)])[:, np.newaxis])
