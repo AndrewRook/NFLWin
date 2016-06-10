@@ -12,6 +12,7 @@ class ComputeElapsedTime(BaseEstimator):
     """Compute the total elapsed time from the start of the game.
 
     Parameters
+    ----------
     quarter_colname : string
         Which column indicates what quarter it is.
     quarter_time_colname : string
