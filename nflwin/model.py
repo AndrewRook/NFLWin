@@ -298,8 +298,16 @@ class WPModel(object):
         -------
         matplotlib.pylot.axis
             The axis the plot was made on.
+
+        Raises
+        ------
+        NotFittedError
+            If the model hasn't been validated.
         """
 
+        if self.sample_probabilities == None:
+            raise NotFittedError("Must validate model before plotting.")
+        
         import matplotlib.pyplot as plt
         if axis is None:
             axis = plt.figure().add_subplot(111)
