@@ -22,7 +22,6 @@ dependencies:
 - six=1.10.0=py27_0
 - sqlalchemy=1.0.12=py27_0
 - sqlite=3.9.2=0
-- statsmodels=0.6.1=np111py27_0
 - tk=8.5.18=0
 - wheel=0.29.0=py27_0
 - zlib=1.2.8=0
