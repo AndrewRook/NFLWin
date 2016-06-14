@@ -7,10 +7,10 @@ from setuptools.command.install import install as _install
 ###################################################################
 #Boilerplate I modified from the internet
 
-NAME = "PyWPA"
+NAME = "NFLWin"
 PACKAGES = find_packages(where=".")
 META_PATH = os.path.join(NAME, "__init__.py")
-KEYWORDS = ['NFL','WPA','Win Probability Added']
+KEYWORDS = ['NFL','WP','Win Probability']
 CLASSIFIERS = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Football Analytics Enthusiasts",
@@ -64,9 +64,9 @@ class install(_install):
 if __name__ == "__main__":
     setup(
         name=NAME,
-        description='A Python implementation of NFL Win Probability Added (WPA)',
+        description='A Python implementation of NFL Win Probability (WP)',
         license='MIT',
-        url='https://github.com/AndrewRook/PyWPA',
+        url='https://github.com/AndrewRook/NFLWin',
         version='0.1.0',
         author='Andrew Schechtman-Rook',
         author_email='footballastronomer@gmail.com',
