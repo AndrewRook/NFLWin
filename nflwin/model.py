@@ -246,6 +246,11 @@ class WPModel(object):
         float, between 0 and 1
             The combined p value, where smaller values indicate that the model is not accurately predicting win
             probabilities.
+            
+        Raises
+        ------
+        NotFittedError
+            If the model hasn't been fit.
 
         Notes
         -----
@@ -260,6 +265,10 @@ class WPModel(object):
         and I wonder if it might be necessary to Monte Carlo this. I would welcome input from others on better ways to do this.
         
         """
+
+        if self.training_seasons == None:
+            raise NotFittedError("Must fit model before validating.")
+        
         self._validation_seasons = []
         self._validation_season_types = []
         if source_data == "nfldb":
@@ -283,6 +292,35 @@ class WPModel(object):
         
         return combined_pvalue
 
+    def predict_wp(self, plays):
+        """Estimate the win probability for a set of plays.
+
+        Basically a simple wrapper around ``WPModel.model.predict_proba``,
+        takes in a DataFrame and then spits out an array of predicted
+        win probabilities.
+
+        Parameters
+        ----------
+        plays : Pandas DataFrame
+            The input data to use to make the predictions.
+
+        Returns
+        -------
+        Numpy array, of length ``len(plays)``
+            Predicted probability that the offensive team in each play
+            will go on to win the game.
+
+        Raises
+        ------
+        NotFittedError
+            If the model hasn't been fit.
+        """
+        if self.training_seasons == None:
+            raise NotFittedError("Must fit model before predicting WP.")
+
+        return self.model.predict_proba(plays)[:,1]
+
+
     def plot_validation(self, axis=None, **kwargs):
         """Plot the validation data.
 
@@ -302,7 +340,7 @@ class WPModel(object):
         Raises
         ------
         NotFittedError
-            If the model hasn't been validated.
+            If the model hasn't been fit **and** validated.
         """
 
         if self.sample_probabilities == None:
