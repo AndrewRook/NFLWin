@@ -266,7 +266,7 @@ class WPModel(object):
         
         """
 
-        if self.training_seasons == None:
+        if self.training_seasons is None:
             raise NotFittedError("Must fit model before validating.")
         
         self._validation_seasons = []
@@ -315,7 +315,7 @@ class WPModel(object):
         NotFittedError
             If the model hasn't been fit.
         """
-        if self.training_seasons == None:
+        if self.training_seasons is None:
             raise NotFittedError("Must fit model before predicting WP.")
 
         return self.model.predict_proba(plays)[:,1]
@@ -343,7 +343,7 @@ class WPModel(object):
             If the model hasn't been fit **and** validated.
         """
 
-        if self.sample_probabilities == None:
+        if self.sample_probabilities is None:
             raise NotFittedError("Must validate model before plotting.")
         
         import matplotlib.pyplot as plt
@@ -459,6 +459,9 @@ if __name__ == "__main__":
     start = time.time()
     combined_pvalue = win_probability_model.validate_model(validation_seasons=[2014])
     print("Took {0:.2f}s to validate model, with combined p_value of {1:.2f}".format(time.time() - start, combined_pvalue))
+
+    test_data = utilities.get_nfldb_play_data(season_years=[2015])
+    win_probability_model.predict_wp(test_data)
     
     import matplotlib.pyplot as plt
     plt.style.use('ggplot')
