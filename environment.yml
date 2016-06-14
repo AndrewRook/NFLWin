@@ -17,12 +17,11 @@ dependencies:
 - pytz=2016.3=py27_0
 - readline=6.2=2
 - scikit-learn=0.17.1=np111py27_0
-- scipy=0.17.0=np111py27_0
+- scipy=0.17.0
 - setuptools=20.7.0=py27_0
 - six=1.10.0=py27_0
 - sqlalchemy=1.0.12=py27_0
 - sqlite=3.9.2=0
-- statsmodels=0.6.1=np111py27_0
 - tk=8.5.18=0
 - wheel=0.29.0=py27_0
 - zlib=1.2.8=0
