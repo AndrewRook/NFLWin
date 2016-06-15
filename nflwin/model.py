@@ -1,10 +1,13 @@
 """Tools for creating and running the model."""
 from __future__ import print_function, division
 
+import os
+
 import numpy as np
 from scipy import stats
 
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.cross_validation import train_test_split
@@ -74,8 +77,12 @@ class WPModel(object):
     num_plays_used : A numpy array of floats or ``None`` (default=``None``)
         After the model has been validated, contains the number of plays used to compute each
         element of ``predicted_win_percents``.
+    model_directory : string
+        The directory where all models will be saved to or loaded from.
 
     """
+    model_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
+    _default_model_filename = "default_model.nflwin"
 
     def __init__(self,
                  home_score_colname="curr_home_score",
@@ -111,6 +118,7 @@ class WPModel(object):
         self._sample_probabilities = None
         self._predicted_win_percents = None
         self._num_plays_used = None
+
 
     @property
     def training_seasons(self):
@@ -439,6 +447,47 @@ class WPModel(object):
 
         pipe = Pipeline(steps)
         return pipe
+
+    def save_model(self, filename=None):
+        """Save the WPModel instance to disk.
+
+        All models are saved to the same place, with the installed
+        NFLWin library (given by ``WPModel.model_directory``). 
+
+        Parameters
+        ----------
+        filename : string (default=None):
+            The filename to use for the saved model. If this parameter
+            is not specified, save to the default filename. Note that if a model
+            already lists with this filename, it will be overwritten. Note also that
+            this is a filename only, **not** a full path. If a full path is specified
+            it is likely (albeit not guaranteed) to cause errors.
+
+        Returns
+        -------
+        ``None``
+        """
+
+        if filename is None:
+            filename = self._default_model_filename
+        joblib.dump(self, os.path.join(self.model_directory, filename))
+
+    @classmethod
+    def load_model(cls, filename=None):
+        """Load a saved WPModel.
+
+        Parameters
+        ----------
+        Same as ``save_model``.
+
+        Returns
+        -------
+        ``nflwin.WPModel`` instance.
+        """
+        if filename is None:
+            filename = cls._default_model_filename
+            
+        return joblib.load(os.path.join(cls.model_directory, filename))
 
     @staticmethod
     def _brier_loss_scorer(estimator, X, y):
