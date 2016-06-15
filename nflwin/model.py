@@ -81,6 +81,8 @@ class WPModel(object):
         The directory where all models will be saved to or loaded from.
 
     """
+    model_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
+    _default_model_filename = "default_model.nflwin"
 
     def __init__(self,
                  home_score_colname="curr_home_score",
@@ -117,8 +119,6 @@ class WPModel(object):
         self._predicted_win_percents = None
         self._num_plays_used = None
 
-        self._model_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
-        self._default_model_name = "default_model.nflwin"
 
     @property
     def training_seasons(self):
@@ -142,10 +142,6 @@ class WPModel(object):
     @property
     def num_plays_used(self):
         return self._num_plays_used
-
-    @property
-    def model_directory(self):
-        return self._model_directory
 
     def train_model(self,
                     source_data="nfldb",
@@ -477,7 +473,7 @@ class WPModel(object):
         joblib.dump(self, os.path.join(self.model_directory, filename))
 
     @classmethod
-    def load_model(self, filename=None):
+    def load_model(cls, filename=None):
         """Load a saved WPModel.
 
         Parameters
@@ -489,9 +485,9 @@ class WPModel(object):
         ``nflwin.WPModel`` instance.
         """
         if filename is None:
-            filename = self._default_model_filename
+            filename = cls._default_model_filename
             
-        return joblib.load(filename)
+        return joblib.load(os.path.join(cls.model_directory, filename))
 
     @staticmethod
     def _brier_loss_scorer(estimator, X, y):
