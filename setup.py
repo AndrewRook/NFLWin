@@ -32,6 +32,8 @@ EXTRAS_REQUIRES = {
     "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov"]
     }
 
+PACKAGE_DATA = {"nflwin": ["models/default_model.nflwin*"]}
+
 HERE = os.path.abspath(os.path.dirname(__file__))
 README = None
 with open(os.path.join(HERE, 'README.rst'),'r') as f:
@@ -53,6 +55,7 @@ if __name__ == "__main__":
         keywords=KEYWORDS,
         long_description=README,
         packages=PACKAGES,
+        package_data=PACKAGE_DATA,
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES
     )
