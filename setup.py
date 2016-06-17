@@ -26,7 +26,7 @@ INSTALL_REQUIRES = ['numpy',
                     'pandas',
                     'scikit-learn']
 
-EXTRAS_REQUIRES = {
+EXTRAS_REQUIRE = {
     "plotting": ["matplotlib"],
     "nfldb": ["nfldb", "sqlalchemy"],
     "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov"]
@@ -57,5 +57,6 @@ if __name__ == "__main__":
         packages=PACKAGES,
         package_data=PACKAGE_DATA,
         classifiers=CLASSIFIERS,
-        install_requires=INSTALL_REQUIRES
+        install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE
     )
