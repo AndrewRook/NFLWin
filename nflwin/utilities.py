@@ -1,10 +1,8 @@
 """Utility functions that don't fit in the main modules"""
 from __future__ import print_function, division
 
-import nfldb
 import numpy as np
 import pandas as pd
-import sqlalchemy as sql
 
 
 def connect_nfldb():
@@ -30,7 +28,8 @@ def connect_nfldb():
     IOError
         If it can't find the config file.
     """
-    
+    import nfldb
+    import sqlalchemy as sql
     db_config, paths_tried = nfldb.db.config()
     if db_config is None:
         raise IOError("get_play_data: could not find database config! Looked"

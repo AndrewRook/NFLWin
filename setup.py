@@ -7,7 +7,7 @@ from setuptools.command.install import install as _install
 ###################################################################
 #Boilerplate I modified from the internet
 
-NAME = "NFLWin"
+NAME = "nflwin"
 PACKAGES = find_packages(where=".")
 META_PATH = os.path.join(NAME, "__init__.py")
 KEYWORDS = ['NFL','WP','Win Probability']
@@ -21,11 +21,18 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 2",
     "Programming Language :: Python :: 2.7",
 ]
-INSTALL_REQUIRES = ['nfldb',
-                    'numpy',
+INSTALL_REQUIRES = ['numpy',
                     'scipy',
                     'pandas',
                     'scikit-learn']
+
+EXTRAS_REQUIRES = {
+    "plotting": ["matplotlib"],
+    "nfldb": ["nfldb", "sqlalchemy"],
+    "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov"]
+    }
+
+PACKAGE_DATA = {"nflwin": ["models/default_model.nflwin*"]}
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 README = None
@@ -33,33 +40,6 @@ with open(os.path.join(HERE, 'README.rst'),'r') as f:
     README = f.read()
     
 ###################################################################
-
-class install(_install):
-    def run(self):
-        #Run the regular install:
-        _install.run(self)
-
-        #Get the installation directory:
-        INSTALL_DIR = os.path.join(self.install_lib,NAME)
-        #Unzip files:
-
-        #Data tarball:
-        data_tarball = os.path.join(INSTALL_DIR,'data','nfldb_processed_data.tar.gz')
-        if os.path.exists(data_tarball):
-            #Only unzip the files if the path exists:
-            with tarfile.open(data_tarball) as tarball:
-                tarball.extractall(path=os.path.dirname(data_tarball))
-        else:
-            warnings.warn("Could not find data tarball!")
-
-        #Saved model tarball:
-        model_tarball = os.path.join(INSTALL_DIR,'models','PyWPA_model.tar.gz')
-        if os.path.exists(model_tarball):
-            #Only unzip the files if the path exists:
-            with tarfile.open(model_tarball) as tarball:
-                tarball.extractall(path=os.path.dirname(model_tarball))
-        else:
-            warnings.warn("Could not find model tarball!")
 
 if __name__ == "__main__":
     setup(
@@ -75,8 +55,7 @@ if __name__ == "__main__":
         keywords=KEYWORDS,
         long_description=README,
         packages=PACKAGES,
+        package_data=PACKAGE_DATA,
         classifiers=CLASSIFIERS,
-        install_requires=INSTALL_REQUIRES,
-        include_package_data=True,
-        cmdclass={'install': install},
+        install_requires=INSTALL_REQUIRES
     )
