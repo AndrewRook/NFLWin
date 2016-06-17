@@ -28,8 +28,8 @@ INSTALL_REQUIRES = ['numpy',
 
 EXTRAS_REQUIRES = {
     "plotting": ["matplotlib"],
-    "nfldb": ["nfldb"],
-    "dev": ["matplotlib", "nfldb", "pytest", "pytest-cov"]
+    "nfldb": ["nfldb", "sqlalchemy"],
+    "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov"]
     }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
