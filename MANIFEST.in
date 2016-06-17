@@ -1,3 +1,2 @@
 include README* LICENSE
-include PyWPA/data/nfldb_processed_data.tar.gz
-include PyWPA/models/PyWPA_model.tar.gz
+include nflwin/models/default_model.nflwin*
