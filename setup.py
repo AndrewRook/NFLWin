@@ -29,7 +29,7 @@ INSTALL_REQUIRES = ['numpy',
 EXTRAS_REQUIRE = {
     "plotting": ["matplotlib"],
     "nfldb": ["nfldb", "sqlalchemy"],
-    "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov", "sphinx"]
+    "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov", "sphinx", "numpydoc"]
     }
 
 PACKAGE_DATA = {"nflwin": ["models/default_model.nflwin*"]}
