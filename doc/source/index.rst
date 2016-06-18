@@ -13,10 +13,10 @@ Contents:
 
 
 
-Indices and tables
+Resources
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+* :ref:`Full API Documentation <modindex>`
+* :ref:`Search NFLWin's Documentation <search>`
 
