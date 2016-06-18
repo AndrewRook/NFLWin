@@ -18,7 +18,16 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+CODE_DIRECTORY = os.path.join(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.abspath(__file__)
+                )
+            )
+        ),
+     "nflwin")
+sys.path.insert(0, CODE_DIRECTORY)
 
 # -- General configuration ------------------------------------------------
 
@@ -33,6 +42,7 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'numpydoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
