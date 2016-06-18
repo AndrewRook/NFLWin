@@ -18,16 +18,14 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-CODE_DIRECTORY = os.path.join(
+PROJECT_DIRECTORY = os.path.dirname(
     os.path.dirname(
         os.path.dirname(
-            os.path.dirname(
-                os.path.abspath(__file__)
-                )
+            os.path.abspath(__file__)
             )
-        ),
-     "nflwin")
-sys.path.insert(0, CODE_DIRECTORY)
+        )
+    )
+sys.path.insert(0, PROJECT_DIRECTORY)
 
 # -- General configuration ------------------------------------------------
 
@@ -42,8 +40,12 @@ extensions = [
     'sphinx.ext.doctest',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.autosummary',
     'numpydoc',
 ]
+
+#some magic (http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings) to suppress spurious warnings:
+numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -123,7 +125,7 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'nature'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
