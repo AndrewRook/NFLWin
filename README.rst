@@ -4,7 +4,9 @@ NFLWin
 |Build Status|
 
 
-Estimate Win Probability (WP) for plays in NFL games::
+Estimate Win Probability (WP) for plays in NFL games:
+
+.. code-block:: python
 
   >>> import pandas as pd
   >>> from nflwin.model import WPModel
