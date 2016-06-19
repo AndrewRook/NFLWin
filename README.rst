@@ -30,7 +30,7 @@ For full documentation, including information about methods and accuracy, click 
 
 License
 ---------------
-MIT. See `license file <LICENSE>`_
+MIT. See `license file <LICENSE>`_.
 
 .. |Build Status| image:: https://travis-ci.org/AndrewRook/NFLWin.svg?branch=master
    :target: https://travis-ci.org/AndrewRook/NFLWin
