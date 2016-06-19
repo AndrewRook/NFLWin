@@ -28,6 +28,9 @@ Estimate Win Probability (WP) for plays in NFL games:
 
 For full documentation, including information about methods and accuracy, click `here <https://AndrewRook.github.io/NFLWin>`_.
 
+License
+---------------
+MIT. See `license file <LICENSE>`_
 
 .. |Build Status| image:: https://travis-ci.org/AndrewRook/NFLWin.svg?branch=master
    :target: https://travis-ci.org/AndrewRook/NFLWin
