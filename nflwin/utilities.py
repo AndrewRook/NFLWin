@@ -78,8 +78,8 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         * **quarter:** The quarter, prepended with "Q" (e.g. ``Q1`` means the first quarter). 
           Overtime periods are denoted as ``OT``, ``OT2``, and theoretically ``OT3`` if one were to
           ever be played.
-        * **time:** seconds elapsed since the start of the quarter.
-        * **pos_team:** The abbreviation of the team currently with possession of the ball.
+        * **seconds_elapsed:** seconds elapsed since the start of the quarter.
+        * **offense_team:** The abbreviation of the team currently with possession of the ball.
         * **yardline:** The current field position. Goes from -49 to 49, where negative numbers
           indicate that the team with possession is on its own side of the field.
         * **down:** The down. kickoffs, extra points, and similar have a down of 0.
