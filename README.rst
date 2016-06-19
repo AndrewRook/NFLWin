@@ -1,7 +1,7 @@
 NFLWin
 ===============
 
-|Build Status|
+|Build Status| |Doc Status|
 
 
 Estimate Win Probability (WP) for plays in NFL games:
@@ -32,3 +32,6 @@ For full documentation, including information about methods and accuracy, click 
 .. |Build Status| image:: https://travis-ci.org/AndrewRook/NFLWin.svg?branch=master
    :target: https://travis-ci.org/AndrewRook/NFLWin
    :alt: Build Status
+.. |Doc Status| image:: https://readthedocs.org/projects/nflwin/badge/?version=latest
+   :target: http://nflwin.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
