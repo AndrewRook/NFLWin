@@ -1,0 +1,626 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>nflwin.preprocessing &mdash; NFLWin 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="NFLWin 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">NFLWin 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for nflwin.preprocessing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Tools to get raw data ready for modeling.&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">OneHotEncoder</span>
+<span class="kn">from</span> <span class="nn">sklearn.utils.validation</span> <span class="kn">import</span> <span class="n">NotFittedError</span>
+
+<div class="viewcode-block" id="ComputeElapsedTime"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.ComputeElapsedTime">[docs]</a><span class="k">class</span> <span class="nc">ComputeElapsedTime</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Compute the total elapsed time from the start of the game.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    quarter_colname : string</span>
+<span class="sd">        Which column indicates what quarter it is.</span>
+<span class="sd">    quarter_time_colname : string</span>
+<span class="sd">        Which column indicates how much time has elapsed in the current quarter.</span>
+<span class="sd">    quarter_to_second_mapping : dict (default=``{&quot;Q1&quot;: 0, &quot;Q2&quot;: 900, &quot;Q3&quot;: 1800, &quot;Q4&quot;: 2700,</span>
+<span class="sd">                                                 &quot;OT&quot;: 3600, &quot;OT2&quot;: 4500, &quot;OT3&quot;: 5400}``)</span>
+<span class="sd">        What mapping to use between the string values in the quarter column and the seconds they</span>
+<span class="sd">        correspond to. Mostly useful if your data had quarters listed as something like &quot;Quarter 1&quot;</span>
+<span class="sd">        or &quot;q1&quot; instead of the values from ``nfldb``.</span>
+<span class="sd">    total_time_colname : string (default=&quot;total_elapsed_time&quot;)</span>
+<span class="sd">        What column name to store the total elapsed time under.</span>
+<span class="sd">    copy : boolean (default=True)</span>
+<span class="sd">        Whether to add the new column in place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quarter_colname</span><span class="p">,</span> <span class="n">quarter_time_colname</span><span class="p">,</span>
+                 <span class="n">quarter_to_second_mapping</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Q1&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Q2&quot;</span><span class="p">:</span> <span class="mi">900</span><span class="p">,</span> <span class="s2">&quot;Q3&quot;</span><span class="p">:</span> <span class="mi">1800</span><span class="p">,</span> <span class="s2">&quot;Q4&quot;</span><span class="p">:</span> <span class="mi">2700</span><span class="p">,</span>
+                                            <span class="s2">&quot;OT&quot;</span><span class="p">:</span> <span class="mi">3600</span><span class="p">,</span> <span class="s2">&quot;OT2&quot;</span><span class="p">:</span> <span class="mi">4500</span><span class="p">,</span> <span class="s2">&quot;OT3&quot;</span><span class="p">:</span> <span class="mi">5400</span><span class="p">},</span>
+                 <span class="n">total_time_colname</span><span class="o">=</span><span class="s2">&quot;total_elapsed_time&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quarter_colname</span> <span class="o">=</span> <span class="n">quarter_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quarter_time_colname</span> <span class="o">=</span> <span class="n">quarter_time_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quarter_to_second_mapping</span> <span class="o">=</span> <span class="n">quarter_to_second_mapping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_time_colname</span> <span class="o">=</span> <span class="n">total_time_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span>
+
+<div class="viewcode-block" id="ComputeElapsedTime.fit"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.ComputeElapsedTime.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    
+<div class="viewcode-block" id="ComputeElapsedTime.transform"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.ComputeElapsedTime.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the new column.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features + 1)</span>
+<span class="sd">            The input DataFrame, with the new column added.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``quarter_colname`` or ``quarter_time_colname`` don&#39;t exist, or</span>
+<span class="sd">            if ``total_time_colname`` **does** exist.</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If the total time elapsed is not a numeric column, which typically indicates</span>
+<span class="sd">            that the mapping did not apply to every row.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quarter_colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;ComputeElapsedTime: quarter_colname {0} does not exist in dataset.&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quarter_colname</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quarter_time_colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;ComputeElapsedTime: quarter_time_colname {0} does not exist in dataset.&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quarter_time_colname</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_time_colname</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;ComputeElapsedTime: total_time_colname {0} already exists in dataset.&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_time_colname</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">time_elapsed</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quarter_colname</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quarter_to_second_mapping</span><span class="p">)</span> <span class="o">+</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">quarter_time_colname</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;ComputeElapsedTime: Total time elapsed not numeric. Check your mapping from quarter name to time.&quot;</span><span class="p">)</span>
+
+        <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">total_time_colname</span><span class="p">]</span> <span class="o">=</span> <span class="n">time_elapsed</span>
+
+        <span class="k">return</span> <span class="n">X</span></div></div>
+    
+
+<div class="viewcode-block" id="ComputeIfOffenseIsHome"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.ComputeIfOffenseIsHome">[docs]</a><span class="k">class</span> <span class="nc">ComputeIfOffenseIsHome</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Determine if the team currently with possession is the home team.</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    offense_team_colname : string</span>
+<span class="sd">        Which column indicates what team was on offense.</span>
+<span class="sd">    home_team_colname : string</span>
+<span class="sd">        Which column indicates what team was the home team.</span>
+<span class="sd">    offense_home_team_colname : string (default=&quot;is_offense_home&quot;)</span>
+<span class="sd">        What column to store whether or not the offense was the home team.</span>
+<span class="sd">    copy : boolean (default=True)</span>
+<span class="sd">        Whether to add the new column in place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offense_team_colname</span><span class="p">,</span>
+                 <span class="n">home_team_colname</span><span class="p">,</span>
+                 <span class="n">offense_home_team_colname</span><span class="o">=</span><span class="s2">&quot;is_offense_home&quot;</span><span class="p">,</span>
+                 <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offense_team_colname</span> <span class="o">=</span> <span class="n">offense_team_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_team_colname</span> <span class="o">=</span> <span class="n">home_team_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offense_home_team_colname</span> <span class="o">=</span> <span class="n">offense_home_team_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span>
+
+<div class="viewcode-block" id="ComputeIfOffenseIsHome.fit"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.ComputeIfOffenseIsHome.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="ComputeIfOffenseIsHome.transform"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.ComputeIfOffenseIsHome.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the new column.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features + 1)</span>
+<span class="sd">            The input DataFrame, with the new column added.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``offense_team_colname`` or ``home_team_colname`` don&#39;t exist, or</span>
+<span class="sd">            if ``offense_home_team_colname`` **does** exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">home_team_colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;ComputeIfOffenseWon: home_team_colname {0} does not exist in dataset.&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">home_team_colname</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offense_team_colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;ComputeIfOffenseWon: offense_team_colname {0} does not exist in dataset.&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offense_team_colname</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offense_home_team_colname</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;ComputeIfOffenseWon: offense_home_team_colname {0} already exists in dataset.&quot;</span>
+                           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offense_home_team_colname</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">offense_home_team_colname</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">home_team_colname</span><span class="p">]</span> <span class="o">==</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">offense_team_colname</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">X</span></div></div>
+
+
+<div class="viewcode-block" id="MapToInt"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.MapToInt">[docs]</a><span class="k">class</span> <span class="nc">MapToInt</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Map a column of values to integers.</span>
+
+<span class="sd">    Mapping to integer is nice if you know a column</span>
+<span class="sd">    only has a few specific values in it, but you need</span>
+<span class="sd">    to convert it to integers before one-hot encoding it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    colname : string</span>
+<span class="sd">        The name of the column to perform the mapping on.</span>
+<span class="sd">    copy : boolean (default=True)</span>
+<span class="sd">        If ``False``, apply the mapping in-place.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mapping : dict</span>
+<span class="sd">        Keys are the unique values of the column, values are the</span>
+<span class="sd">        integers those values will be mapped to.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    The ``transform`` method DOES NOT CHECK to see if the input</span>
+<span class="sd">    DataFrame only contains values in ``mapping``. Any values not</span>
+<span class="sd">    in ``mapping`` will be left alone, which can cause subtle bugs</span>
+<span class="sd">    if you&#39;re not careful.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colname</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colname</span> <span class="o">=</span> <span class="n">colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="MapToInt.fit"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.MapToInt.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find all unique strings and construct the mapping.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : For compatibility with Scikit-learn&#39;s ``Pipeline``.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``colname`` is not in ``X``.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;MapStringsToInt: Required column {0} &quot;</span>
+                           <span class="s2">&quot;not present in data&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colname</span><span class="p">))</span>
+        <span class="n">unique_values</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">colname</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">unique_values</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_values</span><span class="p">))}</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="MapToInt.transform"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.MapToInt.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply the mapping to the data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            The input DataFrame, with the mapping applied.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotFittedError</span>
+<span class="sd">            If ``transform`` is called before ``fit``.</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If ``colname`` is not in ``X``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s2">&quot;MapStringsToInt: Must fit before transform.&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;MapStringsToInt: Required column {0} &quot;</span>
+                           <span class="s2">&quot;not present in data&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">colname</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">colname</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">X</span></div></div>
+        
+
+<div class="viewcode-block" id="OneHotEncoderFromDataFrame"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.OneHotEncoderFromDataFrame">[docs]</a><span class="k">class</span> <span class="nc">OneHotEncoderFromDataFrame</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;One-hot encode a DataFrame.</span>
+
+<span class="sd">    This cleaner wraps the standard scikit-learn OneHotEncoder,</span>
+<span class="sd">    handling the transfer between column name and column index.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    categorical_feature_names : &quot;all&quot; or array of column names.</span>
+<span class="sd">        Specify what features are treated as categorical.</span>
+<span class="sd">        * &quot;all&quot; (default): All features are treated as categorical.</span>
+<span class="sd">        * array of column names: Array of categorical feature names.</span>
+<span class="sd">    dtype : number type, default=np.float.</span>
+<span class="sd">        Desired dtype of output.</span>
+<span class="sd">    handle_unknown : str, &quot;error&quot; (default) or &quot;ignore&quot;.</span>
+<span class="sd">        Whether to raise an error or ignore if an unknown categorical feature</span>
+<span class="sd">        is present during transform.</span>
+<span class="sd">    copy : boolean (default=True)</span>
+<span class="sd">        If ``False``, apply the encoding in-place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span>
+    <span class="nd">@dtype.setter</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onehot</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtype</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handle_unknown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_unknown</span>
+    <span class="nd">@handle_unknown.setter</span>
+    <span class="k">def</span> <span class="nf">handle_unknown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">handle_unknown</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle_unknown</span> <span class="o">=</span> <span class="n">handle_unknown</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onehot</span><span class="o">.</span><span class="n">handle_unknown</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_unknown</span>
+        
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">categorical_feature_names</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span>
+                 <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span>
+                 <span class="n">handle_unknown</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
+                 <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">onehot</span> <span class="o">=</span> <span class="n">OneHotEncoder</span><span class="p">(</span><span class="n">sparse</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">n_values</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+                                    <span class="n">categorical_features</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">)</span> <span class="c1">#We&#39;ll subset the DF</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">categorical_feature_names</span> <span class="o">=</span> <span class="n">categorical_feature_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handle_unknown</span> <span class="o">=</span> <span class="n">handle_unknown</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span>
+
+<div class="viewcode-block" id="OneHotEncoderFromDataFrame.fit"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.OneHotEncoderFromDataFrame.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert the column names to indices, then compute the one hot encoding.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : For compatibility with Scikit-learn&#39;s ``Pipeline``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_feature_names</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">categorical_feature_names</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span>
+
+        <span class="c1">#Get all columns that need to be encoded:</span>
+        <span class="n">data_to_encode</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_feature_names</span><span class="p">]</span>
+            
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">onehot</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">data_to_encode</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="OneHotEncoderFromDataFrame.transform"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.OneHotEncoderFromDataFrame.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply the encoding to the data.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of new features)</span>
+<span class="sd">            The input DataFrame, with the encoding applied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        
+        <span class="n">data_to_transform</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_feature_names</span><span class="p">]</span>
+        <span class="n">transformed_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">onehot</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">data_to_transform</span><span class="p">)</span>
+
+        <span class="c1">#TODO (AndrewRook): Find good column names for the encoded columns.</span>
+        <span class="n">colnames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;onehot_col{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">transformed_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="c1">#Create a dataframe from the transformed columns (setting the index is critical for</span>
+        <span class="c1">#merging with data containing non-standard indexes)</span>
+        <span class="n">transformed_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">transformed_data</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">colnames</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        
+        <span class="n">X</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categorical_feature_names</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">[</span><span class="n">transformed_df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span> <span class="o">=</span> <span class="n">transformed_df</span>
+        
+        <span class="k">return</span> <span class="n">X</span></div></div>
+            
+    
+
+<div class="viewcode-block" id="CreateScoreDifferential"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.CreateScoreDifferential">[docs]</a><span class="k">class</span> <span class="nc">CreateScoreDifferential</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert offense and defense scores into a differential (offense - defense).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    home_score_colname : string</span>
+<span class="sd">        The name of the column containing the score of the home team.</span>
+<span class="sd">    away_score_colname : string</span>
+<span class="sd">        The name of the column containing the score of the away team.</span>
+<span class="sd">    offense_home_colname : string</span>
+<span class="sd">        The name of the column indicating if the offense is home.</span>
+<span class="sd">    score_differential_colname : string (default=``&quot;score_differential&quot;``)</span>
+<span class="sd">        The name of column containing the score differential. Must not already</span>
+<span class="sd">        exist in the DataFrame.</span>
+<span class="sd">    copy : boolean (default = ``True``)</span>
+<span class="sd">        If ``False``, add the score differential in place.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">home_score_colname</span><span class="p">,</span>
+                 <span class="n">away_score_colname</span><span class="p">,</span>
+                 <span class="n">offense_home_colname</span><span class="p">,</span>
+                 <span class="n">score_differential_colname</span><span class="o">=</span><span class="s2">&quot;score_differential&quot;</span><span class="p">,</span>
+                 <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_score_colname</span> <span class="o">=</span> <span class="n">home_score_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">away_score_colname</span> <span class="o">=</span> <span class="n">away_score_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offense_home_colname</span> <span class="o">=</span> <span class="n">offense_home_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">score_differential_colname</span> <span class="o">=</span> <span class="n">score_differential_colname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span>
+
+<div class="viewcode-block" id="CreateScoreDifferential.fit"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.CreateScoreDifferential.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CreateScoreDifferential.transform"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.CreateScoreDifferential.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the score differential column.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features + 1)</span>
+<span class="sd">            The input DataFrame, with the score differential column added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">score_differential</span> <span class="o">=</span> <span class="p">((</span><span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">home_score_colname</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">away_score_colname</span><span class="p">])</span> <span class="o">*</span>
+                                  <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">offense_home_colname</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;CreateScoreDifferential: data missing required column. Must &quot;</span>
+                           <span class="s2">&quot;include columns named {0}, {1}, and {2}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">home_score_colname</span><span class="p">,</span>
+                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">away_score_colname</span><span class="p">,</span>
+                                                                            <span class="bp">self</span><span class="o">.</span><span class="n">offense_home_colname</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">score_differential_colname</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;CreateScoreDifferential: column {0} already in DataFrame, and can&#39;t &quot;</span>
+                           <span class="s2">&quot;be used for the score differential&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">score_differential_colname</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">score_differential_colname</span><span class="p">]</span> <span class="o">=</span> <span class="n">score_differential</span>
+
+        <span class="k">return</span> <span class="n">X</span></div></div>
+        
+
+
+<div class="viewcode-block" id="CheckColumnNames"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.CheckColumnNames">[docs]</a><span class="k">class</span> <span class="nc">CheckColumnNames</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make sure user has the right column names, in the right order.</span>
+
+<span class="sd">    This is a useful first step to make sure that nothing</span>
+<span class="sd">    is going to break downstream, but can also be used effectively</span>
+<span class="sd">    to drop columns that are no longer necessary.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    column_names : ``None``, or list of strings</span>
+<span class="sd">        A list of column names that need to be present in the scoring</span>
+<span class="sd">        data. All other columns will be stripped out. The order of the</span>
+<span class="sd">        columns will be applied to any scoring</span>
+<span class="sd">        data as well, in order to handle the fact that pandas lets</span>
+<span class="sd">        you play fast and loose with column order. If ``None``,</span>
+<span class="sd">        will obtain every column in the DataFrame passed to the</span>
+<span class="sd">        ``fit`` method.</span>
+<span class="sd">    copy : boolean (default=``True``)</span>
+<span class="sd">        If ``False``, add the score differential in place.</span>
+<span class="sd">       </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">column_names</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span> <span class="o">=</span> <span class="n">column_names</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span> <span class="o">=</span> <span class="n">copy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_specified_columns</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_specified_columns</span> <span class="o">=</span> <span class="bp">True</span>
+            
+
+<div class="viewcode-block" id="CheckColumnNames.fit"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.CheckColumnNames.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Grab the column names from a Pandas DataFrame.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : For compatibility with Scikit-learn&#39;s ``Pipeline``. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_specified_columns</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">column_names</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">columns</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="CheckColumnNames.transform"><a class="viewcode-back" href="../../nflwin.html#nflwin.preprocessing.CheckColumnNames.transform">[docs]</a>    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply the column ordering to the data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, number of features)</span>
+<span class="sd">            NFL play data.</span>
+<span class="sd">        y : Numpy array, with length = number of plays, or None</span>
+<span class="sd">            1 if the home team won, 0 if not.</span>
+<span class="sd">            (Used as part of Scikit-learn&#39;s ``Pipeline``)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        X : Pandas DataFrame, of shape(number of plays, ``len(column_names)``)</span>
+<span class="sd">            The input DataFrame, properly ordered and with extraneous</span>
+<span class="sd">            columns dropped</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        KeyError</span>
+<span class="sd">            If the input data frame doesn&#39;t have all the columns specified</span>
+<span class="sd">            by ``column_names``.</span>
+<span class="sd">        NotFittedError</span>
+<span class="sd">            If ``transform`` is called before ``fit``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fit</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NotFittedError</span><span class="p">(</span><span class="s2">&quot;CheckColumnName: Call &#39;fit&#39; before &#39;transform&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+                
+            <span class="k">return</span> <span class="n">X</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;CheckColumnName: DataFrame does not have required columns. &quot;</span>
+                           <span class="s2">&quot;Must contain at least {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">column_names</span><span class="p">))</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">NFLWin 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Andrew Schechtman-Rook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>

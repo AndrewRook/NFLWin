@@ -1,0 +1,337 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>nflwin.utilities &mdash; NFLWin 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="NFLWin 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">NFLWin 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for nflwin.utilities</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utility functions that don&#39;t fit in the main modules&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+
+
+<div class="viewcode-block" id="connect_nfldb"><a class="viewcode-back" href="../../nflwin.html#nflwin.utilities.connect_nfldb">[docs]</a><span class="k">def</span> <span class="nf">connect_nfldb</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Connect to the nfldb database.</span>
+
+<span class="sd">    Rather than using the builtin method we make our own,</span>
+<span class="sd">    since we&#39;re going to use SQLAlchemy as the engine. However,</span>
+<span class="sd">    we can still make use of the information in the nfldb config</span>
+<span class="sd">    file to get information like username and password, which</span>
+<span class="sd">    means this function doesn&#39;t need any arguments.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    None</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    SQLAlchemy engine object</span>
+<span class="sd">        A connected engine, ready to be used to query the DB.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    IOError</span>
+<span class="sd">        If it can&#39;t find the config file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">nfldb</span>
+    <span class="kn">import</span> <span class="nn">sqlalchemy</span> <span class="kn">as</span> <span class="nn">sql</span>
+    <span class="n">db_config</span><span class="p">,</span> <span class="n">paths_tried</span> <span class="o">=</span> <span class="n">nfldb</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">config</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">db_config</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;get_play_data: could not find database config! Looked&quot;</span>
+                      <span class="s2">&quot; in these places: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">paths_tried</span><span class="p">))</span>
+    <span class="n">db_config</span><span class="p">[</span><span class="s2">&quot;drivername&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;postgres&quot;</span>
+    <span class="n">db_config</span><span class="p">[</span><span class="s2">&quot;username&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">db_config</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">]</span>
+    <span class="k">del</span> <span class="n">db_config</span><span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">]</span>
+    <span class="k">del</span> <span class="n">db_config</span><span class="p">[</span><span class="s2">&quot;timezone&quot;</span><span class="p">]</span>
+
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">sql</span><span class="o">.</span><span class="n">create_engine</span><span class="p">(</span><span class="n">sql</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">URL</span><span class="p">(</span><span class="o">**</span><span class="n">db_config</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">engine</span></div>
+    
+    
+<div class="viewcode-block" id="get_nfldb_play_data"><a class="viewcode-back" href="../../nflwin.html#nflwin.utilities.get_nfldb_play_data">[docs]</a><span class="k">def</span> <span class="nf">get_nfldb_play_data</span><span class="p">(</span><span class="n">season_years</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">season_types</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Regular&quot;</span><span class="p">,</span> <span class="s2">&quot;Postseason&quot;</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;Get play-by-play data from the nfldb database.</span>
+
+<span class="sd">    We use a specialized query and then postprocessing because, while possible to</span>
+<span class="sd">    do using the objects created by ``nfldb``, it is *orders of magnitude slower*.</span>
+<span class="sd">    This is due to the more general nature of ``nfldb``, which is not really designed</span>
+<span class="sd">    for this kind of data mining. Since we need to get a lot of data in a single way,</span>
+<span class="sd">    it&#39;s much simpler to interact at a lower level with the underlying postgres</span>
+<span class="sd">    database.</span>
+
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    season_years : list (default=None)</span>
+<span class="sd">        A list of all years to get data for (earliest year in nfldb is 2009).</span>
+<span class="sd">        If ``None``, get data from all available seasons.</span>
+<span class="sd">    season_types : list (default=[&quot;Regular&quot;, &quot;Postseason&quot;])</span>
+<span class="sd">        A list of all parts of seasons to get data for (acceptable values are</span>
+<span class="sd">        &quot;Preseason&quot;, &quot;Regular&quot;, and &quot;Postseason&quot;). If ``None``, get data from</span>
+<span class="sd">        all three season types.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Pandas DataFrame</span>
+<span class="sd">        The play by play data, with the following columns:</span>
+<span class="sd">        </span>
+<span class="sd">        * **gsis_id:** The official NFL GSIS_ID for the game.</span>
+<span class="sd">        * **drive_id:** The id of the drive, starts at 1 and increases by 1 for each new drive.</span>
+<span class="sd">        * **play_id:** The id of the play in ``nfldb``. Note that sequential plays have</span>
+<span class="sd">          increasing but not necessarily sequential values. With ``drive_id`` and ``gsis_id``,</span>
+<span class="sd">          works as a unique identifier for a given play.</span>
+<span class="sd">        * **quarter:** The quarter, prepended with &quot;Q&quot; (e.g. ``Q1`` means the first quarter). </span>
+<span class="sd">          Overtime periods are denoted as ``OT``, ``OT2``, and theoretically ``OT3`` if one were to</span>
+<span class="sd">          ever be played.</span>
+<span class="sd">        * **time:** seconds elapsed since the start of the quarter.</span>
+<span class="sd">        * **pos_team:** The abbreviation of the team currently with possession of the ball.</span>
+<span class="sd">        * **yardline:** The current field position. Goes from -49 to 49, where negative numbers</span>
+<span class="sd">          indicate that the team with possession is on its own side of the field.</span>
+<span class="sd">        * **down:** The down. kickoffs, extra points, and similar have a down of 0.</span>
+<span class="sd">        * **yards_to_go:** How many yards needed in order to get a first down (or touchdown).</span>
+<span class="sd">        * **home_team:** The abbreviation of the home team.</span>
+<span class="sd">        * **away_team:** The abbreviation of the away team.</span>
+<span class="sd">        * **curr_home_score:** The home team&#39;s score at the start of the play.</span>
+<span class="sd">        * **curr_away_score:** The away team&#39;s score at the start of the play. </span>
+<span class="sd">        * **offense_won:** A boolean - ``True`` if the offense won the game, ``False`` otherwise. (The</span>
+<span class="sd">          database query skips tied games.)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    ``gsis_id``, ``drive_id``, and ``play_id`` are not necessary to make the model, but</span>
+<span class="sd">    are included because they can be useful for computing things like WPA.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">connect_nfldb</span><span class="p">()</span>
+
+    <span class="n">sql_string</span> <span class="o">=</span> <span class="n">_make_nfldb_query_string</span><span class="p">(</span><span class="n">season_years</span><span class="o">=</span><span class="n">season_years</span><span class="p">,</span> <span class="n">season_types</span><span class="o">=</span><span class="n">season_types</span><span class="p">)</span>
+
+    <span class="n">plays_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="n">sql_string</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span>
+
+    <span class="c1">#Fix yardline, quarter and time elapsed:</span>
+    <span class="k">def</span> <span class="nf">yardline_time_fix</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">yardline</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;yardline&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="n">yardline</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">split_time</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">yardline</span><span class="p">,</span> <span class="n">split_time</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:],</span> <span class="nb">float</span><span class="p">(</span><span class="n">split_time</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="n">plays_df</span><span class="p">[[</span><span class="s1">&#39;yardline&#39;</span><span class="p">,</span> <span class="s1">&#39;quarter&#39;</span><span class="p">,</span> <span class="s1">&#39;seconds_elapsed&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">plays_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">yardline_time_fix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">plays_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="c1">#Set NaN downs (kickoffs, etc) to 0:</span>
+    <span class="n">plays_df</span><span class="p">[</span><span class="s1">&#39;down&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plays_df</span><span class="p">[</span><span class="s1">&#39;down&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+
+
+    <span class="c1">#Aggregate scores:</span>
+    <span class="n">plays_df</span> <span class="o">=</span> <span class="n">_aggregate_nfldb_scores</span><span class="p">(</span><span class="n">plays_df</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">plays_df</span></div>
+
+<span class="k">def</span> <span class="nf">_aggregate_nfldb_scores</span><span class="p">(</span><span class="n">play_df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Aggregate the raw nfldb data to get the score of every play.&quot;&quot;&quot;</span>
+
+    <span class="c1"># First, add the yardline of the subsequent play to the df</span>
+    <span class="n">play_df</span><span class="p">[</span><span class="s1">&#39;next_yardline&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">play_df</span><span class="p">[</span><span class="s1">&#39;yardline&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1">#Set up the dictionary to keep track of things:</span>
+    <span class="n">curr_home_score</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">curr_away_score</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">curr_gsis_id</span> <span class="o">=</span> <span class="n">play_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gsis_id</span>
+    <span class="n">argdict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;curr_home_score&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;curr_away_score&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;curr_gsis_id&quot;</span><span class="p">:</span> <span class="n">play_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gsis_id</span><span class="p">}</span>
+
+    <span class="c1">#Define an internal function to actually compute the score of a given play:</span>
+    <span class="k">def</span> <span class="nf">compute_current_scores</span><span class="p">(</span><span class="n">play</span><span class="p">,</span> <span class="n">argdict</span><span class="p">):</span>
+        <span class="c1">#If new game, set scores to zero:</span>
+        <span class="k">if</span> <span class="n">play</span><span class="o">.</span><span class="n">gsis_id</span> <span class="o">!=</span> <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_gsis_id&#39;</span><span class="p">]:</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_home_score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_away_score&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_gsis_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">play</span><span class="o">.</span><span class="n">gsis_id</span>
+
+        <span class="c1">#Get current score at start of play:</span>
+        <span class="n">home_score_to_return</span> <span class="o">=</span> <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_home_score&#39;</span><span class="p">]</span>
+        <span class="n">away_score_to_return</span> <span class="o">=</span> <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_away_score&#39;</span><span class="p">]</span>
+        
+        <span class="c1">#Check if an extra point is missing from the data:</span>
+        <span class="k">if</span> <span class="n">play</span><span class="o">.</span><span class="n">offense_play_points</span> <span class="o">==</span> <span class="mi">6</span> <span class="ow">and</span> <span class="n">play</span><span class="o">.</span><span class="n">next_yardline</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">play</span><span class="o">.</span><span class="n">offense_play_points</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">play</span><span class="o">.</span><span class="n">defense_play_points</span> <span class="o">==</span> <span class="mi">6</span> <span class="ow">and</span> <span class="n">play</span><span class="o">.</span><span class="n">next_yardline</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">play</span><span class="o">.</span><span class="n">defense_play_points</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1">#Update scores, if necessary:</span>
+        <span class="k">if</span> <span class="n">play</span><span class="o">.</span><span class="n">offense_team</span> <span class="o">==</span> <span class="n">play</span><span class="o">.</span><span class="n">home_team</span><span class="p">:</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_home_score&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">play</span><span class="o">.</span><span class="n">offense_play_points</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_away_score&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">play</span><span class="o">.</span><span class="n">defense_play_points</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_home_score&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">play</span><span class="o">.</span><span class="n">defense_play_points</span>
+            <span class="n">argdict</span><span class="p">[</span><span class="s1">&#39;curr_away_score&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">play</span><span class="o">.</span><span class="n">offense_play_points</span>
+        <span class="k">return</span> <span class="n">home_score_to_return</span><span class="p">,</span> <span class="n">away_score_to_return</span>
+
+    <span class="c1">#Apply function to data:</span>
+    <span class="c1">#TODO (AndrewRook): Make the .apply function go faster, currently it&#39;s a large bottleneck</span>
+    <span class="n">aggregate_scores</span> <span class="o">=</span> <span class="n">play_df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">compute_current_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">argdict</span><span class="p">,))</span>
+    <span class="n">aggregate_scores</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">aggregate_scores</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">play_df</span><span class="p">[[</span><span class="s1">&#39;curr_home_score&#39;</span><span class="p">,</span> <span class="s1">&#39;curr_away_score&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">aggregate_scores</span>
+
+    <span class="c1">#Drop unnecessary columns:</span>
+    <span class="n">play_df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;next_yardline&quot;</span><span class="p">,</span> <span class="s2">&quot;offense_play_points&quot;</span><span class="p">,</span> <span class="s2">&quot;defense_play_points&quot;</span><span class="p">],</span>
+                 <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">play_df</span>
+
+
+<span class="k">def</span> <span class="nf">_make_nfldb_query_string</span><span class="p">(</span><span class="n">season_years</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">season_types</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Construct the query string to get all the play data.</span>
+
+<span class="sd">    This way is a little more compact and robust than specifying</span>
+<span class="sd">    the string in the function that uses it.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">play_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gsis_id&#39;</span><span class="p">,</span> <span class="s1">&#39;drive_id&#39;</span><span class="p">,</span> <span class="s1">&#39;play_id&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;pos_team AS offense_team&#39;</span><span class="p">,</span> <span class="s1">&#39;yardline&#39;</span><span class="p">,</span> <span class="s1">&#39;down&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;yards_to_go&#39;</span><span class="p">]</span>
+
+    <span class="n">offense_play_points</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;GREATEST(&quot;</span>
+        <span class="s2">&quot;(agg_play.fumbles_rec_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.kicking_rec_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.passing_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.receiving_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.rushing_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.kicking_xpmade * 1), &quot;</span>
+        <span class="s2">&quot;(agg_play.passing_twoptm * 2), &quot;</span>
+        <span class="s2">&quot;(agg_play.receiving_twoptm * 2), &quot;</span>
+        <span class="s2">&quot;(agg_play.rushing_twoptm * 2), &quot;</span>
+        <span class="s2">&quot;(agg_play.kicking_fgm * 3)) &quot;</span>
+        <span class="s2">&quot;AS offense_play_points&quot;</span><span class="p">)</span>
+    <span class="n">defense_play_points</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;GREATEST(&quot;</span>
+        <span class="s2">&quot;(agg_play.defense_frec_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.defense_int_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.defense_misc_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.kickret_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.puntret_tds * 6), &quot;</span>
+        <span class="s2">&quot;(agg_play.defense_safe * 2)) &quot;</span>
+        <span class="s2">&quot;AS defense_play_points&quot;</span><span class="p">)</span>
+
+    <span class="n">game_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;game.home_team, game.away_team, &quot;</span>
+                   <span class="s2">&quot;((game.home_score &gt; game.away_score AND play.pos_team = game.home_team) &quot;</span>
+                   <span class="s2">&quot;OR (game.away_score &gt; game.home_score AND play.pos_team = game.away_team)) AS offense_won&quot;</span><span class="p">)</span>
+
+    <span class="n">where_clause</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;WHERE game.home_score != game.away_score &quot;</span>
+                    <span class="s2">&quot;AND game.finished = TRUE &quot;</span>
+                    <span class="s2">&quot;AND play.pos_team != &#39;UNK&#39; &quot;</span>
+                    <span class="s2">&quot;AND (play.time).phase not in (&#39;Pregame&#39;, &#39;Half&#39;, &#39;Final&#39;)&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">season_years</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">where_clause</span> <span class="o">+=</span> <span class="s2">&quot; AND game.season_year&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">season_years</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">where_clause</span> <span class="o">+=</span> <span class="s2">&quot; = {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">season_years</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">where_clause</span> <span class="o">+=</span> <span class="p">(</span><span class="s2">&quot; in ({0})&quot;</span>
+                            <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">year</span><span class="p">)</span> <span class="k">for</span> <span class="n">year</span> <span class="ow">in</span> <span class="n">season_years</span><span class="p">])))</span>
+    <span class="k">if</span> <span class="n">season_types</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">where_clause</span> <span class="o">+=</span> <span class="s2">&quot; AND game.season_type&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">season_types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">where_clause</span> <span class="o">+=</span> <span class="s2">&quot; = &#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">season_types</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">where_clause</span> <span class="o">+=</span> <span class="s2">&quot; in (&#39;{0}&#39;)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;&#39;,&#39;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">season_types</span><span class="p">))</span>
+
+    <span class="n">query_string</span> <span class="o">=</span> <span class="s2">&quot;SELECT &quot;</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot;play.&quot;</span> <span class="o">+</span> <span class="s2">&quot;, play.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">play_fields</span><span class="p">)</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">offense_play_points</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">defense_play_points</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot;, &quot;</span> <span class="o">+</span> <span class="n">game_fields</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot; FROM play INNER JOIN agg_play&quot;</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="p">(</span><span class="s2">&quot; ON play.gsis_id = agg_play.gsis_id&quot;</span>
+        <span class="s2">&quot; AND play.drive_id = agg_play.drive_id&quot;</span>
+        <span class="s2">&quot; AND play.play_id = agg_play.play_id&quot;</span><span class="p">)</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot; INNER JOIN game on play.gsis_id = game.gsis_id&quot;</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">where_clause</span>
+    <span class="n">query_string</span> <span class="o">+=</span> <span class="s2">&quot; ORDER BY play.gsis_id, play.drive_id, play.play_id;&quot;</span>
+
+    <span class="k">return</span> <span class="n">query_string</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">NFLWin 0.1.0 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Andrew Schechtman-Rook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.1.
+    </div>
+  </body>
+</html>
