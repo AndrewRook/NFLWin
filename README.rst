@@ -1,6 +1,12 @@
 NFLWin
-----------
+===============
+
+|Build Status|
+
 
 Estimate Win Probability (WP) for plays in NFL games.
 
-.. include:: nfldb_setup.rst
+
+.. |Build Status| image:: https://travis-ci.org/AndrewRook/NFLWin.svg?branch=master
+   :target: https://travis-ci.org/AndrewRook/NFLWin
+   :alt: Build Status
