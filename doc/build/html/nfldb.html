@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Using Data From nfldb &mdash; NFLWin 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="NFLWin 0.1.0 documentation" href="index.html"/>
+        <link rel="next" title="nflwin" href="modules.html"/>
+        <link rel="prev" title="Installation" href="installation.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> NFLWin
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Links</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using nfldb</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installing-postgres">Installing Postgres</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#start-postgres-and-create-a-default-db">Start Postgres and Create a Default DB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-nfldb-postgres-user-and-database">Create nfldb Postgres User and Database</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Full API Documentation</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">NFLWin</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Using Data From nfldb</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/nfldb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="using-data-from-nfldb">
+<h1>Using Data From nfldb<a class="headerlink" href="#using-data-from-nfldb" title="Permalink to this headline">¶</a></h1>
+<p>NFLWin comes with robust support for querying data from <a class="reference external" href="https://github.com/BurntSushi/nfldb">nfldb</a>, a package designed to
+facilitate downloading and accessing play-by-play data. There are
+functions to query the nfldb database in <a class="reference internal" href="nflwin.html#module-nflwin.utilities" title="nflwin.utilities"><code class="xref py py-mod docutils literal"><span class="pre">nflwin.utilities</span></code></a>,
+and <a class="reference internal" href="nflwin.html#nflwin.model.WPModel" title="nflwin.model.WPModel"><code class="xref py py-class docutils literal"><span class="pre">nflwin.model.WPModel</span></code></a> has keyword arguments that allow
+you to directly use nfldb data to fit and validate a WP model. Using
+nfldb is totally optional: a default model is already fit and ready to
+use, and NFLWin is fully compatible with any source for play-by-play
+data. However, nfldb is one of the few free sources of up-to-date NFL
+data and so it may be a useful resource to have.</p>
+<p>nfldb is pip-installable, and can be installed as an extra dependency
+(<code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">nflwin[nfldb]</span></code>). Without setting up the nfldb
+Postgres database first, however, the pip install will succeed but
+nfldb will be unuseable. What&#8217;s more, trying to set up the database
+<em>after</em> installing nfldb may fail as well.</p>
+<p>The nfldb wiki has <a class="reference external" href="https://github.com/BurntSushi/nfldb/wiki/Installation">fairly decent installation instructions</a>, but I know
+that when I went through the installation process I had to interpret
+and adjust several steps. I&#8217;d at least recommend reading through the
+wiki first, but in case it&#8217;s useful
+I&#8217;ve listed the steps I followed below (for reference I was on Mac OS 10.10).</p>
+<div class="section" id="installing-postgres">
+<h2>Installing Postgres<a class="headerlink" href="#installing-postgres" title="Permalink to this headline">¶</a></h2>
+<p>I had an old install kicking around, so I first had to clean that up.
+Since I was using <a class="reference external" href="http://brew.sh/">Homebrew</a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ brew uninstall -force postgresql
+$ rm -rf /usr/local/var/postgres/ # where I&#39;d installed the prior DB
+</pre></div>
+</div>
+<p>Then install a fresh version:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ brew update
+$ brew install postgresql
+</pre></div>
+</div>
+</div>
+<div class="section" id="start-postgres-and-create-a-default-db">
+<h2>Start Postgres and Create a Default DB<a class="headerlink" href="#start-postgres-and-create-a-default-db" title="Permalink to this headline">¶</a></h2>
+<p>You can choose to run Postgres at startup, but I don&#8217;t use it that
+often so I choose not to do those steps - I just run it in the
+foreground with this command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ postgres -D /usr/local/var/postgres
+</pre></div>
+</div>
+<p>Or in the background with this command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ pg_ctl -D /usr/local/var/postgres -l logfile start
+</pre></div>
+</div>
+<p>If you don&#8217;t create a default database based on your username,
+launching Postgres will fail with a <code class="docutils literal"><span class="pre">psql:</span> <span class="pre">FATAL:</span>&nbsp; <span class="pre">database</span>
+<span class="pre">&quot;USERNAME&quot;</span> <span class="pre">does</span> <span class="pre">not</span> <span class="pre">exist</span></code> error:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ createdb `whoami`
+</pre></div>
+</div>
+<p>Check that the install and configuration went well by launching
+Postgres as your default user:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ psql
+psql (9.5.2)
+Type &quot;help&quot; for help.
+
+USERNAME=#
+</pre></div>
+</div>
+<p>Next, add a password:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">USERNAME</span><span class="o">=</span><span class="c1"># ALTER ROLE &quot;USERNAME&quot; WITH ENCRYPTED PASSWORD &#39;choose a</span>
+<span class="n">superuser</span> <span class="n">password</span><span class="s1">&#39;;</span>
+<span class="n">USERNAME</span><span class="o">=</span><span class="c1"># \q;</span>
+</pre></div>
+</div>
+<p>Edit the <code class="docutils literal"><span class="pre">pg_hba.conf``file</span> <span class="pre">found</span> <span class="pre">in</span> <span class="pre">your</span> <span class="pre">database</span> <span class="pre">(in</span> <span class="pre">my</span> <span class="pre">case</span> <span class="pre">the</span>
+<span class="pre">file</span> <span class="pre">was</span>
+<span class="pre">``/usr/local/var/postgres/pg_hba.conf</span></code>), and change all instances of
+<code class="docutils literal"><span class="pre">trust</span></code> to <code class="docutils literal"><span class="pre">md5</span></code>.</p>
+</div>
+<div class="section" id="create-nfldb-postgres-user-and-database">
+<h2>Create nfldb Postgres User and Database<a class="headerlink" href="#create-nfldb-postgres-user-and-database" title="Permalink to this headline">¶</a></h2>
+<p>Start by making a user:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ createuser -U USERNAME -E -P nfldb
+</pre></div>
+</div>
+<p>where you replace <code class="docutils literal"><span class="pre">USERNAME</span></code> with your actual username. Make up a
+new password. Then make the nfldb database:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ createdb -U USERNAME -O nfldb nfldb
+</pre></div>
+</div>
+<p>You&#8217;ll need to enter the password for the USERNAME account. Next, add
+the fuzzy string matching extension:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ psql -U USERNAME -c &#39;CREATE EXTENSION fuzzystrmatch;&#39; nfldb
+</pre></div>
+</div>
+<p>You should now be able to connect the nfldb user to the nfldb
+database:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ psql -U nfldb nfldb
+</pre></div>
+</div>
+<p>From this point you should be able to follow along with the
+instructions from <a class="reference external" href="https://github.com/BurntSushi/nfldb/wiki/Installation#importing-the-nfldb-database">nfldb</a>.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="modules.html" class="btn btn-neutral float-right" title="nflwin" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Andrew Schechtman-Rook.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

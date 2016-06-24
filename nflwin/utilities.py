@@ -69,16 +69,17 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
     -------
     Pandas DataFrame
         The play by play data, with the following columns:
+        
         * **gsis_id:** The official NFL GSIS_ID for the game.
         * **drive_id:** The id of the drive, starts at 1 and increases by 1 for each new drive.
-        * **play_id:** The id of the play in ``nfldb``. Note that sequential plays have increasing
-          **but not necessarily** sequential values. With ``drive_id`` and ``gsis_id``, works as a
-          unique identifier for a given play.
+        * **play_id:** The id of the play in ``nfldb``. Note that sequential plays have
+          increasing but not necessarily sequential values. With ``drive_id`` and ``gsis_id``,
+          works as a unique identifier for a given play.
         * **quarter:** The quarter, prepended with "Q" (e.g. ``Q1`` means the first quarter). 
           Overtime periods are denoted as ``OT``, ``OT2``, and theoretically ``OT3`` if one were to
           ever be played.
-        * **time:** seconds elapsed since the start of the quarter.
-        * **pos_team:** The abbreviation of the team currently with possession of the ball.
+        * **seconds_elapsed:** seconds elapsed since the start of the quarter.
+        * **offense_team:** The abbreviation of the team currently with possession of the ball.
         * **yardline:** The current field position. Goes from -49 to 49, where negative numbers
           indicate that the team with possession is on its own side of the field.
         * **down:** The down. kickoffs, extra points, and similar have a down of 0.
@@ -90,10 +91,12 @@ def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"
         * **offense_won:** A boolean - ``True`` if the offense won the game, ``False`` otherwise. (The
           database query skips tied games.)
 
-        Note that ``gsis_id``, ``drive_id``, and ``play_id`` are not necessary to make the model, but
-        are included because they can be useful for computing things like WPA.
-          
+    Notes
+    -----
+    ``gsis_id``, ``drive_id``, and ``play_id`` are not necessary to make the model, but
+    are included because they can be useful for computing things like WPA.
     """
+    
     engine = connect_nfldb()
 
     sql_string = _make_nfldb_query_string(season_years=season_years, season_types=season_types)

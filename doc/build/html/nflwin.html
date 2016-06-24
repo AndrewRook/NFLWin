@@ -1,0 +1,1265 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>nflwin package &mdash; NFLWin 0.1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="NFLWin 0.1.0 documentation" href="index.html"/>
+        <link rel="up" title="nflwin" href="modules.html"/>
+        <link rel="prev" title="nflwin" href="modules.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> NFLWin
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <p class="caption"><span class="caption-text">Links</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nfldb.html">Using nfldb</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">Full API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">nflwin package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-nflwin.model">nflwin.model module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-nflwin.preprocessing">nflwin.preprocessing module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-nflwin.utilities">nflwin.utilities module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-nflwin">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">NFLWin</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="modules.html">nflwin</a> &raquo;</li>
+      
+    <li>nflwin package</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/nflwin.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="nflwin-package">
+<h1>nflwin package<a class="headerlink" href="#nflwin-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-nflwin.model">
+<span id="nflwin-model-module"></span><h2>nflwin.model module<a class="headerlink" href="#module-nflwin.model" title="Permalink to this headline">¶</a></h2>
+<p>Tools for creating and running the model.</p>
+<dl class="class">
+<dt id="nflwin.model.WPModel">
+<em class="property">class </em><code class="descclassname">nflwin.model.</code><code class="descname">WPModel</code><span class="sig-paren">(</span><em>home_score_colname='curr_home_score'</em>, <em>away_score_colname='curr_away_score'</em>, <em>quarter_colname='quarter'</em>, <em>time_colname='seconds_elapsed'</em>, <em>down_colname='down'</em>, <em>yards_to_go_colname='yards_to_go'</em>, <em>yardline_colname='yardline'</em>, <em>offense_team_colname='offense_team'</em>, <em>home_team_colname='home_team'</em>, <em>offense_won_colname='offense_won'</em>, <em>copy_data=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>The object that computes win probabilities.</p>
+<p>In addition to holding the model itself, it defines some columns names likely to be
+used in the model as parameters to allow other users to more easily figure out which
+columns go into the model.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>home_score_colname</strong> : string (default=&#8221;curr_home_score&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the current home score at the start of a play.</p>
+</div></blockquote>
+<p><strong>away_score_colname</strong> : string (default=&#8221;curr_away_score&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the current away score at the start of a play.</p>
+</div></blockquote>
+<p><strong>quarter_colname</strong> : string (default=&#8221;quarter&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the quarter the play took place in.</p>
+</div></blockquote>
+<p><strong>time_colname</strong> : string (default=&#8221;seconds_elapsed&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the time elapsed (in seconds) from the start
+of the quarter when the play began.</p>
+</div></blockquote>
+<p><strong>down_colname</strong> : string (default=&#8221;down&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the current down number, with zeros for plays like
+kickoffs and extra points.</p>
+</div></blockquote>
+<p><strong>yards_to_go_colname</strong> : string (default=&#8221;yards_to_go&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the number of yards to go in order to get a first down.</p>
+</div></blockquote>
+<p><strong>offense_team_colname</strong> : string (default=&#8221;offense_team&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the abbreviation for the team currently on offense.</p>
+</div></blockquote>
+<p><strong>home_team_colname</strong> : string (default=&#8221;home_team&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing the abbreviation for the home team.</p>
+</div></blockquote>
+<p><strong>offense_won_colname</strong> : string (default=&#8221;offense_won&#8221;)</p>
+<blockquote>
+<div><p>The name of the column containing whether or not the offense ended up winning the game.</p>
+</div></blockquote>
+<p><strong>copy_data</strong> : boolean (default=``True``)</p>
+<blockquote class="last">
+<div><p>Whether or not to copy data when fitting and applying the model. Running the model
+in-place (<code class="docutils literal"><span class="pre">copy_data=False</span></code>) will be faster and have a smaller memory footprint,
+but if not done carefully can lead to data integrity issues.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="9%" />
+<col width="91%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>model</td>
+<td>(A Scikit-learn pipeline (or equivalent)) The actual model used to compute WP. Upon initialization it will be set to a default model, but can be overridden by the user.</td>
+</tr>
+<tr class="row-even"><td>training_seasons</td>
+<td>(A list of ints, or <code class="docutils literal"><span class="pre">None</span></code> (default=``None``)) If the model was trained using data downloaded from nfldb, a list of the seasons used to train the model. If nfldb was <strong>not</strong> used, an empty list. If no model has been trained yet, <code class="docutils literal"><span class="pre">None</span></code>.</td>
+</tr>
+<tr class="row-odd"><td>training_season_types</td>
+<td>(A list of strings or <code class="docutils literal"><span class="pre">None</span></code> (default=``None``)) Same as <code class="docutils literal"><span class="pre">training_seasons</span></code>, except for the portions of the seasons used in training the model (&#8220;Preseason&#8221;, &#8220;Regular&#8221;, and/or &#8220;Postseason&#8221;).</td>
+</tr>
+<tr class="row-even"><td>validation_seasons</td>
+<td>(same as <code class="docutils literal"><span class="pre">training_seasons</span></code>, but for validation data.)</td>
+</tr>
+<tr class="row-odd"><td>validation_season_types</td>
+<td>(same as <code class="docutils literal"><span class="pre">training_season_types</span></code>, but for validation data.)</td>
+</tr>
+<tr class="row-even"><td>sample_probabilities</td>
+<td>(A numpy array of floats or <code class="docutils literal"><span class="pre">None</span></code> (default=``None``)) After the model has been validated, contains the sampled predicted probabilities used to compute the validation statistic.</td>
+</tr>
+<tr class="row-odd"><td>predicted_win_percents</td>
+<td>(A numpy array of floats or <code class="docutils literal"><span class="pre">None</span></code> (default=``None``)) After the model has been validated, contains the actual probabilities in the test set at each probability in <code class="docutils literal"><span class="pre">sample_probabilities</span></code>.</td>
+</tr>
+<tr class="row-even"><td>num_plays_used</td>
+<td>(A numpy array of floats or <code class="docutils literal"><span class="pre">None</span></code> (default=``None``)) After the model has been validated, contains the number of plays used to compute each element of <code class="docutils literal"><span class="pre">predicted_win_percents</span></code>.</td>
+</tr>
+<tr class="row-odd"><td>model_directory</td>
+<td>(string) The directory where all models will be saved to or loaded from.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nflwin.model.WPModel.create_default_pipeline">
+<code class="descname">create_default_pipeline</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.create_default_pipeline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.create_default_pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the default win probability estimation pipeline.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Scikit-learn pipeline</p>
+<blockquote>
+<div><p>The default pipeline, suitable for computing win probabilities
+but by no means the best possible model.</p>
+</div></blockquote>
+<p>This can be run any time a new default pipeline is required,</p>
+<p class="last">and either set to the <code class="docutils literal"><span class="pre">model</span></code> attribute or used independently.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="nflwin.model.WPModel.load_model">
+<em class="property">classmethod </em><code class="descname">load_model</code><span class="sig-paren">(</span><em>filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.load_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.load_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a saved WPModel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>Same as ``save_model``.</strong></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">nflwin.WPModel</span></code> instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.model_directory">
+<code class="descname">model_directory</code><em class="property"> = '/Users/Rook/PyWPA/nflwin/models'</em><a class="headerlink" href="#nflwin.model.WPModel.model_directory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.num_plays_used">
+<code class="descname">num_plays_used</code><a class="headerlink" href="#nflwin.model.WPModel.num_plays_used" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.model.WPModel.plot_validation">
+<code class="descname">plot_validation</code><span class="sig-paren">(</span><em>axis=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.plot_validation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.plot_validation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the validation data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>axis</strong> : matplotlib.pyplot.axis object or <code class="docutils literal"><span class="pre">None</span></code> (default=``None``)</p>
+<blockquote>
+<div><p>If provided, the validation line will be overlaid on <code class="docutils literal"><span class="pre">axis</span></code>.
+Otherwise, a new figure and axis will be generated and plotted on.</p>
+</div></blockquote>
+<p><strong>**kwargs</strong></p>
+<blockquote>
+<div><p>Arguments to <code class="docutils literal"><span class="pre">axis.plot</span></code>.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">matplotlib.pylot.axis</p>
+<blockquote>
+<div><p>The axis the plot was made on.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>NotFittedError</strong></p>
+<blockquote class="last">
+<div><p>If the model hasn&#8217;t been fit <strong>and</strong> validated.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nflwin.model.WPModel.predict_wp">
+<code class="descname">predict_wp</code><span class="sig-paren">(</span><em>plays</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.predict_wp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.predict_wp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate the win probability for a set of plays.</p>
+<p>Basically a simple wrapper around <code class="docutils literal"><span class="pre">WPModel.model.predict_proba</span></code>,
+takes in a DataFrame and then spits out an array of predicted
+win probabilities.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>plays</strong> : Pandas DataFrame</p>
+<blockquote>
+<div><p>The input data to use to make the predictions.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Numpy array, of length <code class="docutils literal"><span class="pre">len(plays)</span></code></p>
+<blockquote>
+<div><p>Predicted probability that the offensive team in each play
+will go on to win the game.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>NotFittedError</strong></p>
+<blockquote class="last">
+<div><p>If the model hasn&#8217;t been fit.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.predicted_win_percents">
+<code class="descname">predicted_win_percents</code><a class="headerlink" href="#nflwin.model.WPModel.predicted_win_percents" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.sample_probabilities">
+<code class="descname">sample_probabilities</code><a class="headerlink" href="#nflwin.model.WPModel.sample_probabilities" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.model.WPModel.save_model">
+<code class="descname">save_model</code><span class="sig-paren">(</span><em>filename=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.save_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.save_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the WPModel instance to disk.</p>
+<p>All models are saved to the same place, with the installed
+NFLWin library (given by <code class="docutils literal"><span class="pre">WPModel.model_directory</span></code>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>filename</strong> : string (default=None):</p>
+<blockquote>
+<div><p>The filename to use for the saved model. If this parameter
+is not specified, save to the default filename. Note that if a model
+already lists with this filename, it will be overwritten. Note also that
+this is a filename only, <strong>not</strong> a full path. If a full path is specified
+it is likely (albeit not guaranteed) to cause errors.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="docutils literal"><span class="pre">None</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nflwin.model.WPModel.train_model">
+<code class="descname">train_model</code><span class="sig-paren">(</span><em>source_data='nfldb', training_seasons=[2009, 2010, 2011, 2012, 2013, 2014], training_season_types=['Regular', 'Postseason']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.train_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.train_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train the model.</p>
+<p>Once a modeling pipeline is set up (either the default or something
+custom-generated), historical data needs to be fed into it in order to
+&#8220;fit&#8221; the model so that it can then be used to predict future results.
+This method implements a simple wrapper around the core Scikit-learn functionality
+which does this.</p>
+<p>The default is to use data from the nfldb database, however that can be changed
+to a simple Pandas DataFrame if desired (for instance if you wish to use data
+from another source).</p>
+<p>There is no particular output from this function, rather the parameters governing
+the fit of the model are saved inside the model object itself. If you want to get an
+estimate of the quality of the fit, use the <code class="docutils literal"><span class="pre">validate_model</span></code> method after running
+this method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>source_data</strong> : the string <code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code> or a Pandas DataFrame (default=``&#8221;nfldb&#8221;<a href="#id1"><span class="problematic" id="id2">``</span></a>)</p>
+<blockquote>
+<div><p>The data to be used to train the model. If <code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code>, will query the nfldb
+database for the training data (note that this requires a correctly configured
+installation of nfldb&#8217;s database).</p>
+</div></blockquote>
+<p><strong>training_seasons</strong> : list of ints (default=``[2009, 2010, 2011, 2012, 2013, 2014]``)</p>
+<blockquote>
+<div><p>What seasons to use to train the model if getting data from the nfldb database.
+If <code class="docutils literal"><span class="pre">source_data</span></code> is not <code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code>, this argument will be ignored.
+<strong>NOTE:</strong> it is critical not to use all possible data in order to train the
+model - some will need to be reserved for a final validation (see the
+<code class="docutils literal"><span class="pre">validate_model</span></code> method). A good dataset to reserve
+for validation is the most recent one or two NFL seasons.</p>
+</div></blockquote>
+<p><strong>training_season_types</strong> : list of strings (default=``[&#8220;Regular&#8221;, &#8220;Postseason&#8221;]``)</p>
+<blockquote>
+<div><p>If querying from the nfldb database, what parts of the seasons to use.
+Options are &#8220;Preseason&#8221;, &#8220;Regular&#8221;, and &#8220;Postseason&#8221;. If <code class="docutils literal"><span class="pre">source_data</span></code> is not
+<code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code>, this argument will be ignored.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="docutils literal"><span class="pre">None</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>If you are loading in the default model, <strong>there is no need to re-run this method</strong>.
+In fact, doing so will likely result in weird errors and could corrupt the model if you
+were to try to save it back to disk.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.training_seasons">
+<code class="descname">training_seasons</code><a class="headerlink" href="#nflwin.model.WPModel.training_seasons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.training_seasons_types">
+<code class="descname">training_seasons_types</code><a class="headerlink" href="#nflwin.model.WPModel.training_seasons_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.model.WPModel.validate_model">
+<code class="descname">validate_model</code><span class="sig-paren">(</span><em>source_data='nfldb', validation_seasons=[2015], validation_season_types=['Regular', 'Postseason']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/model.html#WPModel.validate_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.model.WPModel.validate_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate the model.</p>
+<p>Once a modeling pipeline is trained, a different dataset must be fed into the trained model
+to validate the quality of the fit.
+This method implements a simple wrapper around the core Scikit-learn functionality
+which does this.</p>
+<p>The default is to use data from the nfldb database, however that can be changed
+to a simple Pandas DataFrame if desired (for instance if you wish to use data
+from another source).</p>
+<p>The output of this method is a p value which represents the confidence at which
+we can reject the null hypothesis that the model predicts the appropriate win
+probabilities. This number is computed by first smoothing the predicted win probabilities of both all test data and
+just the data where the offense won with a gaussian <a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html#sklearn.neighbors.KernelDensity">kernel density
+estimate</a>
+with standard deviation = 0.01. Once the data is smooth, ratios at each percentage point from 1% to 99% are computed (i.e.
+what fraction of the time did the offense win when the model says they have a 1% chance of winning, 2% chance, etc.). Each of
+these ratios should be well approximated by the binomial distribution, since they are essentially independent (not perfectly
+but hopefully close enough) weighted coin flips, giving a p value. From there <a class="reference external" href="https://en.wikipedia.org/wiki/Fisher%27s_method">Fisher&#8217;s method</a>
+is used to combine the p values into a global p value. A p value close to zero means that the model is unlikely to be
+properly predicting the correct win probabilities. A p value close to one, <strong>while not proof that the model is correct</strong>,
+means that the model is at least not inconsistent with the hypothesis that it predicts good win probabilities.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>source_data</strong> : the string <code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code> or a Pandas DataFrame (default=``&#8221;nfldb&#8221;<a href="#id3"><span class="problematic" id="id4">``</span></a>)</p>
+<blockquote>
+<div><p>The data to be used to train the model. If <code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code>, will query the nfldb
+database for the training data (note that this requires a correctly configured
+installation of nfldb&#8217;s database).</p>
+</div></blockquote>
+<p><strong>training_seasons</strong> : list of ints (default=``[2015]``)</p>
+<blockquote>
+<div><p>What seasons to use to validate the model if getting data from the nfldb database.
+If <code class="docutils literal"><span class="pre">source_data</span></code> is not <code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code>, this argument will be ignored.
+<strong>NOTE:</strong> it is critical not to use the same data to validate the model as was used
+in the fit. Generally a good data set to use for validation is one from a time
+period more recent than was used to train the model. For instance, if the model was trained
+on data from 2009-2014, data from the 2015 season would be a sensible choice to validate the model.</p>
+</div></blockquote>
+<p><strong>training_season_types</strong> : list of strings (default=``[&#8220;Regular&#8221;, &#8220;Postseason&#8221;]``)</p>
+<blockquote>
+<div><p>If querying from the nfldb database, what parts of the seasons to use.
+Options are &#8220;Preseason&#8221;, &#8220;Regular&#8221;, and &#8220;Postseason&#8221;. If <code class="docutils literal"><span class="pre">source_data</span></code> is not
+<code class="docutils literal"><span class="pre">&quot;nfldb&quot;</span></code>, this argument will be ignored.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float, between 0 and 1</p>
+<blockquote>
+<div><p>The combined p value, where smaller values indicate that the model is not accurately predicting win
+probabilities.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>NotFittedError</strong></p>
+<blockquote class="last">
+<div><p>If the model hasn&#8217;t been fit.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Probabilities are computed between 1 and 99 percent because a single incorrect prediction at 100% or 0% automatically drives
+the global p value to zero. Since the model is being smoothed this situation can occur even when there are no model predictions
+at those extreme values, and therefore leads to erroneous p values.</p>
+<p>While it seems reasonable (to me at least), I am not totally certain that this approach is entirely correct.
+It&#8217;s certainly sub-optimal in that you would ideally reject the null hypothesis that the model predictions
+<strong>aren&#8217;t</strong> appropriate, but that seems to be a much harder problem (and one that would need much more test
+data to beat down the uncertainties involved). I&#8217;m also not sure if using Fisher&#8217;s method is appropriate here,
+and I wonder if it might be necessary to Monte Carlo this. I would welcome input from others on better ways to do this.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.validation_seasons">
+<code class="descname">validation_seasons</code><a class="headerlink" href="#nflwin.model.WPModel.validation_seasons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.model.WPModel.validation_seasons_types">
+<code class="descname">validation_seasons_types</code><a class="headerlink" href="#nflwin.model.WPModel.validation_seasons_types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-nflwin.preprocessing">
+<span id="nflwin-preprocessing-module"></span><h2>nflwin.preprocessing module<a class="headerlink" href="#module-nflwin.preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>Tools to get raw data ready for modeling.</p>
+<dl class="class">
+<dt id="nflwin.preprocessing.CheckColumnNames">
+<em class="property">class </em><code class="descclassname">nflwin.preprocessing.</code><code class="descname">CheckColumnNames</code><span class="sig-paren">(</span><em>column_names=None</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#CheckColumnNames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.CheckColumnNames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></p>
+<p>Make sure user has the right column names, in the right order.</p>
+<p>This is a useful first step to make sure that nothing
+is going to break downstream, but can also be used effectively
+to drop columns that are no longer necessary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>column_names</strong> : <code class="docutils literal"><span class="pre">None</span></code>, or list of strings</p>
+<blockquote>
+<div><p>A list of column names that need to be present in the scoring
+data. All other columns will be stripped out. The order of the
+columns will be applied to any scoring
+data as well, in order to handle the fact that pandas lets
+you play fast and loose with column order. If <code class="docutils literal"><span class="pre">None</span></code>,
+will obtain every column in the DataFrame passed to the
+<code class="docutils literal"><span class="pre">fit</span></code> method.</p>
+</div></blockquote>
+<p><strong>copy</strong> : boolean (default=``True``)</p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">False</span></code>, add the score differential in place.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nflwin.preprocessing.CheckColumnNames.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#CheckColumnNames.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.CheckColumnNames.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grab the column names from a Pandas DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>self</strong> : For compatibility with Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.CheckColumnNames.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#CheckColumnNames.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.CheckColumnNames.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the column ordering to the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, <code class="docutils literal"><span class="pre">len(column_names)</span></code>)</p>
+<blockquote>
+<div><p>The input DataFrame, properly ordered and with extraneous
+columns dropped</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>KeyError</strong></p>
+<blockquote>
+<div><p>If the input data frame doesn&#8217;t have all the columns specified
+by <code class="docutils literal"><span class="pre">column_names</span></code>.</p>
+</div></blockquote>
+<p><strong>NotFittedError</strong></p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">transform</span></code> is called before <code class="docutils literal"><span class="pre">fit</span></code>.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="nflwin.preprocessing.ComputeElapsedTime">
+<em class="property">class </em><code class="descclassname">nflwin.preprocessing.</code><code class="descname">ComputeElapsedTime</code><span class="sig-paren">(</span><em>quarter_colname</em>, <em>quarter_time_colname</em>, <em>quarter_to_second_mapping={'Q1': 0</em>, <em>'Q3': 1800</em>, <em>'Q2': 900</em>, <em>'Q4': 2700</em>, <em>'OT3': 5400</em>, <em>'OT2': 4500</em>, <em>'OT': 3600}</em>, <em>total_time_colname='total_elapsed_time'</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#ComputeElapsedTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.ComputeElapsedTime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></p>
+<p>Compute the total elapsed time from the start of the game.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>quarter_colname</strong> : string</p>
+<blockquote>
+<div><p>Which column indicates what quarter it is.</p>
+</div></blockquote>
+<p><strong>quarter_time_colname</strong> : string</p>
+<blockquote>
+<div><p>Which column indicates how much time has elapsed in the current quarter.</p>
+</div></blockquote>
+<p><strong>quarter_to_second_mapping</strong> : dict (default=``{&#8220;Q1&#8221;: 0, &#8220;Q2&#8221;: 900, &#8220;Q3&#8221;: 1800, &#8220;Q4&#8221;: 2700,</p>
+<blockquote>
+<div><blockquote>
+<div><p>&#8220;OT&#8221;: 3600, &#8220;OT2&#8221;: 4500, &#8220;OT3&#8221;: 5400}``)</p>
+</div></blockquote>
+<p>What mapping to use between the string values in the quarter column and the seconds they
+correspond to. Mostly useful if your data had quarters listed as something like &#8220;Quarter 1&#8221;
+or &#8220;q1&#8221; instead of the values from <code class="docutils literal"><span class="pre">nfldb</span></code>.</p>
+</div></blockquote>
+<p><strong>total_time_colname</strong> : string (default=&#8221;total_elapsed_time&#8221;)</p>
+<blockquote>
+<div><p>What column name to store the total elapsed time under.</p>
+</div></blockquote>
+<p><strong>copy</strong> : boolean (default=True)</p>
+<blockquote class="last">
+<div><p>Whether to add the new column in place.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nflwin.preprocessing.ComputeElapsedTime.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#ComputeElapsedTime.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.ComputeElapsedTime.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.ComputeElapsedTime.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#ComputeElapsedTime.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.ComputeElapsedTime.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the new column.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features + 1)</p>
+<blockquote>
+<div><p>The input DataFrame, with the new column added.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>KeyError</strong></p>
+<blockquote>
+<div><p>If <code class="docutils literal"><span class="pre">quarter_colname</span></code> or <code class="docutils literal"><span class="pre">quarter_time_colname</span></code> don&#8217;t exist, or
+if <code class="docutils literal"><span class="pre">total_time_colname</span></code> <strong>does</strong> exist.</p>
+</div></blockquote>
+<p><strong>TypeError</strong></p>
+<blockquote class="last">
+<div><p>If the total time elapsed is not a numeric column, which typically indicates
+that the mapping did not apply to every row.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="nflwin.preprocessing.ComputeIfOffenseIsHome">
+<em class="property">class </em><code class="descclassname">nflwin.preprocessing.</code><code class="descname">ComputeIfOffenseIsHome</code><span class="sig-paren">(</span><em>offense_team_colname</em>, <em>home_team_colname</em>, <em>offense_home_team_colname='is_offense_home'</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#ComputeIfOffenseIsHome"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.ComputeIfOffenseIsHome" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></p>
+<p>Determine if the team currently with possession is the home team.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>offense_team_colname</strong> : string</p>
+<blockquote>
+<div><p>Which column indicates what team was on offense.</p>
+</div></blockquote>
+<p><strong>home_team_colname</strong> : string</p>
+<blockquote>
+<div><p>Which column indicates what team was the home team.</p>
+</div></blockquote>
+<p><strong>offense_home_team_colname</strong> : string (default=&#8221;is_offense_home&#8221;)</p>
+<blockquote>
+<div><p>What column to store whether or not the offense was the home team.</p>
+</div></blockquote>
+<p><strong>copy</strong> : boolean (default=True)</p>
+<blockquote class="last">
+<div><p>Whether to add the new column in place.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nflwin.preprocessing.ComputeIfOffenseIsHome.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#ComputeIfOffenseIsHome.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.ComputeIfOffenseIsHome.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.ComputeIfOffenseIsHome.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#ComputeIfOffenseIsHome.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.ComputeIfOffenseIsHome.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the new column.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features + 1)</p>
+<blockquote>
+<div><p>The input DataFrame, with the new column added.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>KeyError</strong></p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">offense_team_colname</span></code> or <code class="docutils literal"><span class="pre">home_team_colname</span></code> don&#8217;t exist, or
+if <code class="docutils literal"><span class="pre">offense_home_team_colname</span></code> <strong>does</strong> exist.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="nflwin.preprocessing.CreateScoreDifferential">
+<em class="property">class </em><code class="descclassname">nflwin.preprocessing.</code><code class="descname">CreateScoreDifferential</code><span class="sig-paren">(</span><em>home_score_colname</em>, <em>away_score_colname</em>, <em>offense_home_colname</em>, <em>score_differential_colname='score_differential'</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#CreateScoreDifferential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.CreateScoreDifferential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></p>
+<p>Convert offense and defense scores into a differential (offense - defense).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>home_score_colname</strong> : string</p>
+<blockquote>
+<div><p>The name of the column containing the score of the home team.</p>
+</div></blockquote>
+<p><strong>away_score_colname</strong> : string</p>
+<blockquote>
+<div><p>The name of the column containing the score of the away team.</p>
+</div></blockquote>
+<p><strong>offense_home_colname</strong> : string</p>
+<blockquote>
+<div><p>The name of the column indicating if the offense is home.</p>
+</div></blockquote>
+<p><strong>score_differential_colname</strong> : string (default=``&#8221;score_differential&#8221;<a href="#id5"><span class="problematic" id="id6">``</span></a>)</p>
+<blockquote>
+<div><p>The name of column containing the score differential. Must not already
+exist in the DataFrame.</p>
+</div></blockquote>
+<p><strong>copy</strong> : boolean (default = <code class="docutils literal"><span class="pre">True</span></code>)</p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">False</span></code>, add the score differential in place.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nflwin.preprocessing.CreateScoreDifferential.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#CreateScoreDifferential.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.CreateScoreDifferential.fit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.CreateScoreDifferential.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#CreateScoreDifferential.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.CreateScoreDifferential.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the score differential column.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features + 1)</p>
+<blockquote class="last">
+<div><p>The input DataFrame, with the score differential column added.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="nflwin.preprocessing.MapToInt">
+<em class="property">class </em><code class="descclassname">nflwin.preprocessing.</code><code class="descname">MapToInt</code><span class="sig-paren">(</span><em>colname</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#MapToInt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.MapToInt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></p>
+<p>Map a column of values to integers.</p>
+<p>Mapping to integer is nice if you know a column
+only has a few specific values in it, but you need
+to convert it to integers before one-hot encoding it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>colname</strong> : string</p>
+<blockquote>
+<div><p>The name of the column to perform the mapping on.</p>
+</div></blockquote>
+<p><strong>copy</strong> : boolean (default=True)</p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">False</span></code>, apply the mapping in-place.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="94%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>mapping</td>
+<td>(dict) Keys are the unique values of the column, values are the integers those values will be mapped to.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="nflwin.preprocessing.MapToInt.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#MapToInt.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.MapToInt.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all unique strings and construct the mapping.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>self</strong> : For compatibility with Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>KeyError</strong></p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">colname</span></code> is not in <code class="docutils literal"><span class="pre">X</span></code>.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.MapToInt.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#MapToInt.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.MapToInt.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the mapping to the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>The input DataFrame, with the mapping applied.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>NotFittedError</strong></p>
+<blockquote>
+<div><p>If <code class="docutils literal"><span class="pre">transform</span></code> is called before <code class="docutils literal"><span class="pre">fit</span></code>.</p>
+</div></blockquote>
+<p><strong>KeyError</strong></p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">colname</span></code> is not in <code class="docutils literal"><span class="pre">X</span></code>.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="nflwin.preprocessing.OneHotEncoderFromDataFrame">
+<em class="property">class </em><code class="descclassname">nflwin.preprocessing.</code><code class="descname">OneHotEncoderFromDataFrame</code><span class="sig-paren">(</span><em>categorical_feature_names='all'</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>handle_unknown='error'</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#OneHotEncoderFromDataFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.OneHotEncoderFromDataFrame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></p>
+<p>One-hot encode a DataFrame.</p>
+<p>This cleaner wraps the standard scikit-learn OneHotEncoder,
+handling the transfer between column name and column index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>categorical_feature_names</strong> : &#8220;all&#8221; or array of column names.</p>
+<blockquote>
+<div><p>Specify what features are treated as categorical.
+* &#8220;all&#8221; (default): All features are treated as categorical.
+* array of column names: Array of categorical feature names.</p>
+</div></blockquote>
+<p><strong>dtype</strong> : number type, default=np.float.</p>
+<blockquote>
+<div><p>Desired dtype of output.</p>
+</div></blockquote>
+<p><strong>handle_unknown</strong> : str, &#8220;error&#8221; (default) or &#8220;ignore&#8221;.</p>
+<blockquote>
+<div><p>Whether to raise an error or ignore if an unknown categorical feature
+is present during transform.</p>
+</div></blockquote>
+<p><strong>copy</strong> : boolean (default=True)</p>
+<blockquote class="last">
+<div><p>If <code class="docutils literal"><span class="pre">False</span></code>, apply the encoding in-place.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="nflwin.preprocessing.OneHotEncoderFromDataFrame.dtype">
+<code class="descname">dtype</code><a class="headerlink" href="#nflwin.preprocessing.OneHotEncoderFromDataFrame.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.OneHotEncoderFromDataFrame.fit">
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#OneHotEncoderFromDataFrame.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.OneHotEncoderFromDataFrame.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the column names to indices, then compute the one hot encoding.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>self</strong> : For compatibility with Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="nflwin.preprocessing.OneHotEncoderFromDataFrame.handle_unknown">
+<code class="descname">handle_unknown</code><a class="headerlink" href="#nflwin.preprocessing.OneHotEncoderFromDataFrame.handle_unknown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="nflwin.preprocessing.OneHotEncoderFromDataFrame.transform">
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/preprocessing.html#OneHotEncoderFromDataFrame.transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.preprocessing.OneHotEncoderFromDataFrame.transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply the encoding to the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of features)</p>
+<blockquote>
+<div><p>NFL play data.</p>
+</div></blockquote>
+<p><strong>y</strong> : Numpy array, with length = number of plays, or None</p>
+<blockquote>
+<div><p>1 if the home team won, 0 if not.
+(Used as part of Scikit-learn&#8217;s <code class="docutils literal"><span class="pre">Pipeline</span></code>)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : Pandas DataFrame, of shape(number of plays, number of new features)</p>
+<blockquote class="last">
+<div><p>The input DataFrame, with the encoding applied.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-nflwin.utilities">
+<span id="nflwin-utilities-module"></span><h2>nflwin.utilities module<a class="headerlink" href="#module-nflwin.utilities" title="Permalink to this headline">¶</a></h2>
+<p>Utility functions that don&#8217;t fit in the main modules</p>
+<dl class="function">
+<dt id="nflwin.utilities.connect_nfldb">
+<code class="descclassname">nflwin.utilities.</code><code class="descname">connect_nfldb</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/utilities.html#connect_nfldb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.utilities.connect_nfldb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to the nfldb database.</p>
+<p>Rather than using the builtin method we make our own,
+since we&#8217;re going to use SQLAlchemy as the engine. However,
+we can still make use of the information in the nfldb config
+file to get information like username and password, which
+means this function doesn&#8217;t need any arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>None</strong></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">SQLAlchemy engine object</p>
+<blockquote>
+<div><p>A connected engine, ready to be used to query the DB.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>IOError</strong></p>
+<blockquote class="last">
+<div><p>If it can&#8217;t find the config file.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="nflwin.utilities.get_nfldb_play_data">
+<code class="descclassname">nflwin.utilities.</code><code class="descname">get_nfldb_play_data</code><span class="sig-paren">(</span><em>season_years=None, season_types=['Regular', 'Postseason']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/nflwin/utilities.html#get_nfldb_play_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#nflwin.utilities.get_nfldb_play_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get play-by-play data from the nfldb database.</p>
+<p>We use a specialized query and then postprocessing because, while possible to
+do using the objects created by <code class="docutils literal"><span class="pre">nfldb</span></code>, it is <em>orders of magnitude slower</em>.
+This is due to the more general nature of <code class="docutils literal"><span class="pre">nfldb</span></code>, which is not really designed
+for this kind of data mining. Since we need to get a lot of data in a single way,
+it&#8217;s much simpler to interact at a lower level with the underlying postgres
+database.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>season_years</strong> : list (default=None)</p>
+<blockquote>
+<div><p>A list of all years to get data for (earliest year in nfldb is 2009).
+If <code class="docutils literal"><span class="pre">None</span></code>, get data from all available seasons.</p>
+</div></blockquote>
+<p><strong>season_types</strong> : list (default=[&#8220;Regular&#8221;, &#8220;Postseason&#8221;])</p>
+<blockquote>
+<div><p>A list of all parts of seasons to get data for (acceptable values are
+&#8220;Preseason&#8221;, &#8220;Regular&#8221;, and &#8220;Postseason&#8221;). If <code class="docutils literal"><span class="pre">None</span></code>, get data from
+all three season types.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Pandas DataFrame</p>
+<blockquote class="last">
+<div><p>The play by play data, with the following columns:</p>
+<ul class="simple">
+<li><strong>gsis_id:</strong> The official NFL GSIS_ID for the game.</li>
+<li><strong>drive_id:</strong> The id of the drive, starts at 1 and increases by 1 for each new drive.</li>
+<li><strong>play_id:</strong> The id of the play in <code class="docutils literal"><span class="pre">nfldb</span></code>. Note that sequential plays have
+increasing but not necessarily sequential values. With <code class="docutils literal"><span class="pre">drive_id</span></code> and <code class="docutils literal"><span class="pre">gsis_id</span></code>,
+works as a unique identifier for a given play.</li>
+<li><strong>quarter:</strong> The quarter, prepended with &#8220;Q&#8221; (e.g. <code class="docutils literal"><span class="pre">Q1</span></code> means the first quarter). 
+Overtime periods are denoted as <code class="docutils literal"><span class="pre">OT</span></code>, <code class="docutils literal"><span class="pre">OT2</span></code>, and theoretically <code class="docutils literal"><span class="pre">OT3</span></code> if one were to
+ever be played.</li>
+<li><strong>seconds_elapsed:</strong> seconds elapsed since the start of the quarter.</li>
+<li><strong>offense_team:</strong> The abbreviation of the team currently with possession of the ball.</li>
+<li><strong>yardline:</strong> The current field position. Goes from -49 to 49, where negative numbers
+indicate that the team with possession is on its own side of the field.</li>
+<li><strong>down:</strong> The down. kickoffs, extra points, and similar have a down of 0.</li>
+<li><strong>yards_to_go:</strong> How many yards needed in order to get a first down (or touchdown).</li>
+<li><strong>home_team:</strong> The abbreviation of the home team.</li>
+<li><strong>away_team:</strong> The abbreviation of the away team.</li>
+<li><strong>curr_home_score:</strong> The home team&#8217;s score at the start of the play.</li>
+<li><strong>curr_away_score:</strong> The away team&#8217;s score at the start of the play.</li>
+<li><strong>offense_won:</strong> A boolean - <code class="docutils literal"><span class="pre">True</span></code> if the offense won the game, <code class="docutils literal"><span class="pre">False</span></code> otherwise. (The
+database query skips tied games.)</li>
+</ul>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal"><span class="pre">gsis_id</span></code>, <code class="docutils literal"><span class="pre">drive_id</span></code>, and <code class="docutils literal"><span class="pre">play_id</span></code> are not necessary to make the model, but
+are included because they can be useful for computing things like WPA.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-nflwin">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-nflwin" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="modules.html" class="btn btn-neutral" title="nflwin" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Andrew Schechtman-Rook.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
