@@ -301,3 +301,8 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+#Run apidoc if inside a ReadTheDocs environment:
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if on_rtd:
+    os.system("sphinx-apidoc -f -o doc/source nflwin/ nflwin/tests")
