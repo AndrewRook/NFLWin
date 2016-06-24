@@ -83,6 +83,7 @@
                 <p class="caption"><span class="caption-text">Links</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="nfldb.html">Using nfldb</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules.html">Full API Documentation</a></li>
 </ul>
 
@@ -150,27 +151,24 @@ data-source-agnostic as long as the data is formatted properly for the
 model to parse.</p>
 <div class="section" id="quickstart">
 <h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
-<p>NFLWin is pip-installable:</p>
+<p>NFLWin is <code class="docutils literal"><span class="pre">pip</span></code>-installable:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ pip install nflwin
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">Test</p>
+<p class="last">NFLWin depends on <a class="reference external" href="https://www.scipy.org/">SciPy</a>, which
+is notoriously difficult to install properly via
+<code class="docutils literal"><span class="pre">pip</span></code>. You may wish to use the <a class="reference external" href="http://conda.pydata.org/docs/">Conda</a> package manager to install
+Scipy before installing NFLWin.</p>
 </div>
 <p>When installed via <code class="docutils literal"><span class="pre">pip</span></code>, NFLWin comes with a working Win Probability model out-of-the-box:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="p">::</span> <span class="n">python</span>
-</pre></div>
-</div>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">nflwin.model</span> <span class="k">import</span> <span class="n">WPModel</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">nflwin.model</span> <span class="kn">import</span> <span class="n">WPModel</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">standard_model</span> <span class="o">=</span> <span class="n">WPModel</span><span class="o">.</span><span class="n">load_model</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>NFLWin operates on <a class="reference external" href="http://pandas.pydata.org/">Pandas</a> DataFrames:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="p">::</span> <span class="n">python</span>
-</pre></div>
-</div>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">plays</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
 <span class="gp">... </span><span class="s2">&quot;quarter&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Q1&quot;</span><span class="p">,</span> <span class="s2">&quot;Q2&quot;</span><span class="p">,</span> <span class="s2">&quot;Q4&quot;</span><span class="p">],</span>
 <span class="gp">... </span><span class="s2">&quot;seconds_elapsed&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">600</span><span class="p">],</span>
@@ -186,10 +184,7 @@ model to parse.</p>
 </pre></div>
 </div>
 <p>Once data is loaded, using the model to predict WP is easy:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="p">::</span> <span class="n">python</span>
-</pre></div>
-</div>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">standard_model</span><span class="o">.</span><span class="n">predict_wp</span><span class="p">(</span><span class="n">plays</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">standard_model</span><span class="o">.</span><span class="n">predict_wp</span><span class="p">(</span><span class="n">plays</span><span class="p">)</span>
 <span class="go">array([ 0.58300397,  0.64321796,  0.18195466])</span>
 </pre></div>
 </div>

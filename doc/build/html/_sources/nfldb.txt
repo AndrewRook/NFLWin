@@ -1,21 +1,34 @@
-NFLWin
+Using Data From nfldb
 -------------
 
-A package designed to compute Win Percentage (WP) for NFL plays.
+NFLWin comes with robust support for querying data from `nfldb
+<https://github.com/BurntSushi/nfldb>`_, a package designed to
+facilitate downloading and accessing play-by-play data. There are
+functions to query the nfldb database in :py:mod:`nflwin.utilities`,
+and :py:class:`nflwin.model.WPModel` has keyword arguments that allow
+you to directly use nfldb data to fit and validate a WP model. Using
+nfldb is totally optional: a default model is already fit and ready to
+use, and NFLWin is fully compatible with any source for play-by-play
+data. However, nfldb is one of the few free sources of up-to-date NFL
+data and so it may be a useful resource to have. 
 
-Installation Instructions
----------------------------------------------
+nfldb is pip-installable, and can be installed as an extra dependency
+(``pip install nflwin[nfldb]``). Without setting up the nfldb
+Postgres database first, however, the pip install will succeed but
+nfldb will be unuseable. What's more, trying to set up the database
+*after* installing nfldb may fail as well. 
 
-1. Installing nfldb (optional)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These steps are only necessary if you want to re-build the model or
-use nfldb as your data source. Most of these instructions can be found on the nfldb page, but
-I've repeated them here in the order I followed them (on Mac OS 10.10).
+The nfldb wiki has `fairly decent installation instructions
+<https://github.com/BurntSushi/nfldb/wiki/Installation>`_, but I know
+that when I went through the installation process I had to interpret
+and adjust several steps. I'd at least recommend reading through the
+wiki first, but in case it's useful 
+I've listed the steps I followed below (for reference I was on Mac OS 10.10).
 
 Installing Postgres
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 I had an old install kicking around, so I first had to clean that up.
-Since I was using Homebrew::
+Since I was using `Homebrew <http://brew.sh/>`_::
 
   $ brew uninstall -force postgresql
   $ rm -rf /usr/local/var/postgres/ # where I'd installed the prior DB
@@ -59,7 +72,8 @@ Next, add a password::
   superuser password';
   USERNAME=# \q;
 
-Edit the ``pg_hba.conf``file found in your database (in this case
+Edit the ``pg_hba.conf``file found in your database (in my case the
+file was 
 ``/usr/local/var/postgres/pg_hba.conf``), and change all instances of
 ``trust`` to ``md5``. 
 
@@ -88,35 +102,4 @@ From this point you should be able to follow along with the
 instructions from `nfldb
 <https://github.com/BurntSushi/nfldb/wiki/Installation#importing-the-nfldb-database>`_. 
 
-2. Setting up Your Environment
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you're going to use ``nfldb`` to get your game data, it's critical
-to complete part 1 **before** moving to this part, or else you may
-find weird things are broken (for instance, having to
-uninstall/reinstall ``psycopg2``). 
-
-2a. Developers
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-Pretty simple - get ``conda``, then::
-
-  $ conda env create -f environment.yml
-
-2b. Users
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-This will depend on whether or not you want the nfldb dependencies.
-
-
-3. Running Tests
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-``NFLWin`` uses ``pytest`` to run unit tests. You can invoke ``pytest``
-like so::
-
-  $ ./run_tests.sh
-
-This will run the test suite on all modules and print out the results
-as well as a coverage report. If you have ``nfldb`` properly installed
-and wish to run additional tests specifically relating to querying the
-database (will take longer), use the ``-d`` flag::
-
-  $ ./run_tests.sh -d
 

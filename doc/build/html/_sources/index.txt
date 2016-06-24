@@ -25,22 +25,27 @@ model to parse.
 Quickstart
 ---------------
 
-NFLWin is pip-installable::
+NFLWin is ``pip``-installable::
 
   $ pip install nflwin
 
-.. note:: Test
+.. note:: NFLWin depends on `SciPy <https://www.scipy.org/>`_, which
+	  is notoriously difficult to install properly via
+	  ``pip``. You may wish to use the `Conda
+	  <http://conda.pydata.org/docs/>`_ package manager to install
+	  Scipy before installing NFLWin.
 
-When installed via ``pip``, NFLWin comes with a working Win Probability model out-of-the-box::
+When installed via ``pip``, NFLWin comes with a working Win Probability model out-of-the-box:
 
 .. code-block:: python
 
   >>> from nflwin.model import WPModel
   >>> standard_model = WPModel.load_model()
 
-NFLWin operates on `Pandas <http://pandas.pydata.org/>`_ DataFrames::
+NFLWin operates on `Pandas <http://pandas.pydata.org/>`_ DataFrames:
   
 .. code-block:: python
+
   >>> import pandas as pd 
   >>> plays = pd.DataFrame({
   ... "quarter": ["Q1", "Q2", "Q4"],
@@ -55,9 +60,10 @@ NFLWin operates on `Pandas <http://pandas.pydata.org/>`_ DataFrames::
   ... "curr_away_score": [0, 0, 10]
   ... })
 
-Once data is loaded, using the model to predict WP is easy::
+Once data is loaded, using the model to predict WP is easy:
 
 .. code-block:: python
+
   >>> standard_model.predict_wp(plays)
   array([ 0.58300397,  0.64321796,  0.18195466])
 
@@ -70,6 +76,7 @@ Resources
    :caption: Links
 
    installation.rst
+   Using nfldb <nfldb.rst>
    Full API Documentation <modules.rst>
 
 * :ref:`Full API Documentation <modindex>`

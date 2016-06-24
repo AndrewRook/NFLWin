@@ -70,6 +70,10 @@ Once data is loaded, using the model to predict WP is easy:
 Resources
 --------
 
+Default Model metrics
+Making a new model
+
+
 .. toctree::
    :maxdepth: 2
    :hidden:
