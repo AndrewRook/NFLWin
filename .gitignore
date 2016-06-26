@@ -9,3 +9,4 @@ dist/
 old_pywpa/
 secrets.txt
 
+doc/build/

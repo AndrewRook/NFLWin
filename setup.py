@@ -1,4 +1,5 @@
 import os
+import re
 import tarfile
 import warnings
 from setuptools import setup, find_packages
@@ -7,13 +8,21 @@ from setuptools.command.install import install as _install
 ###################################################################
 #Boilerplate I modified from the internet
 
+VERSION_FILE = "nflwin/_version.py"
+version_string = open(VERSION_FILE, "r").read()
+version_re = r"^__version__ = ['\"]([^'\"]*)['\"]"
+version_match = re.search(version_re, version_string, re.M)
+if version_match:
+    VERSION = version_match.group(1)
+else:
+    raise RuntimeError("Unable to find version string in {0}".format(VERSION_FILE))
+
 NAME = "nflwin"
 PACKAGES = find_packages(where=".")
 META_PATH = os.path.join(NAME, "__init__.py")
 KEYWORDS = ['NFL','WP','Win Probability']
 CLASSIFIERS = [
     "Development Status :: 2 - Pre-Alpha",
-    "Intended Audience :: Football Analytics Enthusiasts",
     "Natural Language :: English",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -47,7 +56,7 @@ if __name__ == "__main__":
         description='A Python implementation of NFL Win Probability (WP)',
         license='MIT',
         url='https://github.com/AndrewRook/NFLWin',
-        version='0.1.0',
+        version=VERSION,
         author='Andrew Schechtman-Rook',
         author_email='footballastronomer@gmail.com',
         maintainer='Andrew Schechtman-Rook',

@@ -1,3 +1,5 @@
+.. _nfldb-install:
+
 Using Data From nfldb
 -------------
 

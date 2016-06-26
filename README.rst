@@ -26,7 +26,7 @@ Estimate Win Probability (WP) for plays in NFL games:
   >>> standard_model.predict_wp(plays)
   array([ 0.58300397,  0.64321796,  0.18195466])
 
-For full documentation, including information about methods and accuracy, click `here <https://AndrewRook.github.io/NFLWin>`_.
+For full documentation, including information about methods and accuracy, click `here <http://nflwin.readthedocs.io/>`_.
 
 License
 ---------------
