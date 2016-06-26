@@ -25,6 +25,9 @@
 
 set -e
 
+echo "Need to change pypi server!
+exit 1
+
 #Parse command line arguments:
 if [ "$#" -ne 1 ]; then
     echo "Syntax: ./increment_version.sh [major|minor|patch]"
@@ -104,10 +107,12 @@ git add nflwin/_version.py
 git commit -m "bumped ${VERSION_TYPE} version to ${NEW_VERSION}"
 
 #Tag the commit:
-git tag -a ${NEW_VERSION} "bumped ${VERSION_TYPE}"
+git tag -a ${NEW_VERSION} -m "bumped ${VERSION_TYPE}"
 
 #Push the commit and tag:
 git push
 git push origin ${NEW_VERSION}
+
+echo "finished!"
 
 exit 0
