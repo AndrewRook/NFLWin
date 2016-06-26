@@ -25,7 +25,7 @@
 
 set -e
 
-echo "Need to change pypi server!
+echo "Need to change pypi server!"
 exit 1
 
 #Parse command line arguments:
