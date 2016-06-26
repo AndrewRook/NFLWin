@@ -16,10 +16,11 @@
 #    git tag to make sure they're the same.
 # 7. Figures out what the new version should be.
 # 8. Updates nflwin/_version.py to the new version.
-# 9. Adds and commits nflwin/_version.py with commit message
+# 9. Uploads package to PyPI.
+#10. Adds and commits nflwin/_version.py with commit message
 #    "bumped [TYPE] version to [VERSION]", where [TYPE] is major, minor, or patch.
-#10. Tags latest commit with version number (no 'v').
-#11. Pushes commit and tag.
+#11. Tags latest commit with version number (no 'v').
+#12. Pushes commit and tag.
 ########################################################################
 
 set -e
@@ -67,8 +68,46 @@ fi
 VERSION_PY=`grep "^__version__" nflwin/_version.py | awk '{print $NF}' | tr -d \"`
 
 #Get version in git:
-VERSION_git=`git describe --tags $(git rev-list --tags --max-count=1)`
+VERSION_GIT=`git describe --tags $(git rev-list --tags --max-count=1)`
 
-echo $VERSION_PY $VERSION_git
+#Ensure versions are the same:
+if [ $VERSION_PY != $VERSION_GIT ]; then
+    echo "Versions must match! Python version=${VERSION_PY}, git version=${VERSION_GIT}"
+    exit 1
+fi
+
+#Determines what new version should be:
+MAJOR=`echo $VERSION_PY | awk -F"." '{print $1}'`
+MINOR=`echo $VERSION_PY | awk -F"." '{print $2}'`
+PATCH=`echo $VERSION_PY | awk -F"." '{print $3}'`
+if [ $VERSION_TYPE == "patch" ]; then
+    PATCH=$(expr $PATCH + 1)
+elif [ $VERSION_TYPE == "minor" ]; then
+    MINOR=$(expr $MINOR + 1)
+    PATCH=0
+else
+    MAJOR=$(expr $MAJOR + 1)
+    MINOR=0
+    PATCH=0
+fi
+NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+
+#Update nflwin/_version.py:
+sed -i.bak "s/${VERSION_PY}/${NEW_VERSION}/" nflwin/_version.py
+rm nflwin/_version.py.bak
+
+#Upload package to PyPI:
+python setup.py sdist upload -r pypitest
+
+#Stage and commit nflwin/_version.py
+git add nflwin/_version.py
+git commit -m "bumped ${VERSION_TYPE} version to ${NEW_VERSION}"
+
+#Tag the commit:
+git tag -a ${NEW_VERSION} "bumped ${VERSION_TYPE}"
+
+#Push the commit and tag:
+git push
+git push origin ${NEW_VERSION}
 
 exit 0
