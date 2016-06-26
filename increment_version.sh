@@ -17,9 +17,9 @@
 # 7. Figures out what the new version should be.
 # 8. Updates nflwin/_version.py to the new version.
 # 9. Adds and commits nflwin/_version.py with commit message
-#    "bumped [TYPE] version", where [TYPE] is major, minor, or patch.
+#    "bumped [TYPE] version to [VERSION]", where [TYPE] is major, minor, or patch.
 #10. Tags latest commit with version number (no 'v').
-#11. Pushes commits and tags.
+#11. Pushes commit and tag.
 ########################################################################
 
 set -e
@@ -64,9 +64,11 @@ fi
 ./run_tests.sh #Will return 1 if any tests fail, thus triggering the set -e flag.
 
 #Get version in nflwin/_version.py
-VERSION_PY = `grep "^__version__" nflwin/_version.py | awk '{print $NF}' | tr -d \"`
+VERSION_PY=`grep "^__version__" nflwin/_version.py | awk '{print $NF}' | tr -d \"`
 
-#Get version in github:
+#Get version in git:
+VERSION_git=`git describe --tags $(git rev-list --tags --max-count=1)`
 
+echo $VERSION_PY $VERSION_git
 
 exit 0
