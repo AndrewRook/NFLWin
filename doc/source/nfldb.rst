@@ -1,7 +1,7 @@
 .. _nfldb-install:
 
 Using Data From nfldb
--------------
+=======================================
 
 NFLWin comes with robust support for querying data from `nfldb
 <https://github.com/BurntSushi/nfldb>`_, a package designed to
@@ -13,6 +13,10 @@ nfldb is totally optional: a default model is already fit and ready to
 use, and NFLWin is fully compatible with any source for play-by-play
 data. However, nfldb is one of the few free sources of up-to-date NFL
 data and so it may be a useful resource to have. 
+
+
+Installing nfldb
+--------------------------------
 
 nfldb is pip-installable, and can be installed as an extra dependency
 (``pip install nflwin[nfldb]``). Without setting up the nfldb
@@ -27,8 +31,9 @@ and adjust several steps. I'd at least recommend reading through the
 wiki first, but in case it's useful 
 I've listed the steps I followed below (for reference I was on Mac OS 10.10).
 
+
 Installing Postgres
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 I had an old install kicking around, so I first had to clean that up.
 Since I was using `Homebrew <http://brew.sh/>`_::
 
@@ -104,4 +109,51 @@ From this point you should be able to follow along with the
 instructions from `nfldb
 <https://github.com/BurntSushi/nfldb/wiki/Installation#importing-the-nfldb-database>`_. 
 
+Using nfldb
+----------------------
 
+Once nfldb is properly installed, you can use it with NFLwin in a
+couple of different ways.
+
+Querying Data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+nfldb comes with a robust set of options to query its database, but
+they tend to be designed more for ad hoc querying of small amounts of
+data or computing aggregate statistics. It's possible to use built-in
+nfldb queries to get the data NFLWin needs, but it's *slow*. So NFLWin
+has built in support for bulk queries of nfldb in the
+:py:mod:`nflwin.utilities` module::
+
+      >>> from nflwin import utilities
+      >>> data = utilities.get_nfldb_play_data(season_years=[2010],
+      ... season_types=["Regular", "Postseason"])
+      >>> data.head()
+            gsis_id  drive_id  play_id offense_team  yardline  down  yards_to_go  \
+      0  2010090900         1       35          MIN     -20.0     0            0   
+      1  2010090900         1       57           NO     -27.0     1           10   
+      2  2010090900         1       81           NO       1.0     1           10   
+      3  2010090900         1      109           NO      13.0     1           10   
+      4  2010090900         1      135           NO      13.0     2           10   
+      
+        home_team away_team offense_won quarter  seconds_elapsed  curr_home_score  \
+      0        NO       MIN       False      Q1              0.0                0   
+      1        NO       MIN        True      Q1              4.0                0   
+      2        NO       MIN        True      Q1             39.0                0   
+      3        NO       MIN        True      Q1             79.0                0   
+      4        NO       MIN        True      Q1             84.0                0   
+
+         curr_away_score  
+      0                0  
+      1                0  
+      2                0  
+      3                0  
+      4                0  
+
+You can see the `docstring <nflwin.html#nflwin.utilities.get_nfldb_play_data>`_ for more details, but basically ``get_nfldb_play_data`` queries
+the nfldb database directly for columns relevant to estimating WP,
+does some simple parsing/preprocessing to get them in the right format,
+then returns them as a dataframe. Keyword arguments control what parts
+of seasons are queried.
+
+Integration with WPModel
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
