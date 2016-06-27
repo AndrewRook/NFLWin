@@ -81,6 +81,7 @@ Making a new model
 
    installation.rst
    Using nfldb <nfldb.rst>
+   Developer Documentation <dev.rst>
    Full API Documentation <modules.rst>
 
 * :ref:`Full API Documentation <modindex>`
