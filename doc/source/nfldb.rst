@@ -157,3 +157,17 @@ of seasons are queried.
 
 Integration with WPModel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+While you can train NFLWin's win probability model
+(:py:class:`nflwin.model.WPModel`) with whatever data you want, it
+comes with keyword arguments that allow you to query nfldb
+directly. For instance, to train the default model on the 2009 and 2010
+regular seasons from nfldb, you'd enter the following::
+
+  >>> from nflwin.model import WPModel
+  >>> model = WPModel()
+  >>> model.create_default_pipeline() #doctest: +ELLIPSIS
+  Pipeline(...)
+  >>> model.train_model(source_data="nfldb",
+  ... training_seasons=[2009, 2010],
+  ... training_season_types=["Regular"])
