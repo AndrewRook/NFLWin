@@ -25,7 +25,7 @@
 
 set -e
 
-echo "Need to change pypi server!
+echo "Need to change pypi server!"
 exit 1
 
 #Parse command line arguments:
@@ -68,7 +68,7 @@ fi
 ./run_tests.sh #Will return 1 if any tests fail, thus triggering the set -e flag.
 
 #Get version in nflwin/_version.py
-VERSION_PY=`grep "^__version__" nflwin/_version.py | awk '{print $NF}' | tr -d \"`
+VERSION_PY=`grep "^__version__" nflwin/_version.py | awk '{print $NF}' | tr -d \" | tr -d u`
 
 #Get version in git:
 VERSION_GIT=`git describe --tags $(git rev-list --tags --max-count=1)`
