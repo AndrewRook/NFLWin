@@ -42,6 +42,15 @@ When installed via ``pip``, NFLWin comes with a working Win Probability model ou
   >>> from nflwin.model import WPModel
   >>> standard_model = WPModel.load_model()
 
+The default model can be inspected to learn what data it requires:
+
+.. code-block:: python
+
+  >>> standard_model.column_descriptions
+  {'home_team': 'Abbreviation for the home team', 'yardline': "The yardline, given by (yards from own goalline - 50). -49 is your own 1 while 49 is the opponent's 1.", 'seconds_elapsed': 'Seconds elapsed in the quarter', 'down': 'The current down', 'curr_away_score': 'Abbreviation for the visiting team', 'offense_team': 'Abbreviation for the offensive team', 'yards_to_go': 'Yards to a first down (or the endzone)', 'quarter': 'The quarter'}
+
+  
+
 NFLWin operates on `Pandas <http://pandas.pydata.org/>`_ DataFrames:
   
 .. code-block:: python
