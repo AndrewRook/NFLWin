@@ -1,12 +1,21 @@
 from __future__ import print_function, division
 
 import os
+import collections
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from nflwin import model
+
+class TestDefaults(object):
+    """Tests for defaults."""
+
+    def test_column_descriptions_set(self):
+        wpmodel = model.WPModel()
+        assert isinstance(wpmodel.column_descriptions, collections.Mapping)
+        
 
 class TestTestDistribution(object):
     """Tests the _test_distribution static method of WPModel."""

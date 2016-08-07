@@ -29,26 +29,6 @@ class WPModel(object):
 
     Parameters
     ----------
-    home_score_colname : string (default="curr_home_score")
-        The name of the column containing the current home score at the start of a play.
-    away_score_colname : string (default="curr_away_score")
-        The name of the column containing the current away score at the start of a play.
-    quarter_colname : string (default="quarter")
-        The name of the column containing the quarter the play took place in.
-    time_colname : string (default="seconds_elapsed")
-        The name of the column containing the time elapsed (in seconds) from the start
-        of the quarter when the play began.
-    down_colname : string (default="down")
-        The name of the column containing the current down number, with zeros for plays like
-        kickoffs and extra points.
-    yards_to_go_colname : string (default="yards_to_go")
-        The name of the column containing the number of yards to go in order to get a first down.
-    offense_team_colname : string (default="offense_team")
-        The name of the column containing the abbreviation for the team currently on offense.
-    home_team_colname : string (default="home_team")
-        The name of the column containing the abbreviation for the home team.
-    offense_won_colname : string (default="offense_won")
-        The name of the column containing whether or not the offense ended up winning the game.
     copy_data : boolean (default=``True``)
         Whether or not to copy data when fitting and applying the model. Running the model
         in-place (``copy_data=False``) will be faster and have a smaller memory footprint,
@@ -59,6 +39,10 @@ class WPModel(object):
     model : A Scikit-learn pipeline (or equivalent)
         The actual model used to compute WP. Upon initialization it will be set to
         a default model, but can be overridden by the user.
+    column_descriptions : dictionary
+        A dictionary whose keys are the names of the columns used in the model, and the values are
+        string descriptions of what the columns mean. Set at initialization to be the default model,
+        if you create your own model you'll need to update this attribute manually.
     training_seasons : A list of ints, or ``None`` (default=``None``)
         If the model was trained using data downloaded from nfldb, a list of the seasons
         used to train the model. If nfldb was **not** used, an empty list. If no model
@@ -85,28 +69,8 @@ class WPModel(object):
     _default_model_filename = "default_model.nflwin"
 
     def __init__(self,
-                 home_score_colname="curr_home_score",
-                 away_score_colname="curr_away_score",
-                 quarter_colname="quarter",
-                 time_colname = "seconds_elapsed",
-                 down_colname="down",
-                 yards_to_go_colname="yards_to_go",
-                 yardline_colname="yardline",
-                 offense_team_colname="offense_team",
-                 home_team_colname="home_team",
-                 offense_won_colname="offense_won",
                  copy_data=True
                 ):
-        self.home_score_colname = home_score_colname
-        self.away_score_colname = away_score_colname
-        self.quarter_colname = quarter_colname
-        self.time_colname = time_colname
-        self.down_colname = down_colname
-        self.yards_to_go_colname = yards_to_go_colname
-        self.yardline_colname = yardline_colname
-        self.offense_team_colname = offense_team_colname
-        self.home_team_colname = home_team_colname
-        self.offense_won_colname = offense_won_colname
         self.copy_data = copy_data
 
         self.model = self.create_default_pipeline()
@@ -146,7 +110,8 @@ class WPModel(object):
     def train_model(self,
                     source_data="nfldb",
                     training_seasons=[2009, 2010, 2011, 2012, 2013, 2014],
-                    training_season_types=["Regular", "Postseason"]):
+                    training_season_types=["Regular", "Postseason"],
+                    target_colname="offense_won"):
         """Train the model.
 
         Once a modeling pipeline is set up (either the default or something
@@ -187,6 +152,8 @@ class WPModel(object):
             If querying from the nfldb database, what parts of the seasons to use.
             Options are "Preseason", "Regular", and "Postseason". If ``source_data`` is not
             ``"nfldb"``, this argument will be ignored.
+        target_colname : string or integer (default=``"offense_won"``)
+            The name of the target variable column. 
 
         Returns
         -------
@@ -199,14 +166,15 @@ class WPModel(object):
                                                         season_types=training_season_types)
             self._training_seasons = training_seasons
             self._training_season_types = training_season_types
-        target_col = source_data[self.offense_won_colname]
-        feature_cols = source_data.drop(self.offense_won_colname, axis=1)
+        target_col = source_data[target_colname]
+        feature_cols = source_data.drop(target_colname, axis=1)
         self.model.fit(feature_cols, target_col)
 
     def validate_model(self,
                        source_data="nfldb",
                        validation_seasons=[2015],
-                       validation_season_types=["Regular", "Postseason"]):
+                       validation_season_types=["Regular", "Postseason"],
+                       target_colname="offense_won"):
         """Validate the model.
 
         Once a modeling pipeline is trained, a different dataset must be fed into the trained model
@@ -248,6 +216,8 @@ class WPModel(object):
             If querying from the nfldb database, what parts of the seasons to use.
             Options are "Preseason", "Regular", and "Postseason". If ``source_data`` is not
             ``"nfldb"``, this argument will be ignored.
+        target_colname : string or integer (default=``"offense_won"``)
+            The name of the target variable column. 
 
         Returns
         -------
@@ -285,8 +255,8 @@ class WPModel(object):
             self._validation_seasons = validation_seasons
             self._validation_season_types = validation_season_types
             
-        target_col = source_data[self.offense_won_colname]
-        feature_cols = source_data.drop(self.offense_won_colname, axis=1)
+        target_col = source_data[target_colname]
+        feature_cols = source_data.drop(target_colname, axis=1)
         predicted_probabilities = self.model.predict_proba(feature_cols)[:,1]
 
         self._sample_probabilities, self._predicted_win_percents, self._num_plays_used = (
@@ -411,28 +381,50 @@ class WPModel(object):
 
         steps = []
 
-        is_offense_home = preprocessing.ComputeIfOffenseIsHome(self.offense_team_colname,
-                                                               self.home_team_colname,
+        offense_team_colname = "offense_team"
+        home_team_colname = "home_team"
+        home_score_colname = "curr_home_score"
+        away_score_colname = "curr_away_score"
+        down_colname = "down"
+        quarter_colname = "quarter"
+        time_colname = "seconds_elapsed"
+        yardline_colname = "yardline"
+        yards_to_go_colname="yards_to_go"
+
+        self.column_descriptions = {
+            offense_team_colname: "Abbreviation for the offensive team",
+            home_team_colname: "Abbreviation for the home team",
+            away_score_colname: "Abbreviation for the visiting team",
+            down_colname: "The current down",
+            yards_to_go_colname: "Yards to a first down (or the endzone)",
+            quarter_colname: "The quarter",
+            time_colname: "Seconds elapsed in the quarter",
+            yardline_colname: ("The yardline, given by (yards from own goalline - 50). "
+                               "-49 is your own 1 while 49 is the opponent's 1.")
+            }
+
+        is_offense_home = preprocessing.ComputeIfOffenseIsHome(offense_team_colname,
+                                                               home_team_colname,
                                                                copy=self.copy_data)
         steps.append(("compute_offense_home", is_offense_home))
-        score_differential = preprocessing.CreateScoreDifferential(self.home_score_colname,
-                                                                   self.away_score_colname,
+        score_differential = preprocessing.CreateScoreDifferential(home_score_colname,
+                                                                   away_score_colname,
                                                                    is_offense_home.offense_home_team_colname,
                                                                    copy=self.copy_data)
         steps.append(("create_score_differential", score_differential))
-        steps.append(("map_downs_to_int", preprocessing.MapToInt(self.down_colname, copy=self.copy_data)))
-        total_time_elapsed = preprocessing.ComputeElapsedTime(self.quarter_colname, self.time_colname, copy=self.copy_data)
+        steps.append(("map_downs_to_int", preprocessing.MapToInt(down_colname, copy=self.copy_data)))
+        total_time_elapsed = preprocessing.ComputeElapsedTime(quarter_colname, time_colname, copy=self.copy_data)
         steps.append(("compute_total_time_elapsed", total_time_elapsed))
         steps.append(("remove_unnecessary_columns", preprocessing.CheckColumnNames(
             column_names=[is_offense_home.offense_home_team_colname,
                           score_differential.score_differential_colname,
                           total_time_elapsed.total_time_colname,
-                          self.yardline_colname,
-                          self.yards_to_go_colname,
-                          self.down_colname],
+                          yardline_colname,
+                          yards_to_go_colname,
+                          down_colname],
             copy=self.copy_data)))
         steps.append(("encode_categorical_columns", preprocessing.OneHotEncoderFromDataFrame(
-            categorical_feature_names=[self.down_colname],
+            categorical_feature_names=[down_colname],
             copy=self.copy_data)))
 
         search_grid = {'base_estimator__penalty': ['l1', 'l2'],
@@ -440,9 +432,8 @@ class WPModel(object):
                       }
         base_model = LogisticRegression()
         calibrated_model = CalibratedClassifierCV(base_model, cv=2, method="isotonic")
-        grid_search_model = GridSearchCV(calibrated_model, search_grid,
-                             scoring=self._brier_loss_scorer)
-        #steps.append(("compute_model", grid_search_model))
+        #grid_search_model = GridSearchCV(calibrated_model, search_grid,
+        #                     scoring=self._brier_loss_scorer)
         steps.append(("compute_model", calibrated_model))
 
         pipe = Pipeline(steps)
