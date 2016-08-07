@@ -10,7 +10,7 @@ from setuptools.command.install import install as _install
 
 VERSION_FILE = "nflwin/_version.py"
 version_string = open(VERSION_FILE, "r").read()
-version_re = r"^__version__ = ['\"]([^'\"]*)['\"]"
+version_re = r"^__version__ = [u]{0,1}['\"]([^'\"]*)['\"]"
 version_match = re.search(version_re, version_string, re.M)
 if version_match:
     VERSION = version_match.group(1)
