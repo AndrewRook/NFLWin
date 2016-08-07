@@ -25,9 +25,6 @@
 
 set -e
 
-echo "Need to change pypi server!"
-exit 1
-
 #Parse command line arguments:
 if [ "$#" -ne 1 ]; then
     echo "Syntax: ./increment_version.sh [major|minor|patch]"
@@ -100,7 +97,7 @@ sed -i.bak "s/${VERSION_PY}/${NEW_VERSION}/" nflwin/_version.py
 rm nflwin/_version.py.bak
 
 #Upload package to PyPI:
-python setup.py sdist upload -r pypitest
+python setup.py sdist upload -r pypi
 
 #Stage and commit nflwin/_version.py
 git add nflwin/_version.py
