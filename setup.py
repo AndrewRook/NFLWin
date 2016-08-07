@@ -22,7 +22,7 @@ PACKAGES = find_packages(where=".")
 META_PATH = os.path.join(NAME, "__init__.py")
 KEYWORDS = ['NFL','WP','Win Probability']
 CLASSIFIERS = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 4 - Beta",
     "Natural Language :: English",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
