@@ -88,10 +88,7 @@ For a (much) longer explanation, see the `PhD Football blog
 
 
 Resources
---------
-
-Default Model metrics
-
+------------
 
 .. toctree::
    :maxdepth: 2
