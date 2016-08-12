@@ -161,11 +161,14 @@ class WPModel(object):
         """
         self._training_seasons = []
         self._training_season_types = []
-        if source_data == "nfldb":
-            source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
-                                                        season_types=training_season_types)
-            self._training_seasons = training_seasons
-            self._training_season_types = training_season_types
+        if isinstance(source_data, basestring):
+            if source_data == "nfldb":
+                source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
+                                                            season_types=training_season_types)
+                self._training_seasons = training_seasons
+                self._training_season_types = training_season_types
+            else:
+                raise ValueError("WPModel: if source_data is a string, it must be 'nfldb'")
         target_col = source_data[target_colname]
         feature_cols = source_data.drop(target_colname, axis=1)
         self.model.fit(feature_cols, target_col)

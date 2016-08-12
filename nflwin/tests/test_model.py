@@ -20,6 +20,11 @@ class TestDefaults(object):
 class TestModelTrain(object):
     """Tests for the train_model method."""
 
+    def test_bad_string(self):
+        wpmodel = model.WPModel()
+        with pytest.raises(ValueError):
+            wpmodel.train_model(source_data="this is a bad string")
+
     def test_dataframe_input(self):
         wpmodel = model.WPModel()
         test_data = {'offense_won': {0: True, 1: False, 2: False,
