@@ -83,17 +83,17 @@ If you want to supply your own data, that's easy too - simply set the
 Building a New Model
 --------------------
 If you want to construct a totally new model, that's possible
-too. Basically, you just need to instantiate
+too. Just instantiate
 :class:`~nflwin.model.WPModel`, then replace the
 :attr:`~nflwin.model.WPModel.model` attribute with either a
- scikit-learn `classifier
- <http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html>`_
- or `Pipeline
- <http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`_. From
- that point :meth:`~nflwin.model.WPModel.train_model` and
- :meth:`~nflwin.model.WPModel.validate_model` should work as normal.
+scikit-learn `classifier
+<http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html>`_
+or `Pipeline
+<http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`_. From
+that point :meth:`~nflwin.model.WPModel.train_model` and
+:meth:`~nflwin.model.WPModel.validate_model` should work as normal.
 
 .. note::
-   If you create your own model,
-   :attr:`~nflwin.model.WPModel.column_descriptions` will no longer be
-	 accurate unless you update it manually. 
+   If you create your own model, the
+   :attr:`~nflwin.model.WPModel.column_descriptions` attribute will no longer be
+   accurate unless you update it manually. 
