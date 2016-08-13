@@ -55,4 +55,45 @@ If you want to supply your own data, that's easy too - simply set the
   2                0  
   3                0  
   4                0 
+  >>> new_data_model.train_model(source_data=training_data)
+  >>> validation_data.head()
+        gsis_id  drive_id  play_id offense_team  yardline  down  yards_to_go  \
+  0  2014090400         1       36          SEA     -15.0     0            0   
+  1  2014090400         1       58           GB     -37.0     1           10   
+  2  2014090400         1       79           GB     -31.0     2            4   
+  3  2014090400         1      111           GB     -26.0     1           10   
+  4  2014090400         1      132           GB     -11.0     1           10   
   
+    home_team away_team offense_won quarter  seconds_elapsed  curr_home_score  \
+  0       SEA        GB        True      Q1              0.0                0   
+  1       SEA        GB       False      Q1              4.0                0   
+  2       SEA        GB       False      Q1             30.0                0   
+  3       SEA        GB       False      Q1             49.0                0   
+  4       SEA        GB       False      Q1             88.0                0   
+  
+     curr_away_score  
+  0                0  
+  1                0  
+  2                0  
+  3                0  
+  4                0  
+  >>> new_data_model.validate_model(source_data=validation_data)
+  6.8222808634589248e-35
+
+Building a New Model
+--------------------
+If you want to construct a totally new model, that's possible
+too. Basically, you just need to instantiate
+:class:`~nflwin.model.WPModel`, then replace the
+:attr:`~nflwin.model.WPModel.model` attribute with either a
+ scikit-learn `classifier
+ <http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html>`_
+ or `Pipeline
+ <http://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html>`_. From
+ that point :meth:`~nflwin.model.WPModel.train_model` and
+ :meth:`~nflwin.model.WPModel.validate_model` should work as normal.
+
+.. note::
+   If you create your own model,
+   :attr:`~nflwin.model.WPModel.column_descriptions` will no longer be
+	 accurate unless you update it manually. 
