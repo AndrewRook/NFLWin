@@ -78,59 +78,17 @@ Once data is loaded, using the model to predict WP is easy:
 
 Why NFLWin?
 --------------
-NFLWin is far from the first effort to compute Win Probabilities for
-NFL plays. Brian Burke at Advanced NFL Analytics was one of the first
-to popularize WP in recent years, `writing about the theory behind it
-<http://www.advancedfootballanalytics.com/index.php/home/stats/stats-explained/win-probability-and-wpa>`_
-as well as providing `real-time WP charts for games
-<http://www.advancedfootballanalytics.com/index.php/home/tools>`_. Others
-have picked up on this technique: Pro Football Reference (PFR) has their
-`own model
-<http://www.pro-football-reference.com/about/win_prob.htm>`_ as well
-as an `interactive WP calculator
-<http://www.pro-football-reference.com/play-index/win_prob.cgi?>`_,
-and the technique is offered by `multiple
-<https://www.numberfire.com/live>`_  analytics `startups
-<http://massey-peabody.com/win-probabilities/>`_. It's one of the most
-important tools in the NFL analytics toolchest.
+Put simply, there are no other options: while WP models have been
+widely used in NFL analytics for years, the analytics community has
+almost totally dropped the ball in making these models available for the
+general public or even explaining their algorithms at all.
 
-So why create NFLWin? Well, to put it bluntly, while there are many
-other analysts using WP, they're not publishing their methodologies
-and algorithms or quantifying the quality of their results. This
-information is critical in order to allow others both to use WP
-themselves but also `to validate the correctness of the models <https://en.wikipedia.org/wiki/Peer_review>`_. Brian Burke has never discussed any of the details of
-his WP model (and now that `he's at ESPN <http://www.advancedfootballanalytics.com/index.php/29-site-news/249-all-good-things>`_, that situation is unlikely to
-improve any time soon), and analytics startups are (unsurprisingly)
-treating their models as trade secrets. PFR goes
-into more detail about their model, but it relies on an Estimated
-Points model that is `not explained in sufficient detail to reproduce
-it
-<http://www.sports-reference.com/blog/2012/03/features-expected-points/>`_.
-
-Possibly the best description of a WP model comes from Dennis Lock and
-Dan Nettleton,
-`who wrote an academic paper outline his approach
-<http://nebula.wsimg.com/d376d7bbfed4109a6fbdf8c09e442161?AccessKeyId=6D2A085DACA3DAA9E4A3&disposition=0&alloworigin=1>`_. Lock
-and Nettleton's
-paper provides information regarding the data source used to train the
-model, the type of model used, the software used to build the model,
-and some statistics indicating the quality of the model. It even
-includes a qualitative comparison with Brian Burke's WP estimates. This is far
-and away the most complete, transparent accounting of the guts of a WP
-model and is laudable. However, as often happens in academia, none of
-the code used to build and test their WP model is available for others
-to use; while in principle it would be possible for anyone to recreate
-their model to build on or validate their work, this would require
-building their entire pipeline from scratch based off of prose
-descriptions. 
-
+For a (much) longer explanation, see the `PhD Football blog
+<http://phdfootball.blogspot.com/>`_.
 
 
 Resources
---------
-
-Default Model metrics
-
+------------
 
 .. toctree::
    :maxdepth: 2
