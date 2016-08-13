@@ -96,4 +96,44 @@ that point :meth:`~nflwin.model.WPModel.train_model` and
 .. note::
    If you create your own model, the
    :attr:`~nflwin.model.WPModel.column_descriptions` attribute will no longer be
-   accurate unless you update it manually. 
+   accurate unless you update it manually.
+   
+.. note::
+   If your model uses a data structure other than a Pandas DataFrame,
+   you will not be able to use the ``source_data="nfldb"`` default
+   kwarg of :meth:`~nflwin.model.WPModel.train_model` and
+   :meth:`~nflwin.model.WPModel.validate_model`. If you want to use nfldb
+   data, query it through :func:`nflwin.utilities.get_nfldb_play_data`
+   first and convert it from a DataFrame to the format required by your model.
+
+Using NFLWin's Preprocessors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+While you can completely roll your own WP model from scratch, NFLWin
+comes with several classes designed to aid in preprocessing your
+data. These can be found in the appropriately named
+:mod:`~nflwin.preprocessing` module. Each of these preprocessors inherits
+from scikit-learn's BaseEstimator class, and therefore is fully
+compatible with scikit-learn Pipelines. Available preprocessors
+include:
+
+* :class:`~nflwin.preprocessing.ComputeElapsedTime`: Convert the time
+  elapsed in a quarter into the total seconds elapsed in the game.
+* :class:`~nflwin.preprocessing.ComputeIfOffenseIsHome`: Create an
+  indicator variable for whether or not the offense is the home team.
+* :class:`~nflwin.preprocessing.CreateScoreDifferential`: Create a
+  column indicating the difference between the offense and defense
+  point totals (offense-defense). Uses home team and away team plus
+  an indicator giving if the offense is the home team to compute.
+* :class:`~nflwin.preprocessing.MapToInt`: Map a column of values to
+  integers. Useful for string columns (e.g. a quarter column with "Q1", "Q2", etc).
+* :class:`~nflwin.preprocessing.CheckColumnNames`: Ensure that only the desired data gets passed to
+  the model in the right order. Useful to guarantee that the
+  underlying numpy arrays in a Pandas DataFrame used for model
+  validation are in the same order as they were when the model was
+  trained.
+
+To see examples of these preprocessors in use to build a model, look
+at :meth:`nflwin.model.WPModel.create_default_pipeline`.
+
+Estimating Quality of Fit
+-------------------------
