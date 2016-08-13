@@ -135,5 +135,49 @@ include:
 To see examples of these preprocessors in use to build a model, look
 at :meth:`nflwin.model.WPModel.create_default_pipeline`.
 
+Model I/O
+---------
+To save a model to disk, use the
+:meth:`nflwin.model.WPModel.save_model` method.
+
+.. note::
+   If you do not provide
+   a filename, the default model will be overwritten and in order to
+   recover it you will need to reinstall NFLWin (which will then
+   overwrite any non-default models you have saved).
+
+To load a model from disk, use the
+:meth:`nflwin.model.WPModel.load_model` class method. By default this
+will load the standard model that comes bundled with pip installs of
+NFLWin. Simply specify the ``filename`` kwarg to load a non-standard
+model.
+
+.. note::
+   By default, models are saved to and loaded from the path given by
+   :attr:`nflwin.model.WPModel.model_directory`, which by default is
+   located inside your NFLWin install.
+
 Estimating Quality of Fit
 -------------------------
+When you care about measuring the probability of a classification
+model rather than getting a yes/no prediction it is challenging to
+estimate its quality. This is an area I'm actively looking to improve
+upon, but for now NFLWin does the following.
+
+First, it takes the probabilities given by the model for each play in the
+validation set, then produces a `kernel density estimate
+<https://en.wikipedia.org/wiki/Kernel_density_estimation>`_ (KDE) of all
+the plays as well as just the ones that were predicted
+correctly. The ratio of these two KDEs is the actual WP measured
+from the test data set at a given *predicted* WP. While all of this is
+measured in :meth:`~nflwin.model.WPModel.validate_model`, you can plot
+it for yourself by calling the
+:meth:`~nflwin.model.WPModel.plot_validation` method:
+
+.. image:: _static/validation_plot.png
+
+From there NFLWin estimates if the deviations between predicted and actual WP are
+statistically significant - that's what is actually returned by :meth:`~nflwin.model.WPModel.validate_model`. This is decidedly not awesome - even if the deviations aren't
+significant you can't prove that your model is correct; rather all you can
+say that it is "not inconsistent" with the validation data. If anyone
+has an idea for how to do this better I would welcome it enthusiastically.
