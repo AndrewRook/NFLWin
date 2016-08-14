@@ -24,12 +24,17 @@ seasons and validate on the 2011 and 2012 playoffs, you would do the following:
   >>> new_data_model = WPModel()
   >>> new_data_model.train_model(training_seasons=[2009, 2010], training_season_types=["Regular"])
   >>> new_data_model.validate_model(validation_seasons=[2011, 2012], validation_season_types=["Postseason"])
-  0.14963235412213988
+  (21.355462918011327, 565.56909036318007)
 
 If you want to supply your own data, that's easy too - simply set the
 `source_data` kwarg of :meth:`~nflwin.model.WPModel.train_model` and
 :meth:`~nflwin.model.WPModel.validate_model` to be a Pandas DataFrame of your training and validation data (respectively):
 
+..
+  from nflwin.utilities import get_nfldb_play_data
+  training_data = get_nfldb_play_data(season_years=[2012, 2013])
+  validation_data = get_nfldb_play_data(season_years=[2014])
+  
 .. code-block:: python
 
   >>> from nflwin.model import WPModel
@@ -78,7 +83,7 @@ If you want to supply your own data, that's easy too - simply set the
   3                0  
   4                0  
   >>> new_data_model.validate_model(source_data=validation_data)
-  6.8222808634589248e-35
+  (8.9344062502671591, 265.7971863696315)
 
 Building a New Model
 --------------------
@@ -176,8 +181,11 @@ it for yourself by calling the
 
 .. image:: _static/validation_plot.png
 
-From there NFLWin estimates if the deviations between predicted and actual WP are
-statistically significant - that's what is actually returned by :meth:`~nflwin.model.WPModel.validate_model`. This is decidedly not awesome - even if the deviations aren't
-significant you can't prove that your model is correct; rather all you can
-say that it is "not inconsistent" with the validation data. If anyone
+From there NFLWin computes both the maximum deviation at any given
+percentage and the total area between the estimated WP from the model
+and what would be expected if the model was perfect - that's what is
+actually returned by
+:meth:`~nflwin.model.WPModel.validate_model`. This is obviously not
+ideal given that it's not directly estimating uncertainties in
+the model, but it's the best I've been able to come up with so far. If anyone
 has an idea for how to do this better I would welcome it enthusiastically.

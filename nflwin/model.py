@@ -4,6 +4,7 @@ from __future__ import print_function, division
 import os
 
 import numpy as np
+from scipy import integrate
 from scipy import stats
 
 from sklearn.ensemble import RandomForestClassifier
@@ -254,10 +255,10 @@ class WPModel(object):
         self._validation_season_types = []
         if isinstance(source_data, basestring):
             if source_data == "nfldb":
-                source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
-                                                            season_types=training_season_types)
-                self._training_seasons = training_seasons
-                self._training_season_types = training_season_types
+                source_data = utilities.get_nfldb_play_data(season_years=validation_seasons,
+                                                            season_types=validation_season_types)
+                self._validation_seasons = validation_seasons
+                self._validation_season_types = validation_season_types
             else:
                 raise ValueError("WPModel: if source_data is a string, it must be 'nfldb'")
             
@@ -268,13 +269,36 @@ class WPModel(object):
         self._sample_probabilities, self._predicted_win_percents, self._num_plays_used = (
             WPModel._compute_predicted_percentages(target_col.values, predicted_probabilities))
 
+        #Compute the maximal deviation from a perfect prediction as well as the area under the
+        #curve of the residual between |predicted - perfect|:
+        max_deviation, residual_area = self._compute_prediction_statistics(self.sample_probabilities,
+                                                                           self.predicted_win_percents)
+        return max_deviation, residual_area
+        
         #Compute p-values for each where null hypothesis is that distributions are same, then combine
         #them all to make sure data is not inconsistent with accurate predictions.
-        combined_pvalue = self._test_distribution(self.sample_probabilities,
-                                                  self.predicted_win_percents,
-                                                  self.num_plays_used)
+        # combined_pvalue = self._test_distribution(self.sample_probabilities,
+        #                                           self.predicted_win_percents,
+        #                                           self.num_plays_used)
         
-        return combined_pvalue
+        # return combined_pvalue
+
+    @staticmethod
+    def _compute_prediction_statistics(sample_probabilities, predicted_win_percents):
+        """Take the KDE'd model estimates, then compute statistics.
+
+        Returns
+        -------
+        A tuple of (``max_deviation``, ``residual_area``), where ``max_deviation``
+        is the largest discrepancy between the model and expectation at any WP,
+        and ``residual_area`` is the total area under the curve of |predicted WP - expected WP|.
+        """
+        abs_deviations = np.abs(predicted_win_percents - sample_probabilities)
+        max_deviation = np.max(abs_deviations)
+        residual_area = integrate.simps(abs_deviations,
+                                        sample_probabilities)
+        return (max_deviation, residual_area)
+                                       
 
     def predict_wp(self, plays):
         """Estimate the win probability for a set of plays.
@@ -369,7 +393,7 @@ class WPModel(object):
         number_total = number_density_total * len(actual_results) / np.sum(number_density_total)
         predicted_win_percents = number_offense_won / number_total
 
-        return sample_probabilities, predicted_win_percents, number_total
+        return 100.*sample_probabilities, 100.*predicted_win_percents, number_total
     
     def create_default_pipeline(self):
         """Create the default win probability estimation pipeline.

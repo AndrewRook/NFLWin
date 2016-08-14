@@ -12,8 +12,9 @@ def main():
     print("Took {0:.2f}s to build model".format(time.time() - start))
     
     start = time.time()
-    combined_pvalue = win_probability_model.validate_model(validation_seasons=[2015])
-    print("Took {0:.2f}s to validate model, with combined p_value of {1:.2f}".format(time.time() - start, combined_pvalue))
+    max_deviation, residual_area = win_probability_model.validate_model(validation_seasons=[2015])
+    print("Took {0:.2f}s to validate model, with a max residual of {1:.2f} and a residual area of {2:.2f}"
+          .format(time.time() - start, max_deviation, residual_area))
     
     win_probability_model.save_model()
 
