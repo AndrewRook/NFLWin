@@ -76,6 +76,11 @@ Once data is loaded, using the model to predict WP is easy:
   >>> standard_model.predict_wp(plays)
   array([ 0.58300397,  0.64321796,  0.18195466])
 
+Current Default Model
+---------------------
+
+.. image:: _static/validation_plot.png
+
 Why NFLWin?
 --------------
 Put simply, there are no other options: while WP models have been

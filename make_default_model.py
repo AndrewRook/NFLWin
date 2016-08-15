@@ -1,7 +1,9 @@
 """A simple script to create, train, validate, and save the default model"""
 from __future__ import division, print_function
 
+import datetime as dt
 import time
+import os
 
 from nflwin import model
 
@@ -18,7 +20,16 @@ def main():
     
     win_probability_model.save_model()
 
+    ax = win_probability_model.plot_validation(label="max deviation={0:.2f}, \n"
+                                               "residual total area={1:.2f}"
+                                               "".format(max_deviation, residual_area))
+    curr_datetime = dt.datetime.now()
+    ax.set_title("model generated at: " + curr_datetime.strftime("%Y-%m-%d %H:%M:%S"))
+    ax.legend(loc="lower right")
 
+    this_filepath = os.path.dirname(os.path.abspath(__file__))
+    save_filepath = os.path.join(this_filepath, "doc", "source", "_static", "validation_plot.png")
+    ax.figure.savefig(save_filepath)
 
 
 if __name__ == "__main__":
