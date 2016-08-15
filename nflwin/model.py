@@ -357,7 +357,7 @@ class WPModel(object):
         import matplotlib.pyplot as plt
         if axis is None:
             axis = plt.figure().add_subplot(111)
-            axis.plot([0, 1], [0, 1], ls="--", lw=2, color="black")
+            axis.plot([0, 100], [0, 100], ls="--", lw=2, color="black")
             axis.set_xlabel("Predicted WP")
             axis.set_ylabel("Actual WP")
         axis.plot(self.sample_probabilities,
