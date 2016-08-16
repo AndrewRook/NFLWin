@@ -106,6 +106,3 @@ Resources
    Developer Documentation <dev.rst>
    Full API Documentation <modules.rst>
 
-* :ref:`Full API Documentation <modindex>`
-* :ref:`Search NFLWin's Documentation <search>`
-
