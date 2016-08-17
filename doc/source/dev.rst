@@ -4,8 +4,7 @@ For Developers
 This section of the documentation covers things that will be useful for those already contributing to NFLWin.
 
 .. note::
-   Unless stated otherwise assume that all filepaths given in this section start at the root directory for the repo.
-
+   Unless stated otherwise assume that all filepaths given in this section start at the root directory for the repo. 
 
 Testing Documentation
 ------------------------------------------
@@ -24,7 +23,13 @@ NFLWin comes with a pre-trained model, but if the code generating that model is 
   $ python make_default_model.py
 
 .. note::
-   This script hardcodes in the seasons to use for training and testing samples. After each season those will likely need to be updated to use the most up-to-date data.
+   This script hardcodes in the seasons to use for training and
+   testing samples. After each season those will likely need to be
+   updated to use the most up-to-date data.
+
+.. note::
+   This script requires ``matplotlib`` in order to run, as it produces a
+   validation plot for the documentation.
 
 Cutting a New Release
 ----------------------------------

@@ -177,9 +177,8 @@ correctly. The ratio of these two KDEs is the actual WP measured
 from the test data set at a given *predicted* WP. While all of this is
 measured in :meth:`~nflwin.model.WPModel.validate_model`, you can plot
 it for yourself by calling the
-:meth:`~nflwin.model.WPModel.plot_validation` method:
-
-.. image:: _static/validation_plot.png
+:meth:`~nflwin.model.WPModel.plot_validation` method, which will
+generate a plot like that shown on the home page.
 
 From there NFLWin computes both the maximum deviation at any given
 percentage and the total area between the estimated WP from the model
