@@ -60,7 +60,7 @@ def connect_nfldb(config_path=''):
     raise IOError("connect_nfldb: couldn't find a configuration file. "
                   "looked here: {0}".format(", ".join(paths)))
 
-def _aggregate_wins(game_table):
+def _create_game_query(game_table):
     subquery_columns = [game_table.c.home_team,
                         game_table.c.away_team,
                         game_table.c.season_year]
@@ -72,7 +72,7 @@ def _aggregate_wins(game_table):
             else_=1) * 100 + game_table.c.week).label("game_order"))
     subquery_columns.append(
         (game_table.c.home_score > game_table.c.away_score).label("home_win"))
-    subquery = (sa.sql.select(subquery_columns)
+    subquery = (sa.select(subquery_columns)
                 .where(game_table.c.season_type != "Preseason")
                 .alias("subquery"))
 
@@ -109,7 +109,7 @@ def _aggregate_wins(game_table):
                       subquery.c.home_win == True), 1)
             ], else_=0)).label("away_losses"))
 
-    query = (sa.sql.select(query_columns)
+    query = (sa.select(query_columns)
              .select_from(game_table.join(subquery, sa.and_(
                  game_table.c.season_year == subquery.c.season_year,
                  sa.case(
@@ -122,11 +122,76 @@ def _aggregate_wins(game_table):
                      game_table.c.home_team == subquery.c.away_team,
                      game_table.c.away_team == subquery.c.home_team,
                      game_table.c.away_team == subquery.c.away_team))))
-             .where(game_table.c.season_type != "Preseason")
+             .where(sa.and_(
+                 game_table.c.season_type != "Preseason",
+                 game_table.c.finished == True))
              .group_by(game_table.c.gsis_id))
                       
                      
     return query
+
+def _create_play_query(play_table, agg_play_table):
+    offense_play_points_column = sa.func.greatest(
+        agg_play_table.c.fumbles_rec_tds * 6,
+        agg_play_table.c.kicking_rec_tds * 6,
+        agg_play_table.c.passing_tds * 6,
+        agg_play_table.c.receiving_tds * 6,
+        agg_play_table.c.rushing_tds * 6,
+        agg_play_table.c.kicking_xpmade * 1,
+        agg_play_table.c.passing_twoptm * 2,
+        agg_play_table.c.receiving_twoptm * 2,
+        agg_play_table.c.rushing_twoptm * 2,
+        agg_play_table.c.kicking_fgm * 3).label("offense_play_points")
+    defense_play_points_column = sa.func.greatest(
+        agg_play_table.c.defense_frec_tds * 6,
+        agg_play_table.c.defense_int_tds * 6,
+        agg_play_table.c.defense_misc_tds * 6,
+        agg_play_table.c.kickret_tds * 6,
+        agg_play_table.c.puntret_tds * 6,
+        agg_play_table.c.defense_safe * 2).label("defense_play_points")
+    subquery = (sa.select([agg_play_table.c.gsis_id,
+                            agg_play_table.c.drive_id,
+                            agg_play_table.c.play_id,
+                            offense_play_points_column,
+                            defense_play_points_column,
+                            play_table.c.pos_team])
+                 .select_from(agg_play_table.join(play_table, sa.and_(
+                     agg_play_table.c.gsis_id == play_table.c.gsis_id,
+                     agg_play_table.c.drive_id == play_table.c.drive_id,
+                     agg_play_table.c.play_id == play_table.c.play_id)))
+                 .where(
+                     play_table.c.pos_team != "UNK").alias("subquery"))
+
+    play_columns = [play_table.c.gsis_id,
+                    play_table.c.drive_id,
+                    play_table.c.play_id,
+                    play_table.c.time,
+                    play_table.c.yardline,
+                    play_table.c.down,
+                    play_table.c.yards_to_go,
+                    play_table.c.pos_team,
+                    sa.func.sum(sa.case(
+                        [(play_table.c.pos_team == subquery.c.pos_team, subquery.c.offense_play_points)],
+                        else_=subquery.c.defense_play_points)).label("offense_points"),
+                    sa.func.sum(sa.case(
+                        [(play_table.c.pos_team == subquery.c.pos_team, subquery.c.defense_play_points)],
+                        else_=subquery.c.offense_play_points)).label("defense_points"),
+                    ]
+    query = (sa.select(play_columns)
+             .select_from(play_table.join(subquery, sa.and_(
+                 play_table.c.gsis_id == subquery.c.gsis_id,
+                 sa.or_(
+                     play_table.c.drive_id > subquery.c.drive_id,
+                     sa.and_(
+                         play_table.c.drive_id == subquery.c.drive_id,
+                         play_table.c.play_id > subquery.c.play_id
+                     )
+                 ))))
+              .where(play_table.c.pos_team != "UNK")
+             .group_by(play_table.c.gsis_id, play_table.c.drive_id, play_table.c.play_id))
+    return query
+                 
+    
 
 def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"]):
     """"""
@@ -137,9 +202,11 @@ def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"
     tables["agg_play"] = sa.Table("agg_play", metadata, autoload=True)
     tables["game"] = sa.Table("game", metadata, autoload=True)
 
-    test = _aggregate_wins(tables["game"])
+    game_query = _create_game_query(tables["game"])
+    play_query = _create_play_query(tables["play"], tables["agg_play"])
+    #timezone mapping
     with engine.connect() as conn:
-        df = pd.read_sql(test.limit(20), conn)
+        df = pd.read_sql(play_query.limit(50), conn)
 
     print(df)
 
