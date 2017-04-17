@@ -80,7 +80,10 @@ def _create_game_query(game_table):
     query_columns = [sa.func.max(game_table.c.gsis_id).label("gsis_id"),
                      sa.func.max(game_table.c.season_year).label("season_year"),
                      sa.func.max(game_table.c.season_type).label("season_type"),
-                     sa.func.max(game_table.c.week).label("week")]
+                     sa.func.max(game_table.c.week).label("week"),
+                     sa.func.max(game_table.c.home_team).label("home_team"),
+                     sa.func.max(game_table.c.away_team).label("away_team")
+                     ]
     query_columns.append(
         sa.func.sum(sa.case(
             [(sa.and_(game_table.c.home_team == subquery.c.home_team,
@@ -134,8 +137,8 @@ def _create_game_query(game_table):
 def make_nfldb_query(tables):
 
     p = tables["play"]
-    g = tables["game"]
     ap = tables["agg_play"]
+    g = (_create_game_query(tables["game"])).alias("game")
     offense_points_clause = sa.func.greatest(
         ap.c.fumbles_rec_tds * 6,
         ap.c.kicking_rec_tds * 6,
@@ -163,20 +166,21 @@ def make_nfldb_query(tables):
         [(p.c.pos_team == g.c.away_team, offense_points_clause),
          (p.c.pos_team == g.c.home_team, defense_points_clause)],
          else_=0)
-    agg_home_team_points = sa.func.sum(home_team_points).over(
+    agg_home_team_points = (sa.func.sum(home_team_points).over(
         partition_by=ap.c.gsis_id,
-        order_by=[ap.c.drive_id, ap.c.play_id]).label("agg_home_team_points")
-    agg_away_team_points = sa.func.sum(away_team_points).over(
+        order_by=[ap.c.drive_id, ap.c.play_id],
+        range_=(None, 0)) - home_team_points).label("agg_home_team_points")
+    agg_away_team_points = (sa.func.sum(away_team_points).over(
         partition_by=ap.c.gsis_id,
-        order_by=[ap.c.drive_id, ap.c.play_id]).label("agg_away_team_points")
-    columns_to_select = [ap.c.gsis_id,
-                         ap.c.drive_id,
+        order_by=[ap.c.drive_id, ap.c.play_id],
+        range_=(None, 0)) - away_team_points).label("agg_away_team_points")
+    columns_to_select = [ap.c.drive_id,
                          ap.c.play_id,
+                         g,
                          p.c.pos_team,
-                         g.c.home_team,
-                         g.c.away_team,
                          agg_home_team_points,
                          agg_away_team_points]
+    
     
     query = sa.select(columns_to_select).select_from(
         ap.join(p, sa.and_(ap.c.gsis_id == p.c.gsis_id, ap.c.play_id == p.c.play_id))
@@ -193,16 +197,9 @@ def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"
     tables["agg_play"] = sa.Table("agg_play", metadata, autoload=True)
     tables["game"] = sa.Table("game", metadata, autoload=True)
 
-    game_query = _create_game_query(tables["game"]).alias("games")
-    play_query = _create_play_query(tables["play"], tables["agg_play"])
-    columns = [c for c in game_query.c] + [c for c in play_query.c if c.name != "gsis_id"]
-    joint_query = sa.select(columns).select_from(
-        game_query.join(play_query, game_query.c.gsis_id == play_query.c.gsis_id))
-    #timezone mapping
     with engine.connect() as conn:
-        game_df = pd.read_sql(game_query, conn)
 
-        test_query = make_nfldb_query(tables)
+        test_query = (make_nfldb_query(tables)).limit(100)
         start = time.time()
         df = pd.read_sql(test_query, conn)
         print("Took {0:.2f}s".format(time.time() - start))
