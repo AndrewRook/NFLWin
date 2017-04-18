@@ -3,9 +3,6 @@ from __future__ import print_function, division
 
 import os
 
-import preprocessing
-import utilities
-
 class WPModel(object):
     """The object that computes win probabilities.
 

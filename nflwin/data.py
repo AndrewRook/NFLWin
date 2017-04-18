@@ -134,7 +134,7 @@ def _create_game_query(game_table):
                      
     return query
 
-def make_nfldb_query(tables):
+def _make_nfldb_query(tables, season_years, season_types):
 
     p = tables["play"]
     ap = tables["agg_play"]
@@ -181,14 +181,18 @@ def make_nfldb_query(tables):
                          agg_home_team_points,
                          agg_away_team_points]
     
-    
-    query = sa.select(columns_to_select).select_from(
-        ap.join(p, sa.and_(ap.c.gsis_id == p.c.gsis_id, ap.c.play_id == p.c.play_id))
-        .join(g, ap.c.gsis_id == g.c.gsis_id)).order_by(ap.c.gsis_id, ap.c.play_id)
+        
+    query = (sa.select(columns_to_select)
+             .select_from(
+                 ap.join(p, sa.and_(ap.c.gsis_id == p.c.gsis_id, ap.c.play_id == p.c.play_id))
+                 .join(g, ap.c.gsis_id == g.c.gsis_id)
+             )
+             .where(sa.and_(g.c.season_year.in_(season_years), g.c.season_type.in_(season_types)))
+             .order_by(ap.c.gsis_id, ap.c.play_id))
     return query
 
 
-def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"]):
+def query_nfldb(engine, season_years, season_types):
     """"""
     metadata = sa.MetaData(engine)
     tables = {}
@@ -199,10 +203,11 @@ def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"
 
     with engine.connect() as conn:
 
-        test_query = (make_nfldb_query(tables))#.limit(100)
+        test_query = (_make_nfldb_query(tables, season_years, season_types))#.limit(100)
         start = time.time()
         df = pd.read_sql(test_query, conn)
         print("Took {0:.2f}s".format(time.time() - start))
+    print(df.head())
     print(df.shape)
 
     return df
@@ -210,5 +215,5 @@ def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"
 if __name__ == "__main__":
     engine = connect_nfldb()
     #register_game_time_type(engine)
-    df = query_nfldb(engine)
+    df = query_nfldb(engine, [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], ["Regular", "Postseason"])
     df.to_csv("test_data.csv", index=False)
