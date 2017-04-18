@@ -199,15 +199,16 @@ def query_nfldb(engine, season_years=None, season_types=["Regular", "Postseason"
 
     with engine.connect() as conn:
 
-        test_query = (make_nfldb_query(tables)).limit(100)
+        test_query = (make_nfldb_query(tables))#.limit(100)
         start = time.time()
         df = pd.read_sql(test_query, conn)
         print("Took {0:.2f}s".format(time.time() - start))
-    print(df.head(50))
     print(df.shape)
 
+    return df
 
 if __name__ == "__main__":
     engine = connect_nfldb()
     #register_game_time_type(engine)
-    query_nfldb(engine)
+    df = query_nfldb(engine)
+    df.to_csv("test_data.csv", index=False)
