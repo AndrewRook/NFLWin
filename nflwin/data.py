@@ -178,6 +178,10 @@ def _make_nfldb_query(tables, season_years, season_types):
                          ap.c.play_id,
                          g,
                          p.c.pos_team,
+                         p.c.time,
+                         p.c.yardline,
+                         p.c.down,
+                         p.c.yards_to_go,
                          agg_home_team_points,
                          agg_away_team_points]
     
@@ -212,8 +216,52 @@ def query_nfldb(engine, season_years, season_types):
 
     return df
 
+class GameTime(object):
+    def __init__(self, quarter, seconds_elapsed):
+        self.quarter = quarter
+        self.seconds_elapsed = seconds_elapsed
+
+    def __composite_values__(self):
+        return self.quarter, self.seconds_elapsed
+
+    def __repr__(self):
+        return "game_time({0}, {1})".format(self.quarter, self.seconds_elapsed)
+
+    def __eq__(self, other):
+        return (isinstance(other, GameTime) and
+                other.quarter == self.quarter and
+                other.seconds_elapsed == self.seconds_elapsed)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+def _test(engine):
+    metadata = sa.MetaData(engine)
+    # from sqlalchemy_utils import CompositeType, register_composites
+    # #from psycopg2.extras import register_composite
+    # game_time = sa.Column('time', CompositeType("game_time",
+    #                                     [
+    #                                         sa.Column('game_phase', sa.String(10)),
+    #                                         sa.Column('seconds_elapsed', sa.Integer())
+    #                                     ]))
+    play = sa.Table("play", metadata,
+                    #game_time,
+                    autoload=True)
+    game_phase = sa.func.substring(sa.cast(play.c.time, sa.String()),"\((.*),").label("quarter")
+    seconds_elapsed = sa.func.substring(sa.cast(play.c.time, sa.String()),",(.*)\)$").label("seconds_elapsed")
+    with engine.connect() as conn:
+        #register_composites(conn)
+        df = pd.read_sql(sa.select([
+            sa.cast(play.c.time, sa.String()),
+            game_phase,
+            seconds_elapsed,
+            play.c.yards_to_go
+            ]), conn)
+                         
+    print(df.head())
+
 if __name__ == "__main__":
     engine = connect_nfldb()
-    #register_game_time_type(engine)
-    df = query_nfldb(engine, [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], ["Regular", "Postseason"])
-    df.to_csv("test_data.csv", index=False)
+    _test(engine)
+    #df = query_nfldb(engine, [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], ["Regular", "Postseason"])
+    #df.to_csv("test_data.csv", index=False)
