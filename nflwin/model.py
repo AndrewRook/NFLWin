@@ -9,7 +9,11 @@ class WPModel(object):
     Parameters
     ----------
     model : A Scikit-learn pipeline (or equivalent)
-        The model used to compute WP. 
+        The model used to compute WP.
+    data_info : dictionary of tuples
+        Information about what variables are required to run
+        the model. Each key is the variable name, while the values
+        are tuples of (example, prose description).
     
 
     Attributes
@@ -21,8 +25,9 @@ class WPModel(object):
     model_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
     _default_model_filename = "default_model.nflwin"
 
-    def __init__(self, model):
+    def __init__(self, model, data_info):
         self.model = model
+        self.data_info = data_info
                                        
 
     def predict_wp(self, plays, copy_data=True):

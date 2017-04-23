@@ -16,9 +16,17 @@ def main():
     engine = data.connect_nfldb()
     #raw_data = data.query_nfldb(engine, training_seasons + validation_seasons, season_types)
     import pandas as pd
+
+    model_columns = ["home_team", "away_team",
+                     "home_wins", "home_losses",
+                     "away_wins", "away_losses",
+                     "pos_team", "agg_home_team_points",
+                     "agg_away_team_points"]
+
     raw_data = pd.read_csv("test_data.csv")
-    training_data = raw_data[raw_data["season_year"].isin(training_seasons)]
-    validation_data = raw_data[raw_data["season_year"].isin(validation_seasons)]
+    training_data = raw_data[raw_data["season_year"].isin(training_seasons)][model_columns]
+    validation_data = raw_data[raw_data["season_year"].isin(validation_seasons)][model_columns]
+    print(training_data.head())
     
     #win_probability_model = model.WPModel()
 
