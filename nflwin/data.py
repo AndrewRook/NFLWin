@@ -169,19 +169,25 @@ def _make_nfldb_query(tables, season_years, season_types):
     agg_home_team_points = (sa.func.sum(home_team_points).over(
         partition_by=ap.c.gsis_id,
         order_by=[ap.c.drive_id, ap.c.play_id],
-        range_=(None, 0)) - home_team_points).label("agg_home_team_points")
+        range_=(None, 0)) - home_team_points).label("current_home_score")
     agg_away_team_points = (sa.func.sum(away_team_points).over(
         partition_by=ap.c.gsis_id,
         order_by=[ap.c.drive_id, ap.c.play_id],
-        range_=(None, 0)) - away_team_points).label("agg_away_team_points")
+        range_=(None, 0)) - away_team_points).label("current_away_score")
+        
+    game_phase = sa.func.substring(sa.cast(p.c.time, sa.String()),"\((.*),").label("quarter")
+    seconds_elapsed = sa.func.substring(sa.cast(p.c.time, sa.String()),",(.*)\)$").label("seconds_elapsed")
+    yardline = sa.func.substring(sa.cast(p.c.yardline, sa.String()), "^\((.*)\)$").label("yardline")
+    
     columns_to_select = [ap.c.drive_id,
                          ap.c.play_id,
                          g,
                          p.c.pos_team,
-                         p.c.time,
-                         p.c.yardline,
+                         yardline,
                          p.c.down,
                          p.c.yards_to_go,
+                         game_phase,
+                         seconds_elapsed,
                          agg_home_team_points,
                          agg_away_team_points]
     
@@ -191,7 +197,9 @@ def _make_nfldb_query(tables, season_years, season_types):
                  ap.join(p, sa.and_(ap.c.gsis_id == p.c.gsis_id, ap.c.play_id == p.c.play_id))
                  .join(g, ap.c.gsis_id == g.c.gsis_id)
              )
-             .where(sa.and_(g.c.season_year.in_(season_years), g.c.season_type.in_(season_types)))
+             .where(sa.and_(g.c.season_year.in_(season_years),
+                            g.c.season_type.in_(season_types),
+                            sa.not_(game_phase.in_(["Half", "Final"]))))
              .order_by(ap.c.gsis_id, ap.c.play_id))
     return query
 
@@ -216,52 +224,8 @@ def query_nfldb(engine, season_years, season_types):
 
     return df
 
-class GameTime(object):
-    def __init__(self, quarter, seconds_elapsed):
-        self.quarter = quarter
-        self.seconds_elapsed = seconds_elapsed
-
-    def __composite_values__(self):
-        return self.quarter, self.seconds_elapsed
-
-    def __repr__(self):
-        return "game_time({0}, {1})".format(self.quarter, self.seconds_elapsed)
-
-    def __eq__(self, other):
-        return (isinstance(other, GameTime) and
-                other.quarter == self.quarter and
-                other.seconds_elapsed == self.seconds_elapsed)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-def _test(engine):
-    metadata = sa.MetaData(engine)
-    # from sqlalchemy_utils import CompositeType, register_composites
-    # #from psycopg2.extras import register_composite
-    # game_time = sa.Column('time', CompositeType("game_time",
-    #                                     [
-    #                                         sa.Column('game_phase', sa.String(10)),
-    #                                         sa.Column('seconds_elapsed', sa.Integer())
-    #                                     ]))
-    play = sa.Table("play", metadata,
-                    #game_time,
-                    autoload=True)
-    game_phase = sa.func.substring(sa.cast(play.c.time, sa.String()),"\((.*),").label("quarter")
-    seconds_elapsed = sa.func.substring(sa.cast(play.c.time, sa.String()),",(.*)\)$").label("seconds_elapsed")
-    with engine.connect() as conn:
-        #register_composites(conn)
-        df = pd.read_sql(sa.select([
-            sa.cast(play.c.time, sa.String()),
-            game_phase,
-            seconds_elapsed,
-            play.c.yards_to_go
-            ]), conn)
-                         
-    print(df.head())
 
 if __name__ == "__main__":
     engine = connect_nfldb()
-    _test(engine)
-    #df = query_nfldb(engine, [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], ["Regular", "Postseason"])
-    #df.to_csv("test_data.csv", index=False)
+    df = query_nfldb(engine, [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016], ["Regular", "Postseason"])
+    df.to_csv("test_data.csv", index=False)
