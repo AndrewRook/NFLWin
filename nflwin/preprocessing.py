@@ -444,7 +444,6 @@ class CreateScoreDifferential(BaseEstimator):
         return X
         
 
-
 class CheckColumnNames(BaseEstimator):
     """Make sure user has the right column names, in the right order.
 
