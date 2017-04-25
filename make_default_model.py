@@ -48,8 +48,6 @@ def main():
 
     #TODO (AndrewRook) Add ConvertWinningTeamToOffense class to convert the winning team
     #to a boolean did home team win yes/no field
-
-    #TODO (AndrewRook) Add winning team field to query.
     
     pipe = Pipeline(steps)
     pipe.fit_transform(training_data)

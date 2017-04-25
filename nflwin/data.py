@@ -112,6 +112,14 @@ def _create_game_query(game_table):
              (sa.and_(game_table.c.away_team == subquery.c.away_team,
                       subquery.c.home_win == True), 1)
             ], else_=0)).label("away_losses"))
+    
+    winning_team = sa.case(
+        [
+            (game_table.c.finished == False, "UNKNOWN/TIE"),
+            (game_table.c.home_score > game_table.c.away_score, game_table.c.home_team),
+            (game_table.c.away_score > game_table.c.home_score, game_table.c.away_team)
+        ], else_="UNKNOWN/TIE").label("winning_team")
+    query_columns.append(winning_team)
 
     query = (sa.select(query_columns)
              .select_from(game_table.join(subquery, sa.and_(
@@ -128,7 +136,7 @@ def _create_game_query(game_table):
                      game_table.c.away_team == subquery.c.away_team))))
              .where(sa.and_(
                  game_table.c.season_type != "Preseason",
-                 game_table.c.finished == True))
+                 winning_team != "UNKNOWN/TIE"))
              .group_by(game_table.c.gsis_id))
                       
                      
@@ -174,6 +182,7 @@ def _make_nfldb_query(tables, season_years, season_types):
         partition_by=ap.c.gsis_id,
         order_by=[ap.c.drive_id, ap.c.play_id],
         range_=(None, 0)) - away_team_points).label("current_away_score")
+
         
     game_phase = sa.func.substring(sa.cast(p.c.time, sa.String()),"\((.*),").label("quarter")
     seconds_elapsed = sa.func.substring(sa.cast(p.c.time, sa.String()),",(.*)\)$").label("seconds_elapsed")
