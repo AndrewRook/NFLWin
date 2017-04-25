@@ -30,6 +30,8 @@ def main():
                      "quarter", "seconds_elapsed",
                      "current_home_score",
                      "current_away_score"]
+    training_target = raw_data[raw_data["season_year"].isin(training_seasons)]["winning_team"]
+    validation_target = raw_data[raw_data["season_year"].isin(validation_seasons)]["winning_team"]
 
     training_data = raw_data[raw_data["season_year"].isin(training_seasons)][model_columns]
     validation_data = raw_data[raw_data["season_year"].isin(validation_seasons)][model_columns]
