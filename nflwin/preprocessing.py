@@ -159,6 +159,87 @@ class ComputeIfOffenseIsHome(BaseEstimator):
 
         return X
 
+class ConvertToOffenseDefense(BaseEstimator):
+    """Map home/away fields to offense/defense.
+
+    Parameters
+    ----------
+    home_colname : string
+        The name of the column with values corresponding to the home team
+    away_colname : string
+        The name of the column with values corresponding to the away team
+    offense_home_colname : string
+        The name of the column containing a boolean value that is true if
+        the offense is the home team and false otherwise.
+    new_offense_colname : string
+        What the generated column of offensive data should be named.
+    new_defense_colname : string
+        What the generated column of defensive data should be named.
+    copy : boolean (default=True)
+        If ``False``, apply the mapping in-place.
+
+    Notes
+    -----
+    This cleaning step will delete the original home and away columns, reasoning
+    that they are now redundant.
+
+    """
+
+    def __init__(self, home_colname, away_colname, offense_home_colname,
+                 new_offense_colname, new_defense_colname, copy=True):
+        self.home_colname = home_colname
+        self.away_colname = away_colname
+        self.offense_home_colname = offense_home_colname
+        self.new_offense_colname = new_offense_colname
+        self.new_defense_colname = new_defense_colname
+        self.copy = copy
+        
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        """convert the home/away column to offense/defense.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            1 if the home team won, 0 if not.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            The input DataFrame, with the conversion applied.
+
+        Raises
+        ------
+        KeyError
+            If ``home_colname``, ``away_colname``, or ``offense_home_colname`` are not in ``X``;
+            or if ``new_offense_colname`` or ``new_defense_colname`` are already in ``X``.
+        """
+        for colname in [self.home_colname, self.away_colname, self.offense_home_colname]:
+            if colname not in X.columns:
+                raise KeyError("ConvertToOffenseDefense: Required column {0} "
+                               "not present in data".format(colname))
+
+        for colname in [self.new_offense_colname, self.new_defense_colname]:
+            if colname in X.columns:
+                raise KeyError("ConvertToOffenseDefense: Column to be created {0} "
+                               "already exists in data".format(colname))
+
+        if self.copy:
+            X = X.copy()
+
+        X[self.new_offense_colname] = np.choose(X[self.offense_home_colname],
+                                                [X[self.away_colname], X[self.home_colname]])
+        X[self.new_defense_colname] = np.choose(X[self.offense_home_colname],
+                                                [X[self.home_colname], X[self.away_colname]])
+        del X[self.home_colname]
+        del X[self.away_colname]
+        return X
+        
 
 class MapToInt(BaseEstimator):
     """Map a column of values to integers.

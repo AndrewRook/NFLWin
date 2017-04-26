@@ -168,7 +168,24 @@ class TestComputeIfOffenseIsHome(object):
                                                  copy=False)
         ciow.transform(input_df)
         pd.util.testing.assert_frame_equal(input_df.sort_index(axis=1), expected_transformed_df.sort_index(axis=1))
-        
+
+
+class TestConvertToOffenseDefense(object):
+
+    @pytest.mark.parametrize("home_colname,away_colname,offense_home_colname", [
+        ("one", "two", "woo"),
+        ("one", "woo", "two"),
+        ("woo", "one", "two")
+    ])
+    def test_non_existent_colnames_raise_error(self, home_colname, away_colname, offense_home_colname):
+        input_data = pd.DataFrame({"one": [1, 2, 3],
+                                   "two": [4, 5, 6],
+                                   "three": [7, 8, 9]})
+        ctod = preprocessing.ConvertToOffenseDefense(home_colname, away_colname,
+                                                     offense_home_colname, "blah", "blahblah")
+        with pytest.raises(KeyError):
+            ctod.transform(input_data)
+
 
 class TestMapToInt(object):
     """Testing if the integer mapper works."""
