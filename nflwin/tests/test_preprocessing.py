@@ -186,6 +186,20 @@ class TestConvertToOffenseDefense(object):
         with pytest.raises(KeyError):
             ctod.transform(input_data)
 
+    @pytest.mark.parametrize("new_offense_colname,new_defense_colname", [
+        ("real", "fake"),
+        ("fake", "real")
+    ])
+    def test_existent_colnames_raise_error(self, new_offense_colname, new_defense_colname):
+        input_data = pd.DataFrame({"home_colname": [1, 2, 3],
+                                   "away_colname": [4, 5, 6],
+                                   "offense_home_colname": [1, 0, 1],
+                                   "real": [1, 2, 3]})
+        ctod = preprocessing.ConvertToOffenseDefense("home_colname", "away_colname", "offense_home_colname",
+                                                     new_offense_colname, new_defense_colname)
+        with pytest.raises(KeyError):
+            ctod.transform(input_data)
+
 
 class TestMapToInt(object):
     """Testing if the integer mapper works."""
