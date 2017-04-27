@@ -200,6 +200,39 @@ class TestConvertToOffenseDefense(object):
         with pytest.raises(KeyError):
             ctod.transform(input_data)
 
+    def test_transform_works(self):
+        home_colname = "home_colname"
+        away_colname = "away_colname"
+        new_offense_colname = "new_offense_colname"
+        new_defense_colname = "new_defense_colname"
+        input_data = pd.DataFrame({home_colname: [1, 2, 3, 4],
+                                   away_colname: [5, 6, 7, 8],
+                                   "offense_home_colname": [False, True, False, False]})
+        ctod = preprocessing.ConvertToOffenseDefense(home_colname, away_colname, "offense_home_colname",
+                                                     new_offense_colname, new_defense_colname)
+        transformed_data = ctod.transform(input_data)
+        expected_data = pd.DataFrame({new_offense_colname: [5, 2, 7, 8],
+                                      new_defense_colname: [1, 6, 3, 4],
+                                      "offense_home_colname": [False, True, False, False]})
+        pd.util.testing.assert_frame_equal(transformed_data.sort(axis=1), expected_data.sort(axis=1))
+
+    def test_transform_inplace(self):
+        home_colname = "home_colname"
+        away_colname = "away_colname"
+        new_offense_colname = "new_offense_colname"
+        new_defense_colname = "new_defense_colname"
+        input_data = pd.DataFrame({home_colname: [1, 2, 3, 4],
+                                   away_colname: [5, 6, 7, 8],
+                                   "offense_home_colname": [False, True, False, False]})
+        ctod = preprocessing.ConvertToOffenseDefense(home_colname, away_colname, "offense_home_colname",
+                                                     new_offense_colname, new_defense_colname, copy=False)
+        ctod.transform(input_data)
+        expected_data = pd.DataFrame({new_offense_colname: [5, 2, 7, 8],
+                                      new_defense_colname: [1, 6, 3, 4],
+                                      "offense_home_colname": [False, True, False, False]})
+        pd.util.testing.assert_frame_equal(input_data.sort(axis=1), expected_data.sort(axis=1))
+        
+
 
 class TestMapToInt(object):
     """Testing if the integer mapper works."""

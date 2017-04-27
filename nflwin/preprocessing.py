@@ -194,9 +194,6 @@ class ConvertToOffenseDefense(BaseEstimator):
         self.new_defense_colname = new_defense_colname
         self.copy = copy
         
-    def fit(self, X, y=None):
-        return self
-
     def transform(self, X, y=None):
         """convert the home/away column to offense/defense.
 
