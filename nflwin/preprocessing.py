@@ -49,7 +49,7 @@ class ComputeElapsedTime(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -126,7 +126,7 @@ class ComputeIfOffenseIsHome(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -193,6 +193,9 @@ class ConvertToOffenseDefense(BaseEstimator):
         self.new_offense_colname = new_offense_colname
         self.new_defense_colname = new_defense_colname
         self.copy = copy
+
+    def fit(self, X, y=None):
+        return self
         
     def transform(self, X, y=None):
         """convert the home/away column to offense/defense.
@@ -202,7 +205,7 @@ class ConvertToOffenseDefense(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target. 
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -236,6 +239,60 @@ class ConvertToOffenseDefense(BaseEstimator):
         del X[self.home_colname]
         del X[self.away_colname]
         return X
+
+# class ComputeIfWinnerIsOffense(BaseEstimator):
+#     """Convert a target column that indicates which team won to whether the offense won.
+
+#     Parameters
+#     ----------
+#     offense_colname : string
+#         The name of the column with values corresponding to the offensive team
+#     winner_colname : string
+#         The name of the column with values corresponding to the defensive team
+#     copy : boolean (default=True)
+#         If ``False``, apply the mapping in-place.
+
+#     Notes
+#     -----
+#     This cleaner will overwrite ``winner_colname`` with the new boolean logic.
+    
+#     """
+#     def __init__(self, offense_colname, winner_colname, copy=True):
+#         self.offense_colname = offense_colname
+#         self.winner_colname = winner_colname
+#         self.copy = copy
+
+#     def transform(self, X, y=None):
+#         """convert a column from the winning team name to a boolean recording if the offensive team won.
+
+#         Parameters
+#         ----------
+#         X : Pandas DataFrame, of shape(number of plays, number of features)
+#             NFL play data.
+#         y : Numpy array, with length = number of plays, or None
+#             The target.
+#             (Used as part of Scikit-learn's ``Pipeline``)
+
+#         Returns
+#         -------
+#         X : Pandas DataFrame, of shape(number of plays, number of features)
+#             The input DataFrame, with the conversion applied.
+
+#         Raises
+#         ------
+#         KeyError
+#             If ``offense_colname`` or ``winner_colname`` is not in ``X``.
+#         """
+#         for col in [self.offense_colname, self.winner_colname]:
+#             if col not in X.columns:
+#                 raise KeyError("ComputeIfWinnerIsOffense: Required column {0} "
+#                                "not present in data".format(col))
+
+#         X[self.winner_colname] = np.choose(X[self.offense_colname] == X[self.winner_colname],
+#                                            [0, 1])
+
+#         return X
+        
         
 
 class MapToInt(BaseEstimator):
@@ -279,7 +336,7 @@ class MapToInt(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -314,7 +371,7 @@ class MapToInt(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -354,6 +411,7 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
     ----------
     categorical_feature_names : "all" or array of column names.
         Specify what features are treated as categorical.
+        
         * "all" (default): All features are treated as categorical.
         * array of column names: Array of categorical feature names.
     dtype : number type, default=np.float.
@@ -401,7 +459,7 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -428,7 +486,7 @@ class OneHotEncoderFromDataFrame(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -494,7 +552,7 @@ class CreateScoreDifferential(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -562,7 +620,7 @@ class CheckColumnNames(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns
@@ -583,7 +641,7 @@ class CheckColumnNames(BaseEstimator):
         X : Pandas DataFrame, of shape(number of plays, number of features)
             NFL play data.
         y : Numpy array, with length = number of plays, or None
-            1 if the home team won, 0 if not.
+            The target.
             (Used as part of Scikit-learn's ``Pipeline``)
 
         Returns

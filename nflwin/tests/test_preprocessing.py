@@ -214,7 +214,8 @@ class TestConvertToOffenseDefense(object):
         expected_data = pd.DataFrame({new_offense_colname: [5, 2, 7, 8],
                                       new_defense_colname: [1, 6, 3, 4],
                                       "offense_home_colname": [False, True, False, False]})
-        pd.util.testing.assert_frame_equal(transformed_data.sort(axis=1), expected_data.sort(axis=1))
+        pd.util.testing.assert_frame_equal(transformed_data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
 
     def test_transform_inplace(self):
         home_colname = "home_colname"
@@ -230,8 +231,44 @@ class TestConvertToOffenseDefense(object):
         expected_data = pd.DataFrame({new_offense_colname: [5, 2, 7, 8],
                                       new_defense_colname: [1, 6, 3, 4],
                                       "offense_home_colname": [False, True, False, False]})
-        pd.util.testing.assert_frame_equal(input_data.sort(axis=1), expected_data.sort(axis=1))
+        pd.util.testing.assert_frame_equal(input_data.sort_index(axis=1),
+                                           expected_data.sort_index(axis=1))
+
+
+# class TestComputeIfWinnerIsOffense(object):
+#     """Testing if winner computation works."""
+
+#     @pytest.mark.parametrize("offense_colname,winner_colname", [
+#         ("one", "woo"),
+#         ("woo", "two")
+#     ])
+#     def test_bad_colname_produces_error(self, offense_colname, winner_colname):
+#         input_data = pd.DataFrame({"one": [1, 2, 3],
+#                                    "two": [4, 5, 6]})
+#         ciwio = preprocessing.ComputeIfWinnerIsOffense(offense_colname, winner_colname)
         
+#         with pytest.raises(KeyError):
+#             ciwio.transform(input_data)
+
+#     def test_works_copy(self):
+#         input_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
+#                                    "winner": ["NYJ", "NYJ", "NYJ", "OAK", "OAK"]})
+#         ciwio = preprocessing.ComputeIfWinnerIsOffense("offense", "winner")
+#         expected_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
+#                                       "winner": [1, 0, 0, 0, 1]})
+#         pd.util.testing.assert_frame_equal(
+#             ciwio.transform(input_data).sort_index(axis=1), expected_data.sort_index(axis=1)
+#         )
+#     def test_works_inplace(self):
+#         input_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
+#                                    "winner": ["NYJ", "NYJ", "NYJ", "OAK", "OAK"]})
+#         ciwio = preprocessing.ComputeIfWinnerIsOffense("offense", "winner", copy=False)
+#         expected_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
+#                                       "winner": [1, 0, 0, 0, 1]})
+#         ciwio.transform(input_data)
+#         pd.util.testing.assert_frame_equal(
+#             input_data.sort_index(axis=1), expected_data.sort_index(axis=1)
+#         )
 
 
 class TestMapToInt(object):
