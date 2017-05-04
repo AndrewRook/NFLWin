@@ -239,59 +239,6 @@ class ConvertToOffenseDefense(BaseEstimator):
         del X[self.home_colname]
         del X[self.away_colname]
         return X
-
-# class ComputeIfWinnerIsOffense(BaseEstimator):
-#     """Convert a target column that indicates which team won to whether the offense won.
-
-#     Parameters
-#     ----------
-#     offense_colname : string
-#         The name of the column with values corresponding to the offensive team
-#     winner_colname : string
-#         The name of the column with values corresponding to the defensive team
-#     copy : boolean (default=True)
-#         If ``False``, apply the mapping in-place.
-
-#     Notes
-#     -----
-#     This cleaner will overwrite ``winner_colname`` with the new boolean logic.
-    
-#     """
-#     def __init__(self, offense_colname, winner_colname, copy=True):
-#         self.offense_colname = offense_colname
-#         self.winner_colname = winner_colname
-#         self.copy = copy
-
-#     def transform(self, X, y=None):
-#         """convert a column from the winning team name to a boolean recording if the offensive team won.
-
-#         Parameters
-#         ----------
-#         X : Pandas DataFrame, of shape(number of plays, number of features)
-#             NFL play data.
-#         y : Numpy array, with length = number of plays, or None
-#             The target.
-#             (Used as part of Scikit-learn's ``Pipeline``)
-
-#         Returns
-#         -------
-#         X : Pandas DataFrame, of shape(number of plays, number of features)
-#             The input DataFrame, with the conversion applied.
-
-#         Raises
-#         ------
-#         KeyError
-#             If ``offense_colname`` or ``winner_colname`` is not in ``X``.
-#         """
-#         for col in [self.offense_colname, self.winner_colname]:
-#             if col not in X.columns:
-#                 raise KeyError("ComputeIfWinnerIsOffense: Required column {0} "
-#                                "not present in data".format(col))
-
-#         X[self.winner_colname] = np.choose(X[self.offense_colname] == X[self.winner_colname],
-#                                            [0, 1])
-
-#         return X
         
         
 
@@ -579,7 +526,58 @@ class CreateScoreDifferential(BaseEstimator):
 
         return X
         
+class DropColumns(BaseEstimator):
+    """Drop columns from the dataset by name.
 
+    Parameters
+    ----------
+    column_names : list
+        A list of all the column names to be dropped.
+    copy : boolean (default=``True``)
+        If ``False``, transform in place.
+    """
+    def __init__(self, column_names, copy=True):
+        self.column_names = column_names
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        """Drop the columns.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            The target.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, ``len(column_names)``)
+            The transformed data.
+
+        Raises
+        ------
+        KeyError
+            If the input data frame doesn't have all the columns specified
+            by ``column_names``.
+        """
+        if self.copy:
+            X = X.copy()
+
+        try:
+            X.drop(self.column_names, axis=1, inplace=True)
+            return X
+        except ValueError:
+            raise KeyError("DropColumns: DataFrame does not have required columns. "
+                           "Must contain at least {0}".format(self.column_names))
+        
+        
+
+    
 class CheckColumnNames(BaseEstimator):
     """Make sure user has the right column names, in the right order.
 

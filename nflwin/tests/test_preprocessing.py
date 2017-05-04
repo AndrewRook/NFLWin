@@ -235,41 +235,6 @@ class TestConvertToOffenseDefense(object):
                                            expected_data.sort_index(axis=1))
 
 
-# class TestComputeIfWinnerIsOffense(object):
-#     """Testing if winner computation works."""
-
-#     @pytest.mark.parametrize("offense_colname,winner_colname", [
-#         ("one", "woo"),
-#         ("woo", "two")
-#     ])
-#     def test_bad_colname_produces_error(self, offense_colname, winner_colname):
-#         input_data = pd.DataFrame({"one": [1, 2, 3],
-#                                    "two": [4, 5, 6]})
-#         ciwio = preprocessing.ComputeIfWinnerIsOffense(offense_colname, winner_colname)
-        
-#         with pytest.raises(KeyError):
-#             ciwio.transform(input_data)
-
-#     def test_works_copy(self):
-#         input_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
-#                                    "winner": ["NYJ", "NYJ", "NYJ", "OAK", "OAK"]})
-#         ciwio = preprocessing.ComputeIfWinnerIsOffense("offense", "winner")
-#         expected_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
-#                                       "winner": [1, 0, 0, 0, 1]})
-#         pd.util.testing.assert_frame_equal(
-#             ciwio.transform(input_data).sort_index(axis=1), expected_data.sort_index(axis=1)
-#         )
-#     def test_works_inplace(self):
-#         input_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
-#                                    "winner": ["NYJ", "NYJ", "NYJ", "OAK", "OAK"]})
-#         ciwio = preprocessing.ComputeIfWinnerIsOffense("offense", "winner", copy=False)
-#         expected_data = pd.DataFrame({"offense": ["NYJ", "NE", "NE", "CLE", "OAK"],
-#                                       "winner": [1, 0, 0, 0, 1]})
-#         ciwio.transform(input_data)
-#         pd.util.testing.assert_frame_equal(
-#             input_data.sort_index(axis=1), expected_data.sort_index(axis=1)
-#         )
-
 
 class TestMapToInt(object):
     """Testing if the integer mapper works."""
@@ -593,7 +558,46 @@ class TestCreateScoreDifferential(object):
                                            input_data.sort_index(axis=1))
         
         
+class TestDropColumns(object):
 
+    def test_bad_colname(self):
+        dc = preprocessing.DropColumns(["real", "fake"])
+        data = pd.DataFrame({"real": [1, 2, 3],
+                             "also_real": [4, 5, 6]})
+        with pytest.raises(KeyError):
+            dc.transform(data)
+
+    def test_delete_single_column(self):
+        dc = preprocessing.DropColumns(["one"])
+        input_data = pd.DataFrame({"one": [1, 2, 3],
+                                   "two": [4, 5, 6],
+                                   "three": [7, 8, 9]})
+        transformed_data = dc.transform(input_data)
+        expected_data = pd.DataFrame({"two": [4, 5, 6],
+                                      "three": [7, 8, 9]})
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           transformed_data.sort_index(axis=1))
+
+    def test_delete_multiple_columns(self):
+        dc = preprocessing.DropColumns(["one", "two"])
+        input_data = pd.DataFrame({"one": [1, 2, 3],
+                                   "two": [4, 5, 6],
+                                   "three": [7, 8, 9]})
+        transformed_data = dc.transform(input_data)
+        expected_data = pd.DataFrame({"three": [7, 8, 9]})
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           transformed_data.sort_index(axis=1))
+
+    def test_delete_inplace(self):
+        dc = preprocessing.DropColumns(["one", "two"], copy=False)
+        input_data = pd.DataFrame({"one": [1, 2, 3],
+                                   "two": [4, 5, 6],
+                                   "three": [7, 8, 9]})
+        dc.transform(input_data)
+        expected_data = pd.DataFrame({"three": [7, 8, 9]})
+        pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
+                                           input_data.sort_index(axis=1))
+        
 
 class TestCheckColumnNames(object):
     """Testing whether column names are properly checked."""

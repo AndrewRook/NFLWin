@@ -65,12 +65,13 @@ def main():
                   preprocessing.MapToInt("quarter")))
     steps.append(("encode_quarters",
                   preprocessing.OneHotEncoderFromDataFrame(categorical_feature_names=["quarter"])))
+    steps.append(("drop_unnecessary_columns",
+                  preprocessing.DropColumns(["home_team", "away_team", "pos_team"])))
     
-    #TODO (AndrewRook): Add DropColumns class to drop columns by name
+    #TODO (AndrewRook): Add ToNumpy class to convert to numpy arrays
     
     pipe = Pipeline(steps)
     transformed_training_features = pipe.fit_transform(training_features)
-    transformed_training_features.drop(["home_team", "away_team", "pos_team"], axis=1, inplace=True)
     transformed_training_features = transformed_training_features.sort_index(axis=1).values.astype(np.float)
     print(transformed_training_features.shape)
     from keras.models import Sequential
@@ -78,12 +79,11 @@ def main():
     model = Sequential()
     model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
     model.add(Dense(32, activation="relu"))
-    model.add(Dense(32, activation="relu"))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(optimizer="sgd",
                   loss="mean_squared_error",
                   metrics=["accuracy"])
-    model.fit(transformed_training_features, training_target, epochs=10)
+    model.fit(transformed_training_features, training_target, batch_size=256, epochs=10)
     print(model.evaluate(transformed_training_features, training_target, batch_size=128))
     #win_probability_model = model.WPModel()
 
