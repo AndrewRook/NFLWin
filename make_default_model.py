@@ -71,6 +71,8 @@ def main():
                   preprocessing.DropColumns(["home_team", "away_team", "pos_team"])))
     steps.append(("convert_to_numpy",
                   preprocessing.ConvertToNumpy(np.float)))
+
+    #TODO (AndrewRook): Figure out how to handle special teams plays
     
     pipe = Pipeline(steps)
     transformed_training_features = pipe.fit_transform(training_features)
