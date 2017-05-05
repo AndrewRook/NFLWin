@@ -3,6 +3,7 @@ from __future__ import division, print_function
 
 import datetime as dt
 import numpy as np
+import pandas as pd
 import time
 import os
 
@@ -21,8 +22,9 @@ def main():
     season_types = ["Regular", "Postseason"]
     engine = data.connect_nfldb()
     #raw_data = data.query_nfldb(engine, training_seasons + validation_seasons, season_types)
-    import pandas as pd
     raw_data = pd.read_csv("test_data.csv")
+
+    raw_data.fillna(value=0, inplace=True)
 
     model_columns = ["home_team", "away_team",
                      "home_wins", "home_losses",
@@ -70,22 +72,29 @@ def main():
     steps.append(("convert_to_numpy",
                   preprocessing.ConvertToNumpy(np.float)))
     
-    #TODO (AndrewRook): Add ToNumpy class to convert to numpy arrays
-    
     pipe = Pipeline(steps)
     transformed_training_features = pipe.fit_transform(training_features)
+    transformed_validation_features = pipe.transform(validation_features)
+
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import accuracy_score
+    clf = LogisticRegression()
+    clf.fit(transformed_training_features, training_target)
+    predictions = clf.predict(transformed_validation_features)
+    print("Logistic accuracy:", accuracy_score(validation_target, predictions))
+    
     # print(transformed_training_features.shape)
-    # from keras.models import Sequential
-    # from keras.layers import Dense, Activation
-    # model = Sequential()
-    # model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
-    # model.add(Dense(32, activation="relu"))
-    # model.add(Dense(1, activation='sigmoid'))
-    # model.compile(optimizer="sgd",
-    #               loss="mean_squared_error",
-    #               metrics=["accuracy"])
-    # model.fit(transformed_training_features, training_target, batch_size=256, epochs=10)
-    # print(model.evaluate(transformed_training_features, training_target, batch_size=128))
+    from keras.models import Sequential
+    from keras.layers import Dense, Activation
+    model = Sequential()
+    model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
+    model.add(Dense(32, activation="relu"))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(optimizer="sgd",
+                  loss="mean_squared_error",
+                  metrics=["accuracy"])
+    model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
+    print(model.evaluate(transformed_validation_features, validation_target, batch_size=128))
     #win_probability_model = model.WPModel()
 
 if __name__ == "__main__":
