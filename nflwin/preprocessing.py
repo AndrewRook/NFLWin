@@ -576,7 +576,81 @@ class DropColumns(BaseEstimator):
                            "Must contain at least {0}".format(self.column_names))
         
         
+class ConvertToNumpy(BaseEstimator):
+    """Shim a Pandas DataFrame to a Numpy ndarray.
 
+    This cleaner not only spits out a 2D numpy array, but it
+    also makes sure that the order of the columns is consistent.
+
+    Parameters
+    ----------
+    dtype : numpy datatype
+        The datatype you want for the numpy array. For most uses,
+        you probably want np.float.
+
+    Attributes
+    ----------
+    colnames_ : list of strings
+        The column names found when ``fit`` is run. 
+
+    """
+
+    def __init__(self, dtype):
+        self.dtype = dtype
+
+    def fit(self, X, y=None):
+        """Grab the column names from a fitting DataFrame.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            The target.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        self : For compatibility with Scikit-learn's ``Pipeline``. 
+        """
+        self.colnames_ = X.columns
+        return self
+
+    def transform(self, X, y=None):
+        """Apply the column ordering to the data and convert it to the ndarray.
+
+        Parameters
+        ----------
+        X : Pandas DataFrame, of shape(number of plays, number of features)
+            NFL play data.
+        y : Numpy array, with length = number of plays, or None
+            The target.
+            (Used as part of Scikit-learn's ``Pipeline``)
+
+        Returns
+        -------
+        X : Pandas DataFrame, of shape(number of plays, ``len(column_names)``)
+            The input DataFrame, properly ordered and with extraneous
+            columns dropped
+
+        Raises
+        ------
+        KeyError
+            If the input data frame doesn't have all the columns specified
+            by ``column_names``.
+        NotFittedError
+            If ``transform`` is called before ``fit``.
+        """
+        try:
+            return np.array([X[column] for column in self.colnames_], dtype=self.dtype).T
+        except AttributeError:
+            raise NotFittedError("ConvertToNumpy: Call 'fit' before 'transform")
+        except KeyError:
+            raise KeyError("ConvertToNumpy: DataFrame does not have required columns. "
+                           "Must contain at least {0}".format(self.colnames_))
+        
+        
+        
     
 class CheckColumnNames(BaseEstimator):
     """Make sure user has the right column names, in the right order.

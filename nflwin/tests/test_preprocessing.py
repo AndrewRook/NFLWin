@@ -597,6 +597,75 @@ class TestDropColumns(object):
         expected_data = pd.DataFrame({"three": [7, 8, 9]})
         pd.util.testing.assert_frame_equal(expected_data.sort_index(axis=1),
                                            input_data.sort_index(axis=1))
+
+
+class TestConvertToNumpy(object):
+    def test_transform_called_before_fit(self):
+        ctn = preprocessing.ConvertToNumpy(np.float)
+        data = pd.DataFrame()
+        with pytest.raises(NotFittedError):
+            ctn.transform(data)
+
+    def test_transform_data_has_wrong_columns(self):
+        ctn = preprocessing.ConvertToNumpy(np.float)
+        fit_data = pd.DataFrame({
+            "one": [1, 2, 3],
+            "two": [4, 5, 6]
+        })
+        transform_data = pd.DataFrame({
+            "one": [1, 2, 3],
+            "three": [7, 8, 9]
+        })
+        ctn.fit(fit_data)
+        with pytest.raises(KeyError):
+            ctn.transform(transform_data)
+
+    def test_transform_floats(self):
+        ctn = preprocessing.ConvertToNumpy(np.float)
+        input_data = pd.DataFrame({
+            "one": [1, 2, 3],
+            "two": [4.5, 5.6, 6.7]
+        })
+        ctn.fit(input_data[["one", "two"]])
+        transformed_data = ctn.transform(input_data)
+        expected_data = np.array([[1.0, 4.5],
+                                  [2.0, 5.6],
+                                  [3.0, 6.7]])
+        np.testing.assert_allclose(transformed_data, expected_data)
+
+    def test_transform_ints(self):
+        ctn = preprocessing.ConvertToNumpy(np.int)
+        input_data = pd.DataFrame({
+            "one": [1, 2, 3],
+            "two": [4.5, 5.6, 6.7]
+        })
+        ctn.fit(input_data[["one", "two"]])
+        transformed_data = ctn.transform(input_data)
+        expected_data = np.array([[1, 4],
+                                  [2, 5],
+                                  [3, 6]])
+        np.testing.assert_allclose(transformed_data, expected_data)
+
+    def test_transform_ordering(self):
+        ctn = preprocessing.ConvertToNumpy(np.float)
+        input_data = pd.DataFrame({
+            "a": [1, 2, 3],
+            "b": [4.5, 5.6, 6.7],
+            "c": [7, 8, 9]
+        })
+        ctn.fit(input_data[["c", "b", "a"]])
+        transformed_data = ctn.transform(input_data)
+        expected_data = np.array([[7.0, 4.5, 1.0],
+                                  [8.0, 5.6, 2.0],
+                                  [9.0, 6.7, 3.0]])
+        np.testing.assert_allclose(transformed_data, expected_data)
+
+        ctn.fit(input_data[["b", "a", "c"]])
+        transformed_data = ctn.transform(input_data)
+        with pytest.raises(AssertionError):
+            np.testing.assert_allclose(transformed_data, expected_data)
+            
+        
         
 
 class TestCheckColumnNames(object):
