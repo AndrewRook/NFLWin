@@ -14,6 +14,24 @@ from nflwin import data
 from nflwin import model
 from nflwin import preprocessing
 
+def loss_function(y_true, predicted_probabilities):
+    ordered_predictions = np.argsort(predicted_probabilities)
+    sorted_probabilities = predicted_probabilities[ordered_predictions]
+    sorted_actuals = y_true[ordered_predictions]
+    cum_probabilities = np.cumsum(sorted_probabilities)
+    cum_actuals = np.cumsum(sorted_actuals)
+    probabilities_gradient = np.gradient(cum_probabilities, edge_order=2)
+    actuals_gradient = np.gradient(cum_actuals, edge_order=2)
+    import matplotlib.pyplot as plt
+    ax = plt.figure().add_subplot(111)
+    ax.plot(sorted_probabilities, probabilities_gradient,#cum_probabilities,
+            ls="-", color="blue", label="Predictions")
+    ax.plot(sorted_probabilities, sorted_probabilities,#actuals_gradient,#cum_actuals,
+            ls="-", color="red", label="Actuals")
+    ax.legend(loc="upper left", fontsize=10)
+    plt.show()
+    ax.figure.savefig("test.png")
+
 def main():
     start = time.time()
     
@@ -42,8 +60,8 @@ def main():
     validation_features = raw_data[raw_data["season_year"].isin(validation_seasons)][model_columns]
     
     #Convert target to a boolean based on whether the offense won:
-    training_target = (training_target == training_features["pos_team"])
-    validation_target = (validation_target == validation_features["pos_team"])
+    training_target = (training_target == training_features["pos_team"]).values
+    validation_target = (validation_target == validation_features["pos_team"]).values
 
 
     steps = []
@@ -84,19 +102,20 @@ def main():
     clf.fit(transformed_training_features, training_target)
     predictions = clf.predict(transformed_validation_features)
     print("Logistic accuracy:", accuracy_score(validation_target, predictions))
+    loss_function(validation_target, clf.predict_proba(transformed_validation_features)[:,1])
     
     # print(transformed_training_features.shape)
-    from keras.models import Sequential
-    from keras.layers import Dense, Activation
-    model = Sequential()
-    model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
-    model.add(Dense(32, activation="relu"))
-    model.add(Dense(1, activation='sigmoid'))
-    model.compile(optimizer="sgd",
-                  loss="mean_squared_error",
-                  metrics=["accuracy"])
-    model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
-    print(model.evaluate(transformed_validation_features, validation_target, batch_size=128))
+    # from keras.models import Sequential
+    # from keras.layers import Dense, Activation
+    # model = Sequential()
+    # model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
+    # model.add(Dense(32, activation="relu"))
+    # model.add(Dense(1, activation='sigmoid'))
+    # model.compile(optimizer="sgd",
+    #               loss="mean_squared_error",
+    #               metrics=["accuracy"])
+    # model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
+    # print(model.evaluate(transformed_validation_features, validation_target, batch_size=128))
     #win_probability_model = model.WPModel()
 
 if __name__ == "__main__":
