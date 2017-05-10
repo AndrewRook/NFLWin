@@ -8,6 +8,7 @@ import time
 import os
 
 #from sklearn.base import BaseEstimator
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
 from nflwin import data
@@ -17,20 +18,15 @@ from nflwin import preprocessing
 def loss_function(y_true, predicted_probabilities):
     ordered_predictions = np.argsort(predicted_probabilities)
     sorted_probabilities = predicted_probabilities[ordered_predictions]
-    sorted_actuals = y_true[ordered_predictions]
-    cum_probabilities = np.cumsum(sorted_probabilities)
-    cum_actuals = np.cumsum(sorted_actuals)
-    probabilities_gradient = np.gradient(cum_probabilities, edge_order=2)
-    actuals_gradient = np.gradient(cum_actuals, edge_order=2)
+    sorted_actuals = (y_true[ordered_predictions]).astype(np.float)
     import matplotlib.pyplot as plt
+    from scipy.ndimage.filters import gaussian_filter
+    smoothing_sigma = 150
+    smoothed_actuals = gaussian_filter(sorted_actuals, smoothing_sigma, mode="nearest")
     ax = plt.figure().add_subplot(111)
-    ax.plot(sorted_probabilities, probabilities_gradient,#cum_probabilities,
-            ls="-", color="blue", label="Predictions")
-    ax.plot(sorted_probabilities, sorted_probabilities,#actuals_gradient,#cum_actuals,
-            ls="-", color="red", label="Actuals")
-    ax.legend(loc="upper left", fontsize=10)
+    ax.plot(sorted_probabilities, smoothed_actuals, ls="-", color="blue")
+    ax.plot([0, 1], [0, 1], ls="--", color="black")
     plt.show()
-    ax.figure.savefig("test.png")
 
 def main():
     start = time.time()
@@ -63,6 +59,10 @@ def main():
     training_target = (training_target == training_features["pos_team"]).values
     validation_target = (validation_target == validation_features["pos_team"]).values
 
+    #Create a test set for model selection and hyperparameter search
+    training_features, test_features, training_target, test_target = train_test_split(
+        training_features, training_target, test_size=0.2, random_state=4656)
+
 
     steps = []
     steps.append(("compute_offense_home",
@@ -94,15 +94,16 @@ def main():
     
     pipe = Pipeline(steps)
     transformed_training_features = pipe.fit_transform(training_features)
+    transformed_test_features = pipe.transform(test_features)
     transformed_validation_features = pipe.transform(validation_features)
 
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import accuracy_score
     clf = LogisticRegression()
     clf.fit(transformed_training_features, training_target)
-    predictions = clf.predict(transformed_validation_features)
-    print("Logistic accuracy:", accuracy_score(validation_target, predictions))
-    loss_function(validation_target, clf.predict_proba(transformed_validation_features)[:,1])
+    predictions = clf.predict(transformed_test_features)
+    print("Logistic accuracy:", accuracy_score(test_target, predictions))
+    #loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
     
     # print(transformed_training_features.shape)
     # from keras.models import Sequential
