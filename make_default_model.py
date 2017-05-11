@@ -9,23 +9,45 @@ import os
 
 #from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KernelDensity
 from sklearn.pipeline import Pipeline
+from numba import jit
 
 from nflwin import data
 from nflwin import model
 from nflwin import preprocessing
 
+@jit(nopython=True)
+def _smooth_data(sorted_x, sorted_y, sample_x, sigma, truncation_limit=3):
+    min_index = 0
+    smoothed_y = np.zeros(len(sample_x))
+    for i in range(len(sample_x)):
+        while sorted_x[min_index] < sample_x[i] - sigma * truncation_limit:
+            min_index += 1
+        curr_index = min_index
+        sum_weights = 0.
+        while (curr_index < len(sorted_x)) and (sorted_x[curr_index] <= sample_x[i] + sigma * truncation_limit):
+            delta_x = sample_x[i] - sorted_x[curr_index]
+            weight = np.exp(-delta_x**2 / (2 * sigma**2)) / (np.sqrt(2 * np.pi) * sigma)
+            sum_weights += weight
+            smoothed_y[i] += sorted_y[curr_index] * weight
+            curr_index += 1
+        smoothed_y[i] /= sum_weights
+    return smoothed_y
+
 def loss_function(y_true, predicted_probabilities):
-    ordered_predictions = np.argsort(predicted_probabilities)
-    sorted_probabilities = predicted_probabilities[ordered_predictions]
-    sorted_actuals = (y_true[ordered_predictions]).astype(np.float)
+    probability_order = np.argsort(predicted_probabilities)
+    sorted_predictions = predicted_probabilities[probability_order]
+    sorted_truth = y_true[probability_order]
+    sampled_predictions = np.linspace(0, 1, 101)
+    sigma = 0.0001
+    smoothed_truth = _smooth_data(sorted_predictions, sorted_truth, sampled_predictions, sigma)
+    smoothed_ideal = _smooth_data(sorted_predictions, sorted_predictions, sampled_predictions, sigma)
     import matplotlib.pyplot as plt
-    from scipy.ndimage.filters import gaussian_filter
-    smoothing_sigma = 150
-    smoothed_actuals = gaussian_filter(sorted_actuals, smoothing_sigma, mode="nearest")
     ax = plt.figure().add_subplot(111)
-    ax.plot(sorted_probabilities, smoothed_actuals, ls="-", color="blue")
-    ax.plot([0, 1], [0, 1], ls="--", color="black")
+    ax.plot(sampled_predictions, smoothed_truth, ls='-', lw=2, color="blue", label="Model")
+    ax.plot(sampled_predictions, smoothed_ideal, ls='--', lw=2, color="black", label="Ideal")
+    ax.legend(loc="upper left", fontsize=10)
     plt.show()
 
 def main():
@@ -103,7 +125,7 @@ def main():
     clf.fit(transformed_training_features, training_target)
     predictions = clf.predict(transformed_test_features)
     print("Logistic accuracy:", accuracy_score(test_target, predictions))
-    #loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
+    loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
     
     # print(transformed_training_features.shape)
     # from keras.models import Sequential
