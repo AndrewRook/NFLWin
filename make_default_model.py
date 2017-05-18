@@ -2,12 +2,13 @@
 from __future__ import division, print_function
 
 import datetime as dt
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import time
 import os
 
-#from sklearn.base import BaseEstimator
+from scipy import integrate
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KernelDensity
 from sklearn.pipeline import Pipeline
@@ -35,20 +36,31 @@ def _smooth_data(sorted_x, sorted_y, sample_x, sigma, truncation_limit=3):
         smoothed_y[i] /= sum_weights
     return smoothed_y
 
-def loss_function(y_true, predicted_probabilities):
+def smooth_probabilities(y_true, predicted_probabilities, sigma=0.005, sample_probabilities=np.linspace(0, 1, 1001)):
     probability_order = np.argsort(predicted_probabilities)
     sorted_predictions = predicted_probabilities[probability_order]
     sorted_truth = y_true[probability_order]
-    sampled_predictions = np.linspace(0, 1, 101)
-    sigma = 0.0001
-    smoothed_truth = _smooth_data(sorted_predictions, sorted_truth, sampled_predictions, sigma)
-    smoothed_ideal = _smooth_data(sorted_predictions, sorted_predictions, sampled_predictions, sigma)
-    import matplotlib.pyplot as plt
+    
+    smoothed_truth = _smooth_data(sorted_predictions, sorted_truth, sampled_probabilities, sigma)
+    smoothed_ideal = _smooth_data(sorted_predictions, sorted_predictions, sampled_probabilities, sigma)
+
+    return smoothed_truth, smoothed_ideal
+    
+
+def loss_function(y_true, predicted_probabilities):
+    sampled_predictions = np.linspace(0, 1, 1001)
+    sigma = 0.005
+    smoothed_truth, smoothed_ideal = smooth_probabilities(y_true, predicted_probabilities, sigma=sigma, sample_probabilities=sampled_predictions)
+    abs_difference = np.abs(smoothed_truth - smoothed_ideal)
+    max_distance = np.max(abs_difference)
+    area_between_curves = integrate.simps(abs_difference, sampled_predictions)
     ax = plt.figure().add_subplot(111)
     ax.plot(sampled_predictions, smoothed_truth, ls='-', lw=2, color="blue", label="Model")
     ax.plot(sampled_predictions, smoothed_ideal, ls='--', lw=2, color="black", label="Ideal")
     ax.legend(loc="upper left", fontsize=10)
+    print("max distance={0:.4f}, area_between_curves={1:.4f}".format(max_distance, area_between_curves))
     plt.show()
+
 
 def main():
     start = time.time()
