@@ -41,8 +41,8 @@ def smooth_probabilities(y_true, predicted_probabilities, sigma=0.005, sample_pr
     sorted_predictions = predicted_probabilities[probability_order]
     sorted_truth = y_true[probability_order]
     
-    smoothed_truth = _smooth_data(sorted_predictions, sorted_truth, sampled_probabilities, sigma)
-    smoothed_ideal = _smooth_data(sorted_predictions, sorted_predictions, sampled_probabilities, sigma)
+    smoothed_truth = _smooth_data(sorted_predictions, sorted_truth, sample_probabilities, sigma)
+    smoothed_ideal = _smooth_data(sorted_predictions, sorted_predictions, sample_probabilities, sigma)
 
     return smoothed_truth, smoothed_ideal
     
