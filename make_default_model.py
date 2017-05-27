@@ -23,7 +23,7 @@ def _smooth_data(sorted_x, sorted_y, sample_x, sigma, truncation_limit=3):
     min_index = 0
     smoothed_y = np.zeros(len(sample_x))
     for i in range(len(sample_x)):
-        while sorted_x[min_index] < sample_x[i] - sigma * truncation_limit:
+        while  min_index < len(sorted_x) and sorted_x[min_index] < sample_x[i] - sigma * truncation_limit:
             min_index += 1
         curr_index = min_index
         sum_weights = 0.
@@ -33,7 +33,10 @@ def _smooth_data(sorted_x, sorted_y, sample_x, sigma, truncation_limit=3):
             sum_weights += weight
             smoothed_y[i] += sorted_y[curr_index] * weight
             curr_index += 1
-        smoothed_y[i] /= sum_weights
+        if sum_weights < 0.000001:
+            smoothed_y[i] = np.nan
+        else:
+            smoothed_y[i] /= sum_weights
     return smoothed_y
 
 def smooth_probabilities(y_true, predicted_probabilities, sigma=0.005, sample_probabilities=np.linspace(0, 1, 1001)):
@@ -133,24 +136,34 @@ def main():
 
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import accuracy_score
-    clf = LogisticRegression()
-    clf.fit(transformed_training_features, training_target)
-    predictions = clf.predict(transformed_test_features)
-    print("Logistic accuracy:", accuracy_score(test_target, predictions))
-    loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
+    #clf = LogisticRegression()
+    # from sklearn.ensemble import RandomForestClassifier
+    # clf = RandomForestClassifier(n_estimators=100, min_samples_split=100)
+    # clf.fit(transformed_training_features, training_target)
+    # predictions = clf.predict(transformed_test_features)
+    # print("Accuracy:", accuracy_score(test_target, predictions))
+    # loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
     
-    # print(transformed_training_features.shape)
-    # from keras.models import Sequential
-    # from keras.layers import Dense, Activation
-    # model = Sequential()
-    # model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
-    # model.add(Dense(32, activation="relu"))
-    # model.add(Dense(1, activation='sigmoid'))
-    # model.compile(optimizer="sgd",
-    #               loss="mean_squared_error",
-    #               metrics=["accuracy"])
-    # model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
-    # print(model.evaluate(transformed_validation_features, validation_target, batch_size=128))
+    print(transformed_training_features.shape)
+    from keras.models import Sequential
+    from keras.layers import Dense, Activation
+    model = Sequential()
+    model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
+    model.add(Dense(32, activation="softmax"))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(optimizer="sgd",
+                  loss="mean_squared_error",
+                  metrics=["accuracy"])
+    model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
+    #print(dir(model))
+    # print(probabilities.shape)
+    # print(model.evaluate(transformed_test_features, test_target, batch_size=128))
+    #test = model.predict_proba(transformed_test_features)
+    #for i,probs in enumerate(test):
+    #    print(i, probs, test_target[i])
+    print("")
+    print("")
+    loss_function(test_target, model.predict_proba(transformed_test_features)[:,0])
     #win_probability_model = model.WPModel()
 
 if __name__ == "__main__":
