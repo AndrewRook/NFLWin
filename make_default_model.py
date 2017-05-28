@@ -48,21 +48,47 @@ def smooth_probabilities(y_true, predicted_probabilities, sigma=0.005, sample_pr
     smoothed_ideal = _smooth_data(sorted_predictions, sorted_predictions, sample_probabilities, sigma)
 
     return smoothed_truth, smoothed_ideal
+
+
+def plot_loss_function(estimator, X, y, ax=None, n_samples=1001, sigma=0.005, **kwargs):
+    func = create_loss_function(n_samples=n_samples, sigma=sigma, return_vals="eval")
+    func_return = func(estimator, X, y)
+    if ax is None:
+        ax = plt.figure().add_subplot(111)
+    kwargs["label"] = "{0}, max={1:.3f}, area={2:.3f}".format(
+        kwargs.get("label", "Data"), func_return["max"], func_return["area"])
+    ax.plot(func_return["samples"], func_return["smoothed_data"], **kwargs)
+    ax.plot(func_return["samples"], func_return["smoothed_ideal"], ls="--", lw=2, color="black", label="Ideal")
+    ax.legend(loc="upper left", fontsize=10)
+    return ax
     
 
-def loss_function(y_true, predicted_probabilities):
-    sampled_predictions = np.linspace(0, 1, 1001)
-    sigma = 0.005
-    smoothed_truth, smoothed_ideal = smooth_probabilities(y_true, predicted_probabilities, sigma=sigma, sample_probabilities=sampled_predictions)
-    abs_difference = np.abs(smoothed_truth - smoothed_ideal)
-    max_distance = np.max(abs_difference)
-    area_between_curves = integrate.simps(abs_difference, sampled_predictions)
-    ax = plt.figure().add_subplot(111)
-    ax.plot(sampled_predictions, smoothed_truth, ls='-', lw=2, color="blue", label="Model")
-    ax.plot(sampled_predictions, smoothed_ideal, ls='--', lw=2, color="black", label="Ideal")
-    ax.legend(loc="upper left", fontsize=10)
-    print("max distance={0:.4f}, area_between_curves={1:.4f}".format(max_distance, area_between_curves))
-    plt.show()
+def create_loss_function(n_samples=1001, sigma=0.005, return_vals="area"):
+    return_vals = return_vals.lower()
+    if return_vals not in ("area", "max", "both", "eval"):
+        raise ValueError('return_vals must be one of "area", "max", "both", or "eval"')
+    def loss_function(estimator, X, y):
+        predicted_probabilities = estimator.predict_proba(X)[:,1]
+        samples = np.linspace(0, 1, n_samples)
+        smoothed_data, smoothed_ideal = smooth_probabilities(
+            y, predicted_probabilities, sigma=sigma, sample_probabilities=samples
+        )
+        abs_difference = np.abs(smoothed_data - smoothed_ideal)
+        max_distance = np.max(abs_difference)
+        area_between_curves = integrate.simps(abs_difference, samples)
+        if return_vals == "area":
+            return area_between_curves
+        if return_vals == "max":
+            return max_distance
+        if return_vals == "both":
+            return {"area": area_between_curves, "max": max_distance}
+        if return_vals == "eval":
+            return {"area": area_between_curves, "max": max_distance,
+                    "samples": samples, "smoothed_data": smoothed_data,
+                    "smoothed_ideal": smoothed_ideal
+                    }
+    return loss_function
+        
 
 
 def main():
@@ -135,7 +161,27 @@ def main():
     transformed_validation_features = pipe.transform(validation_features)
 
     from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import accuracy_score
+    from sklearn.ensemble import RandomForestClassifier
+    from xgboost import XGBClassifier
+    #from sklearn.metrics import accuracy_score
+
+    def run_model(train_features, train_target, test_features, test_target, classifier):
+        classifier.fit(train_features, train_target)
+        ax = plot_loss_function(classifier, test_features, test_target)
+        plt.show()
+
+    print("Logistic:")
+    run_model(transformed_training_features, training_target,
+              transformed_test_features, test_target,
+              LogisticRegression())
+    # print("Random Forest")
+    # run_model(transformed_training_features, training_target,
+    #           transformed_test_features, test_target,
+    #           RandomForestClassifier(n_estimators=100, min_samples_split=100))
+    print("XGBoost")
+    run_model(transformed_training_features, training_target,
+              transformed_test_features, test_target,
+              XGBClassifier(max_depth=4, n_estimators=100))
     #clf = LogisticRegression()
     # from sklearn.ensemble import RandomForestClassifier
     # clf = RandomForestClassifier(n_estimators=100, min_samples_split=100)
@@ -144,26 +190,26 @@ def main():
     # print("Accuracy:", accuracy_score(test_target, predictions))
     # loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
     
-    print(transformed_training_features.shape)
-    from keras.models import Sequential
-    from keras.layers import Dense, Activation
-    model = Sequential()
-    model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
-    model.add(Dense(32, activation="softmax"))
-    model.add(Dense(1, activation='sigmoid'))
-    model.compile(optimizer="sgd",
-                  loss="mean_squared_error",
-                  metrics=["accuracy"])
-    model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
-    #print(dir(model))
-    # print(probabilities.shape)
-    # print(model.evaluate(transformed_test_features, test_target, batch_size=128))
-    #test = model.predict_proba(transformed_test_features)
-    #for i,probs in enumerate(test):
-    #    print(i, probs, test_target[i])
-    print("")
-    print("")
-    loss_function(test_target, model.predict_proba(transformed_test_features)[:,0])
+    # print(transformed_training_features.shape)
+    # from keras.models import Sequential
+    # from keras.layers import Dense, Activation
+    # model = Sequential()
+    # model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
+    # model.add(Dense(32, activation="softmax"))
+    # model.add(Dense(1, activation='sigmoid'))
+    # model.compile(optimizer="sgd",
+    #               loss="mean_squared_error",
+    #               metrics=["accuracy"])
+    # model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
+    # #print(dir(model))
+    # # print(probabilities.shape)
+    # # print(model.evaluate(transformed_test_features, test_target, batch_size=128))
+    # #test = model.predict_proba(transformed_test_features)
+    # #for i,probs in enumerate(test):
+    # #    print(i, probs, test_target[i])
+    # print("")
+    # print("")
+    # loss_function(test_target, model.predict_proba(transformed_test_features)[:,0])
     #win_probability_model = model.WPModel()
 
 if __name__ == "__main__":
