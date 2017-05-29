@@ -162,26 +162,39 @@ def main():
 
     from sklearn.linear_model import LogisticRegression
     from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import GridSearchCV
     from xgboost import XGBClassifier
     #from sklearn.metrics import accuracy_score
 
-    def run_model(train_features, train_target, test_features, test_target, classifier):
-        classifier.fit(train_features, train_target)
-        ax = plot_loss_function(classifier, test_features, test_target)
+    def run_model(train_features, train_target, test_features, test_target, classifier, param_grid,
+                  fit_params=None):
+        scoring_func = create_loss_function()
+        grid_search = GridSearchCV(classifier, param_grid, scoring=scoring_func, fit_params=fit_params)
+        grid_search.fit(train_features, train_target)
+        print(pd.DataFrame(grid_search.cv_results_))
+        ax = plot_loss_function(grid_search, test_features, test_target)
         plt.show()
 
-    print("Logistic:")
-    run_model(transformed_training_features, training_target,
-              transformed_test_features, test_target,
-              LogisticRegression())
+    # print("Logistic:")
+    # run_model(transformed_training_features, training_target,
+    #           transformed_test_features, test_target,
+    #           LogisticRegression(), {"C": [0.1, 1, 10]})
     # print("Random Forest")
     # run_model(transformed_training_features, training_target,
     #           transformed_test_features, test_target,
     #           RandomForestClassifier(n_estimators=100, min_samples_split=100))
     print("XGBoost")
-    run_model(transformed_training_features, training_target,
-              transformed_test_features, test_target,
-              XGBClassifier(max_depth=4, n_estimators=100))
+    run_model(
+        transformed_training_features, training_target,
+        transformed_test_features, test_target,
+        XGBClassifier(max_depth=4, n_estimators=100),
+        {"max_depth": [3, 4, 5], "n_estimators": [1000]},
+        fit_params={
+            "eval_set": [(transformed_test_features, test_target)],
+            "eval_metric": "logloss",
+            "early_stopping_rounds": 10
+        }
+    )
     #clf = LogisticRegression()
     # from sklearn.ensemble import RandomForestClassifier
     # clf = RandomForestClassifier(n_estimators=100, min_samples_split=100)
@@ -189,16 +202,17 @@ def main():
     # predictions = clf.predict(transformed_test_features)
     # print("Accuracy:", accuracy_score(test_target, predictions))
     # loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
-    
+
+    #NOTE: see https://stats.stackexchange.com/a/76726 for possible things to set this to.
     # print(transformed_training_features.shape)
     # from keras.models import Sequential
     # from keras.layers import Dense, Activation
     # model = Sequential()
     # model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
-    # model.add(Dense(32, activation="softmax"))
+    # model.add(Dense(32, activation="relu"))
     # model.add(Dense(1, activation='sigmoid'))
     # model.compile(optimizer="sgd",
-    #               loss="mean_squared_error",
+    #               loss="binary_crossentropy",
     #               metrics=["accuracy"])
     # model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
     # #print(dir(model))
