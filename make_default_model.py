@@ -160,6 +160,7 @@ def main():
     transformed_test_features = pipe.transform(test_features)
     transformed_validation_features = pipe.transform(validation_features)
 
+    from sklearn.calibration import CalibratedClassifierCV
     from sklearn.linear_model import LogisticRegression
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.model_selection import GridSearchCV
@@ -169,32 +170,39 @@ def main():
     def run_model(train_features, train_target, test_features, test_target, classifier, param_grid,
                   fit_params=None):
         scoring_func = create_loss_function()
-        grid_search = GridSearchCV(classifier, param_grid, scoring=scoring_func, fit_params=fit_params)
+        #calibrated_classifier = CalibratedClassifierCV(base_estimator=classifier, cv=2)
+        #param_grid = {"base_estimator__{0}".format(key): param_grid[key] for key in param_grid if not key.startswith("base_estimator__")}
+        #grid_search = GridSearchCV(calibrated_classifier, param_grid, scoring=scoring_func, fit_params=fit_params)
+        grid_search = GridSearchCV(classifier, param_grid, fit_params=fit_params)
         grid_search.fit(train_features, train_target)
+        calibrated_classifier = CalibratedClassifierCV(base_estimator=grid_search.best_estimator_, cv="prefit")
+        calibrated_classifier.fit(test_features, test_target)
         print(pd.DataFrame(grid_search.cv_results_))
-        ax = plot_loss_function(grid_search, test_features, test_target)
+        ax = plot_loss_function(calibrated_classifier, test_features, test_target)
         plt.show()
 
     # print("Logistic:")
     # run_model(transformed_training_features, training_target,
     #           transformed_test_features, test_target,
     #           LogisticRegression(), {"C": [0.1, 1, 10]})
-    # print("Random Forest")
-    # run_model(transformed_training_features, training_target,
-    #           transformed_test_features, test_target,
-    #           RandomForestClassifier(n_estimators=100, min_samples_split=100))
-    print("XGBoost")
-    run_model(
-        transformed_training_features, training_target,
-        transformed_test_features, test_target,
-        XGBClassifier(max_depth=4, n_estimators=100),
-        {"max_depth": [3, 4, 5], "n_estimators": [1000]},
-        fit_params={
-            "eval_set": [(transformed_test_features, test_target)],
-            "eval_metric": "logloss",
-            "early_stopping_rounds": 10
-        }
-    )
+    print("Random Forest")
+    run_model(transformed_training_features, training_target,
+              transformed_test_features, test_target,
+              RandomForestClassifier(),
+              {"n_estimators": [100], "min_samples_split": [100]}
+              )
+    # print("XGBoost")
+    # run_model(
+    #     transformed_training_features, training_target,
+    #     transformed_test_features, test_target,
+    #     XGBClassifier(max_depth=4, n_estimators=100),
+    #     {"max_depth": [3, 4, 5], "n_estimators": [1000]},
+    #     fit_params={
+    #         "eval_set": [(transformed_test_features, test_target)],
+    #         "eval_metric": "logloss",
+    #         "early_stopping_rounds": 10
+    #     }
+    # )
     #clf = LogisticRegression()
     # from sklearn.ensemble import RandomForestClassifier
     # clf = RandomForestClassifier(n_estimators=100, min_samples_split=100)
