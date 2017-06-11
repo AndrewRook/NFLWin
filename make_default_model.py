@@ -13,6 +13,7 @@ from scipy import integrate
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -57,25 +58,22 @@ def smooth_probabilities(y_true, predicted_probabilities, sigma=0.005, sample_pr
 def plot_loss_function(estimator, X, y, ax=None, n_samples=1001, sigma=0.005, **kwargs):
     func = create_loss_function(n_samples=n_samples, sigma=sigma, return_vals="eval")
     func_return = func(estimator, X, y)
-    test = pd.DataFrame(
-        {
-            "samples": func_return["samples"],
-            "smoothed_data": func_return["smoothed_data"],
-            "smoothed_ideal": func_return["smoothed_ideal"]
-        }
+    accuracy = accuracy_score(
+        y, estimator.predict(X)
     )
     if ax is None:
         ax = plt.figure().add_subplot(111)
-        ax.plot(func_return["samples"], 1. / (1 + np.exp(-9 * (func_return["samples"] - 0.5))),
-                lw=2, color="orange", label="sigmoid")
         ax.plot(func_return["samples"], func_return["smoothed_ideal"],
                 ls="--", lw=2, color="black", label="Ideal")
+        ax.set_ylabel("Actual Winning Percentage")
+        ax.set_xlabel("Predicted Winning Percentage")
         ax2 = ax.twinx()
-        ax2.hist(estimator.predict_proba(X)[:,1], bins=100, alpha=0.25, rwidth=1, color="black")
-    kwargs["label"] = "{0}, max={1:.3f}, area={2:.3f}".format(
-        kwargs.get("label", "Data"), func_return["max"], func_return["area"])
+        ax2.hist(100 * estimator.predict_proba(X)[:,1], bins=100, alpha=0.25, rwidth=1, color="black")
+        ax2.set_ylabel("Number of Plays")
+    kwargs["label"] = "{0}, accuracy={1:.3f}, max={2:.2f}%, area={3:.3f}".format(
+        kwargs.get("label", "Data"), accuracy, func_return["max"], func_return["area"])
     ax.plot(func_return["samples"], func_return["smoothed_data"], **kwargs)
-    ax.legend(loc="upper left", fontsize=10)
+    ax.legend(loc="upper left", fontsize=9)
     return ax
     
 
@@ -89,6 +87,9 @@ def create_loss_function(n_samples=1001, sigma=0.005, return_vals="area", invers
         smoothed_data, smoothed_ideal = smooth_probabilities(
             y, predicted_probabilities, sigma=sigma, sample_probabilities=samples
         )
+        samples *= 100
+        smoothed_data *= 100
+        smoothed_ideal *= 100
         abs_difference = np.abs(smoothed_data - smoothed_ideal)
         max_distance = np.max(abs_difference)
         area_between_curves = integrate.simps(abs_difference, samples)
@@ -210,7 +211,6 @@ def main():
     transformed_test_features = pipe.transform(test_features)
     #transformed_validation_features = pipe.transform(validation_features)
 
-    from sklearn.metrics import accuracy_score
 
             
     
@@ -221,19 +221,11 @@ def main():
                                    fit_params=fit_params,
                                    cv=2, verbose=1)
         grid_search.fit(train_features, train_target)
-        #print(pd.DataFrame(grid_search.cv_results_))
         calibrated_classifier = BinaryCalibrator(grid_search.best_estimator_)
         calibrated_classifier.fit(test_features, test_target)
         return calibrated_classifier, grid_search.best_params_
-        # ax = plot_loss_function(grid_search.best_estimator_, test_features, test_target,
-        #                         color="blue",
-        #                         label="Uncalibrated")
-        # plot_loss_function(calibrated_classifier, test_features, test_target,
-        #                    ax=ax, color="green",
-        #                    label="Calibrated")
-        # ax.set_xlim(0, 1)
-        # plt.show()
 
+    model_list = []
     # print("Random Forest:")
     # best_rforest_model, best_rforest_params = run_model(
     #     transformed_training_features, training_target,
@@ -243,6 +235,14 @@ def main():
     # )
     # best_rforest_accuracy = accuracy_score(
     #     test_target, best_rforest_model.predict(transformed_test_features)
+    # )
+    # model_list.append(
+    #     {
+    #         "model_name": "Random Forest",
+    #         "model": best_rforest_model,
+    #         "params": best_rforest_params,
+    #         "accuracy": best_rforest_accuracy
+    #     }
     # )
     # print("  Best model: {0}, accuracy={1:.3f}".format(best_rforest_params, best_rforest_accuracy))
     
@@ -262,16 +262,33 @@ def main():
     best_xgboost_accuracy = accuracy_score(
         test_target, best_xgboost_model.predict(transformed_test_features)
     )
+    model_list.append(
+        {
+            "model_name": "XGBoost",
+            "model": best_xgboost_model,
+            "params": best_xgboost_params,
+            "accuracy": best_xgboost_accuracy
+        }
+    )
     print("  Best model: {0}, accuracy={1:.3f}".format(best_xgboost_params, best_xgboost_accuracy))
     
-    #clf = LogisticRegression()
-    # from sklearn.ensemble import RandomForestClassifier
-    # clf = RandomForestClassifier(n_estimators=100, min_samples_split=100)
-    # clf.fit(transformed_training_features, training_target)
-    # predictions = clf.predict(transformed_test_features)
-    # print("Accuracy:", accuracy_score(test_target, predictions))
-    # loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
 
+    best_model_info = model_list[0]
+    for model_info in model_list:
+        if model_info["accuracy"] > best_model_info["accuracy"]:
+            best_model_info = model_info
+    print("Best model overall: type: {0}, parameters {1}, accuracy={2:3f}".format(
+        best_model_info["model_name"], best_model_info["params"], best_model_info["accuracy"]
+    ))
+    ax = plot_loss_function(
+        best_model_info["model"], transformed_test_features, test_target,
+        color="blue",
+        label=best_model_info["model_name"]
+    )
+    ax.set_xlim(0, 100)
+    plt.tight_layout()
+    plt.show()
+    
 
 if __name__ == "__main__":
     main()
