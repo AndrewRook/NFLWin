@@ -288,7 +288,13 @@ def main():
     ax.set_xlim(0, 100)
     plt.tight_layout()
     plt.show()
-    
+
+    #TODO (ASR):
+    #1 connect best model to transforms
+    #2 ensure model scoring works properly for entire pipeline
+    #3 save plot to disk
+    #4 save model to disk
+    #5 use validation data instead of test data to make plot
 
 if __name__ == "__main__":
     main()
