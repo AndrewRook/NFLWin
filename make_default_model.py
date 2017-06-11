@@ -8,18 +8,22 @@ import pandas as pd
 import time
 import os
 
-from scipy import integrate
-from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KernelDensity
-from sklearn.pipeline import Pipeline
 from numba import jit
+from scipy import integrate
+from sklearn.base import BaseEstimator
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from xgboost import XGBClassifier
 
 from nflwin import data
 from nflwin import model
 from nflwin import preprocessing
 
 @jit(nopython=True)
-def _smooth_data(sorted_x, sorted_y, sample_x, sigma, truncation_limit=3):
+def _smooth_data(sorted_x, sorted_y, sample_x, sigma, truncation_limit=5):
     min_index = 0
     smoothed_y = np.zeros(len(sample_x))
     for i in range(len(sample_x)):
@@ -53,17 +57,29 @@ def smooth_probabilities(y_true, predicted_probabilities, sigma=0.005, sample_pr
 def plot_loss_function(estimator, X, y, ax=None, n_samples=1001, sigma=0.005, **kwargs):
     func = create_loss_function(n_samples=n_samples, sigma=sigma, return_vals="eval")
     func_return = func(estimator, X, y)
+    test = pd.DataFrame(
+        {
+            "samples": func_return["samples"],
+            "smoothed_data": func_return["smoothed_data"],
+            "smoothed_ideal": func_return["smoothed_ideal"]
+        }
+    )
     if ax is None:
         ax = plt.figure().add_subplot(111)
+        ax.plot(func_return["samples"], 1. / (1 + np.exp(-9 * (func_return["samples"] - 0.5))),
+                lw=2, color="orange", label="sigmoid")
+        ax.plot(func_return["samples"], func_return["smoothed_ideal"],
+                ls="--", lw=2, color="black", label="Ideal")
+        ax2 = ax.twinx()
+        ax2.hist(estimator.predict_proba(X)[:,1], bins=100, alpha=0.25, rwidth=1, color="black")
     kwargs["label"] = "{0}, max={1:.3f}, area={2:.3f}".format(
         kwargs.get("label", "Data"), func_return["max"], func_return["area"])
     ax.plot(func_return["samples"], func_return["smoothed_data"], **kwargs)
-    ax.plot(func_return["samples"], func_return["smoothed_ideal"], ls="--", lw=2, color="black", label="Ideal")
     ax.legend(loc="upper left", fontsize=10)
     return ax
     
 
-def create_loss_function(n_samples=1001, sigma=0.005, return_vals="area"):
+def create_loss_function(n_samples=1001, sigma=0.005, return_vals="area", inverse=False):
     return_vals = return_vals.lower()
     if return_vals not in ("area", "max", "both", "eval"):
         raise ValueError('return_vals must be one of "area", "max", "both", or "eval"')
@@ -76,6 +92,9 @@ def create_loss_function(n_samples=1001, sigma=0.005, return_vals="area"):
         abs_difference = np.abs(smoothed_data - smoothed_ideal)
         max_distance = np.max(abs_difference)
         area_between_curves = integrate.simps(abs_difference, samples)
+        if inverse:
+            max_distance = 1. / max_distance
+            area_between_curves = 1. / area_between_curves
         if return_vals == "area":
             return area_between_curves
         if return_vals == "max":
@@ -90,6 +109,37 @@ def create_loss_function(n_samples=1001, sigma=0.005, return_vals="area"):
     return loss_function
         
 
+class BinaryCalibrator(BaseEstimator):
+
+    def __init__(self, base_estimator, calibration_order=5):
+        self.base_estimator = base_estimator
+        self.calibration_order = calibration_order
+
+    def fit(self, X, y):
+        probabilities = self.base_estimator.predict_proba(X)[:, 1]
+        self.estimator_ = LogisticRegression(C=100)
+        self.estimator_.fit(self._make_features(probabilities), y)
+        return self
+
+    def predict_proba(self, X, y=None):
+        base_probabilities= self.base_estimator.predict_proba(X)[:, 1]
+        return self.estimator_.predict_proba(self._make_features(base_probabilities))
+
+    def predict(self, X, y=None):
+        base_probabilities= self.base_estimator.predict_proba(X)[:, 1]
+        return self.estimator_.predict(self._make_features(base_probabilities))
+        
+
+    def _make_features(self, probabilities):
+        if self.calibration_order < 1:
+            raise ValueError("calibration_order must be >= 1")
+        if self.calibration_order == 1:
+            return probabilities[:, np.newaxis]
+        else:
+            features = []
+            for i in range(self.calibration_order):
+                features.append(probabilities ** i)
+            return np.vstack(features).T
 
 def main():
     start = time.time()
@@ -158,51 +208,62 @@ def main():
     pipe = Pipeline(steps)
     transformed_training_features = pipe.fit_transform(training_features)
     transformed_test_features = pipe.transform(test_features)
-    transformed_validation_features = pipe.transform(validation_features)
+    #transformed_validation_features = pipe.transform(validation_features)
 
-    from sklearn.calibration import CalibratedClassifierCV
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.ensemble import RandomForestClassifier
-    from sklearn.model_selection import GridSearchCV
-    from xgboost import XGBClassifier
-    #from sklearn.metrics import accuracy_score
+    from sklearn.metrics import accuracy_score
 
+            
+    
     def run_model(train_features, train_target, test_features, test_target, classifier, param_grid,
                   fit_params=None):
-        scoring_func = create_loss_function()
-        #calibrated_classifier = CalibratedClassifierCV(base_estimator=classifier, cv=2)
-        #param_grid = {"base_estimator__{0}".format(key): param_grid[key] for key in param_grid if not key.startswith("base_estimator__")}
-        #grid_search = GridSearchCV(calibrated_classifier, param_grid, scoring=scoring_func, fit_params=fit_params)
-        grid_search = GridSearchCV(classifier, param_grid, fit_params=fit_params)
+        scoring_func = create_loss_function(inverse=True)
+        grid_search = GridSearchCV(classifier, param_grid,
+                                   fit_params=fit_params,
+                                   cv=2, verbose=1)
         grid_search.fit(train_features, train_target)
-        calibrated_classifier = CalibratedClassifierCV(base_estimator=grid_search.best_estimator_, cv="prefit")
+        #print(pd.DataFrame(grid_search.cv_results_))
+        calibrated_classifier = BinaryCalibrator(grid_search.best_estimator_)
         calibrated_classifier.fit(test_features, test_target)
-        print(pd.DataFrame(grid_search.cv_results_))
-        ax = plot_loss_function(calibrated_classifier, test_features, test_target)
-        plt.show()
+        return calibrated_classifier, grid_search.best_params_
+        # ax = plot_loss_function(grid_search.best_estimator_, test_features, test_target,
+        #                         color="blue",
+        #                         label="Uncalibrated")
+        # plot_loss_function(calibrated_classifier, test_features, test_target,
+        #                    ax=ax, color="green",
+        #                    label="Calibrated")
+        # ax.set_xlim(0, 1)
+        # plt.show()
 
-    # print("Logistic:")
-    # run_model(transformed_training_features, training_target,
-    #           transformed_test_features, test_target,
-    #           LogisticRegression(), {"C": [0.1, 1, 10]})
-    print("Random Forest")
-    run_model(transformed_training_features, training_target,
-              transformed_test_features, test_target,
-              RandomForestClassifier(),
-              {"n_estimators": [100], "min_samples_split": [100]}
-              )
-    # print("XGBoost")
-    # run_model(
+    # print("Random Forest:")
+    # best_rforest_model, best_rforest_params = run_model(
     #     transformed_training_features, training_target,
     #     transformed_test_features, test_target,
-    #     XGBClassifier(max_depth=4, n_estimators=100),
-    #     {"max_depth": [3, 4, 5], "n_estimators": [1000]},
-    #     fit_params={
-    #         "eval_set": [(transformed_test_features, test_target)],
-    #         "eval_metric": "logloss",
-    #         "early_stopping_rounds": 10
-    #     }
+    #     RandomForestClassifier(),
+    #     {"n_estimators": [100], "min_samples_split": [100]}
     # )
+    # best_rforest_accuracy = accuracy_score(
+    #     test_target, best_rforest_model.predict(transformed_test_features)
+    # )
+    # print("  Best model: {0}, accuracy={1:.3f}".format(best_rforest_params, best_rforest_accuracy))
+    
+    print("XGBoost")
+    best_xgboost_model, best_xgboost_params = run_model(
+        transformed_training_features, training_target,
+        transformed_test_features, test_target,
+        XGBClassifier(objective="binary:logistic", reg_lambda=0),
+        {"max_depth": [3], "n_estimators": [100], "learning_rate": [0.1]},
+        fit_params={
+            "eval_set": [(transformed_test_features, test_target)],
+            "eval_metric": "logloss",
+            "early_stopping_rounds": 10,
+            "verbose": False,
+        }
+    )
+    best_xgboost_accuracy = accuracy_score(
+        test_target, best_xgboost_model.predict(transformed_test_features)
+    )
+    print("  Best model: {0}, accuracy={1:.3f}".format(best_xgboost_params, best_xgboost_accuracy))
+    
     #clf = LogisticRegression()
     # from sklearn.ensemble import RandomForestClassifier
     # clf = RandomForestClassifier(n_estimators=100, min_samples_split=100)
@@ -211,28 +272,6 @@ def main():
     # print("Accuracy:", accuracy_score(test_target, predictions))
     # loss_function(test_target, clf.predict_proba(transformed_test_features)[:,1])
 
-    #NOTE: see https://stats.stackexchange.com/a/76726 for possible things to set this to.
-    # print(transformed_training_features.shape)
-    # from keras.models import Sequential
-    # from keras.layers import Dense, Activation
-    # model = Sequential()
-    # model.add(Dense(32, activation="relu", input_dim=transformed_training_features.shape[1]))
-    # model.add(Dense(32, activation="relu"))
-    # model.add(Dense(1, activation='sigmoid'))
-    # model.compile(optimizer="sgd",
-    #               loss="binary_crossentropy",
-    #               metrics=["accuracy"])
-    # model.fit(transformed_training_features, training_target, batch_size=256, epochs=15)
-    # #print(dir(model))
-    # # print(probabilities.shape)
-    # # print(model.evaluate(transformed_test_features, test_target, batch_size=128))
-    # #test = model.predict_proba(transformed_test_features)
-    # #for i,probs in enumerate(test):
-    # #    print(i, probs, test_target[i])
-    # print("")
-    # print("")
-    # loss_function(test_target, model.predict_proba(transformed_test_features)[:,0])
-    #win_probability_model = model.WPModel()
 
 if __name__ == "__main__":
     main()
