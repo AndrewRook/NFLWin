@@ -292,9 +292,11 @@ def main():
     #TODO (ASR):
     #1 connect best model to transforms
     #2 ensure model scoring works properly for entire pipeline
+    #2.5 refactor WPModel, add model to it
     #3 save plot to disk
     #4 save model to disk
     #5 use validation data instead of test data to make plot
+    #6 make validation views across parameters of interest
 
 if __name__ == "__main__":
     main()
