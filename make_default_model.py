@@ -280,8 +280,11 @@ def main():
     print("Best model overall: type: {0}, parameters {1}, accuracy={2:3f}".format(
         best_model_info["model_name"], best_model_info["params"], best_model_info["accuracy"]
     ))
+
+    pipe.steps.append(("classifier", best_model_info["model"]))
+    best_model_info["model"] = pipe
     ax = plot_loss_function(
-        best_model_info["model"], transformed_test_features, test_target,
+        best_model_info["model"], test_features, test_target,
         color="blue",
         label=best_model_info["model_name"]
     )
@@ -290,8 +293,6 @@ def main():
     plt.show()
 
     #TODO (ASR):
-    #1 connect best model to transforms
-    #2 ensure model scoring works properly for entire pipeline
     #2.5 refactor WPModel, add model to it
     #3 save plot to disk
     #4 save model to disk
