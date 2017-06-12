@@ -154,14 +154,26 @@ def main():
 
     raw_data.fillna(value=0, inplace=True)
 
-    model_columns = ["home_team", "away_team",
-                     "home_wins", "home_losses",
-                     "away_wins", "away_losses",
-                     "pos_team", "yardline",
-                     "down", "yards_to_go",
-                     "quarter", "seconds_elapsed",
-                     "current_home_score",
-                     "current_away_score"]
+    column_info = {
+        "home_team": ("The name or abbreviation of the home team. "
+                      "Can be anything as long as it's consistent with the other team name columns"),
+        "away_team": "Same as home_team, but for the away team.",
+        "home_wins": "Number of wins for the home team (going into the current game).",
+        "home_losses": "Number of losses for the home team (going into the current game).",
+        "away_wins": "Same as home_wins, but for the away team.",
+        "away_losses": "Same as home_losses, but for the away team.",
+        "pos_team": "The name or abbreviation of the team with possession of the ball.",
+        "yardline": ("The line of scrimmage, with -49 equal to the offense's 1-yard line "
+                     "and 49 equal to the defense's 1-yard line."),
+        "down": "The current down (0 can be used for special teams plays outside of normal downs.",
+        "yards_to_go": "The number of yards to go for a first down or touchdown.",
+        "quarter": "The current quarter (valid values: Q1, Q2, Q3, Q4, OT, and OT2).",
+        "seconds_elapsed": "The number of seconds elapsed in the current quarter.",
+        "current_home_score": "The home team's score at the start of the play.",
+        "current_away_score": "Same as current_home_score, but for the away team."
+    }
+    
+    model_columns = list(column_info.keys())
     training_target = raw_data[raw_data["season_year"].isin(training_seasons)]["winning_team"]
     validation_target = raw_data[raw_data["season_year"].isin(validation_seasons)]["winning_team"]
 
@@ -209,7 +221,6 @@ def main():
     pipe = Pipeline(steps)
     transformed_training_features = pipe.fit_transform(training_features)
     transformed_test_features = pipe.transform(test_features)
-    #transformed_validation_features = pipe.transform(validation_features)
 
 
             
