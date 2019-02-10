@@ -3,10 +3,28 @@ from __future__ import print_function, division
 
 import numpy as np
 import pandas as pd
+import patsy
 
 from sklearn.base import BaseEstimator
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.validation import NotFittedError
+
+class CalculateDerivedVariable(BaseEstimator):
+
+    def __init__(self, new_colname, formula):
+        self.new_colname = new_colname
+        self.formula = formula
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        dm = patsy.dmatrix(
+            "I({0}) - 1".format(self.formula), X
+        )
+        X[self.new_colname] = np.asarray(dm)[:, -1]
+        return X
+
 
 class ComputeElapsedTime(BaseEstimator):
     """Compute the total elapsed time from the start of the game.

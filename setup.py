@@ -19,7 +19,6 @@ else:
 
 NAME = "nflwin"
 PACKAGES = find_packages(where=".")
-META_PATH = os.path.join(NAME, "__init__.py")
 KEYWORDS = ['NFL','WP','Win Probability']
 CLASSIFIERS = [
     "Development Status :: 4 - Beta",
@@ -37,8 +36,7 @@ INSTALL_REQUIRES = ['numpy',
 
 EXTRAS_REQUIRE = {
     "plotting": ["matplotlib"],
-    "nfldb": ["nfldb", "sqlalchemy"],
-    "dev": ["matplotlib", "nfldb", "sqlalchemy", "pytest", "pytest-cov", "sphinx", "numpydoc"]
+    "dev": ["matplotlib", "pytest", "pytest-cov", "sphinx", "numpydoc"]
     }
 
 PACKAGE_DATA = {"nflwin": ["models/default_model.nflwin*"]}

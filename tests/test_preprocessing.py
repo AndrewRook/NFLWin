@@ -8,6 +8,89 @@ from sklearn.pipeline import Pipeline
 
 from nflwin import preprocessing
 
+class TestCalculateDerivedVariable:
+    def test_simple_arithmetic(self):
+        input = pd.DataFrame({"one": [1, 2, 3]})
+        formula = "one * 3"
+        expected_output = pd.DataFrame(
+            {"one": [1, 2, 3],
+            "two": [3., 6., 9.]}
+        )
+        cleaner = preprocessing.CalculateDerivedVariable(
+            "two", formula
+        )
+        actual_output = cleaner.transform(input)
+        pd.util.testing.assert_frame_equal(expected_output, actual_output)
+        # should work in-place:
+        pd.util.testing.assert_frame_equal(input, expected_output)
+
+    def test_np_function(self):
+        input = pd.DataFrame({"one": [10, 100, 1000]})
+        formula = "np.log10(one) + 3"
+        expected_output = pd.DataFrame({
+            "one": [10, 100, 1000],
+            "two": [4., 5., 6.]
+        })
+        cleaner = preprocessing.CalculateDerivedVariable(
+            "two", formula
+        )
+        actual_output = cleaner.transform(input)
+        pd.util.testing.assert_frame_equal(expected_output, actual_output)
+        # should work in-place:
+        pd.util.testing.assert_frame_equal(input, expected_output)
+
+
+    def test_multiple_columns(self):
+        input = pd.DataFrame({
+            "one": [10, 100, 1000],
+            "two": [0, 9, 12]
+        })
+        formula = "np.log10(one) + two"
+        expected_output = pd.DataFrame({
+            "one": [10, 100, 1000],
+            "two": [0, 9, 12],
+            "three": [1., 11., 15.]
+        })
+        cleaner = preprocessing.CalculateDerivedVariable(
+            "three", formula
+        )
+        actual_output = cleaner.transform(input)
+        pd.util.testing.assert_frame_equal(expected_output, actual_output)
+        # should work in-place:
+        pd.util.testing.assert_frame_equal(input, expected_output)
+
+
+    def test_boolean_logic(self):
+        input = pd.DataFrame({"one": [1, 2, 3]})
+        formula = "one != 2"
+        expected_output = pd.DataFrame(
+            {"one": [1, 2, 3],
+            "two": [1., 0., 1.]}
+        )
+        cleaner = preprocessing.CalculateDerivedVariable(
+            "two", formula
+        )
+        actual_output = cleaner.transform(input)
+        pd.util.testing.assert_frame_equal(expected_output, actual_output)
+        # should work in-place:
+        pd.util.testing.assert_frame_equal(input, expected_output)
+
+
+    def test_overwrite_columns(self):
+        input = pd.DataFrame({"one": [1, 2, 3]})
+        formula = "one * 3"
+        expected_output = pd.DataFrame(
+            {"one": [3., 6., 9.]}
+        )
+        cleaner = preprocessing.CalculateDerivedVariable(
+            "one", formula
+        )
+        actual_output = cleaner.transform(input)
+        pd.util.testing.assert_frame_equal(expected_output, actual_output)
+        # should work in-place:
+        pd.util.testing.assert_frame_equal(input, expected_output)
+
+
 class TestPipelines(object):
     """Testing if pipelining cleaning steps works."""
     def test_map_to_int_to_onehot(self):
