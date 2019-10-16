@@ -33,7 +33,8 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = ['numpy',
                     'scipy',
                     'pandas',
-                    'scikit-learn']
+                    'scikit-learn',
+                    'joblib',]
 
 EXTRAS_REQUIRE = {
     "plotting": ["matplotlib"],
@@ -47,7 +48,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 README = None
 with open(os.path.join(HERE, 'README.rst'),'r') as f:
     README = f.read()
-    
+
 ###################################################################
 
 if __name__ == "__main__":
