@@ -1,6 +1,11 @@
 from __future__ import print_function, division
 
-import nfldb
+try:
+    import nfldb
+    nfldb_missing=False
+except ImportError:
+    nfldb_missing=True
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -111,7 +116,7 @@ class TestGetNFLDBPlayData(object):
         pd.util.testing.assert_frame_equal(queried_df[:5].sort_index(axis=1),
                                            expected_df.sort_index(axis=1), check_column_type=False)
 
-
+@pytest.mark.requires_db
 class TestConnectNFLDB(object):
     """testing the connect_nfldb function"""
     def setup_method(self, method):
