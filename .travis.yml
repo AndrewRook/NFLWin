@@ -21,7 +21,7 @@ install:
   - conda info -a
 
   #- conda env create -f environment.yml
-  - conda create -n nflwin -y -c conda-forge python=3 numpy scipy pandas pytest pytest-cov
+  - conda create -n nflwin -y -c conda-forge python=3 numpy scipy pandas pytest pytest-cov scikit-learn
   - source activate nflwin
   #- pip install nfldb==0.2.15 nflgame==1.2.19
   - python setup.py install
