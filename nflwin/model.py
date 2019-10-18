@@ -162,7 +162,7 @@ class WPModel(object):
         """
         self._training_seasons = []
         self._training_season_types = []
-        if isinstance(source_data, basestring):
+        if isinstance(source_data, str):
             if source_data == "nfldb":
                 source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
                                                             season_types=training_season_types)
@@ -253,7 +253,7 @@ class WPModel(object):
         
         self._validation_seasons = []
         self._validation_season_types = []
-        if isinstance(source_data, basestring):
+        if isinstance(source_data, str):
             if source_data == "nfldb":
                 source_data = utilities.get_nfldb_play_data(season_years=validation_seasons,
                                                             season_types=validation_season_types)
