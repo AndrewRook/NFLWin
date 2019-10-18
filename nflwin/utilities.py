@@ -44,7 +44,7 @@ def connect_nfldb():
     return engine
     
     
-def get_nfldb_play_data(season_years=None, season_types=["Regular", "Postseason"]):
+def get_nfldb_play_data(season_years=None, season_types=("Regular", "Postseason")):
     """Get play-by-play data from the nfldb database.
 
     We use a specialized query and then postprocessing because, while possible to

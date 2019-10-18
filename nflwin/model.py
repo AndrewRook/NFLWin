@@ -110,8 +110,8 @@ class WPModel(object):
 
     def train_model(self,
                     source_data="nfldb",
-                    training_seasons=[2009, 2010, 2011, 2012, 2013, 2014],
-                    training_season_types=["Regular", "Postseason"],
+                    training_seasons=(2009, 2010, 2011, 2012, 2013, 2014),
+                    training_season_types=("Regular", "Postseason"),
                     target_colname="offense_won"):
         """Train the model.
 
@@ -176,8 +176,8 @@ class WPModel(object):
 
     def validate_model(self,
                        source_data="nfldb",
-                       validation_seasons=[2015],
-                       validation_season_types=["Regular", "Postseason"],
+                       validation_seasons=(2015,),
+                       validation_season_types=("Regular", "Postseason"),
                        target_colname="offense_won"):
         """Validate the model.
 
