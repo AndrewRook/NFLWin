@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import patsy
 
+from copy import deepcopy
 from sklearn import metrics
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
@@ -88,17 +89,23 @@ class GenerateFeatures(BaseEstimator):
         self.n_iters = n_iters
 
     def _add_features(self, *datasets):
-        added_columns_data = []
         for dataset in datasets:
-            extra_columns = np.zeros([dataset.shape[0], len(self.added_features_)])
-            for i, feature_info in enumerate(self.added_features_):
-                
+            added_features = np.zeros(
+                [dataset.shape[1], len(self.residual_trees_)],
+                dtype=np.float
+            )
+            for i, tree in enumerate(self.residual_trees_):
+                best_node = tree.impurity.argmin()
+                terminal_nodes = tree.decision_path(dataset)
+                added_features[:, i] = (terminal_nodes == best_node)
+                # TODO: append into dataset, return data
+
 
     def fit(self, X, y):
         train_X, test_X, train_y, test_y = train_test_split(X, y)
         self.train_performance_ = []
         self.test_performance_ = []
-        self.added_features_ = set()
+        self.residual_trees_ = []
         for i in range(self.n_iters):
             derived_added_train_X, derived_added_test_X = self._add_features(
                 train_X, test_X
@@ -113,11 +120,8 @@ class GenerateFeatures(BaseEstimator):
             ) / np.sqrt(train_predictions * (1 - train_predictions))
 
             self.tree_model.fit(train_X, residuals)
-            best_features, best_thresholds, best_directions = self._get_best_path(
-                self.tree_model.tree_
-            )
-            self.added_features_.add(
-                tuple(zip(best_features, best_directions, best_thresholds))
+            self.residual_trees_.append(
+                deepcopy(self.tree_model.tree_)
             )
 
     def _fit_linear_model(self, train_X, test_X, train_y, test_y):
@@ -128,41 +132,41 @@ class GenerateFeatures(BaseEstimator):
         test_roc_auc = metrics.roc_auc_score(test_y, test_predictions)
         return train_predictions, train_roc_auc, test_roc_auc
 
-    def _get_best_path(self, tree_obj):
-        # identify the parent of each node
-        parents = np.zeros(len(tree_obj.impurity), dtype=np.int) - 1
-        for node in range(len(tree_obj.impurity)):
-            if tree_obj.children_left[node] >= 0:
-                parents[tree_obj.children_left[node]] = node
-            if tree_obj.children_right[node] >= 0:
-                parents[tree_obj.children_right[node]] = node
-
-        # starting with the best node, work up the tree
-        curr_node = tree_obj.impurity.argmin()
-        parent_node = parents[curr_node]
-        split_nodes = []
-        split_directions = []
-        while curr_node >= 0:
-            split_nodes.append(parent_node)
-            split_directions.append(
-                "<="
-                if tree_obj.children_left[parent_node] == curr_node
-                else ">"
-            )
-            parent_node = parents[parent_node]
-            curr_node = parents[curr_node]
-
-        nodes = split_nodes[-2::-1]
-        features = tree_obj.feature[nodes]
-        thresholds = tree_obj.threshold[nodes]
-        directions = split_directions[-2::-1]
-        return features, thresholds, directions
-
-
-    def _get_path_splits(self, path, directions, tree_obj):
-        features = tree_obj.features[path]
-        thresholds = tree_obj.thresholds[path]
-        return zip(features, directions, thresholds)
+    # def _get_best_path(self, tree_obj):
+    #     # identify the parent of each node
+    #     parents = np.zeros(len(tree_obj.impurity), dtype=np.int) - 1
+    #     for node in range(len(tree_obj.impurity)):
+    #         if tree_obj.children_left[node] >= 0:
+    #             parents[tree_obj.children_left[node]] = node
+    #         if tree_obj.children_right[node] >= 0:
+    #             parents[tree_obj.children_right[node]] = node
+    #
+    #     # starting with the best node, work up the tree
+    #     curr_node = tree_obj.impurity.argmin()
+    #     parent_node = parents[curr_node]
+    #     split_nodes = []
+    #     split_directions = []
+    #     while curr_node >= 0:
+    #         split_nodes.append(parent_node)
+    #         split_directions.append(
+    #             "<="
+    #             if tree_obj.children_left[parent_node] == curr_node
+    #             else ">"
+    #         )
+    #         parent_node = parents[parent_node]
+    #         curr_node = parents[curr_node]
+    #
+    #     nodes = split_nodes[-2::-1]
+    #     features = tree_obj.feature[nodes]
+    #     thresholds = tree_obj.threshold[nodes]
+    #     directions = split_directions[-2::-1]
+    #     return features, thresholds, directions
+    #
+    #
+    # def _get_path_splits(self, path, directions, tree_obj):
+    #     features = tree_obj.features[path]
+    #     thresholds = tree_obj.thresholds[path]
+    #     return zip(features, directions, thresholds)
 
 
 

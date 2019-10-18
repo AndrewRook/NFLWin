@@ -8,6 +8,10 @@ from sklearn.pipeline import Pipeline
 
 from nflwin import preprocessing
 
+class TestGenerateFeaturesAddFeatures:
+    def test_data_added_right(self):
+        feature_generator = preprocessing.GenerateFeatures(None, None, None)
+        feature_generator.residual_trees_ = None # Mock this
 
 class TestOneHotEncoding:
     def test_gets_right_unique_values(self):
@@ -70,7 +74,6 @@ class TestOneHotEncoding:
         )
         with pytest.raises(KeyError):
             actual_output = cleaner.transform(transform_data)
-
 
 
 class TestCalculateDerivedVariable:
