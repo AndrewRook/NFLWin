@@ -11,15 +11,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import brier_score_loss
 from sklearn.neighbors import KernelDensity
 from sklearn.pipeline import Pipeline
 from sklearn.utils.validation import NotFittedError
 
-import preprocessing
-import utilities
+from . import preprocessing, utilities
 
 class WPModel(object):
     """The object that computes win probabilities.
