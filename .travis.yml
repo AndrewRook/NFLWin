@@ -20,9 +20,10 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  # Replace dep1 dep2 ... with your dependencies
-  - conda env create -f environment.yml
-  - source activate nflwin
+  #- conda env create -f environment.yml
+  - conda create -n nflwin_py2 -y -c conda-forge python=2 numpy scipy pandas pytest pytest-cov scikit-learn=0.19
+  - source activate nflwin_py2
+  #- pip install nfldb==0.2.15 nflgame==1.2.19
   - python setup.py install
 
 script:
