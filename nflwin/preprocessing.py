@@ -86,7 +86,7 @@ class ComputeElapsedTime(BaseEstimator):
         except TypeError:
             raise TypeError("ComputeElapsedTime: Total time elapsed not numeric. Check your mapping from quarter name to time.")
 
-        X[self.total_time_colname] = time_elapsed
+        X[self.total_time_colname] = time_elapsed.astype(np.int)
 
         return X
     
