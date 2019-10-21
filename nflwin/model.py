@@ -7,8 +7,9 @@ import numpy as np
 from scipy import integrate
 from scipy import stats
 
+import joblib
+
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.model_selection import train_test_split, GridSearchCV
