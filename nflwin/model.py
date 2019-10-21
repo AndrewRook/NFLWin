@@ -7,19 +7,18 @@ import numpy as np
 from scipy import integrate
 from scipy import stats
 
+import joblib
+
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.externals import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.cross_validation import train_test_split
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import brier_score_loss
 from sklearn.neighbors import KernelDensity
 from sklearn.pipeline import Pipeline
 from sklearn.utils.validation import NotFittedError
 
-import preprocessing
-import utilities
+from . import preprocessing, utilities
 
 class WPModel(object):
     """The object that computes win probabilities.
@@ -162,7 +161,7 @@ class WPModel(object):
         """
         self._training_seasons = []
         self._training_season_types = []
-        if isinstance(source_data, basestring):
+        if isinstance(source_data, str):
             if source_data == "nfldb":
                 source_data = utilities.get_nfldb_play_data(season_years=training_seasons,
                                                             season_types=training_season_types)
@@ -253,7 +252,7 @@ class WPModel(object):
         
         self._validation_seasons = []
         self._validation_season_types = []
-        if isinstance(source_data, basestring):
+        if isinstance(source_data, str):
             if source_data == "nfldb":
                 source_data = utilities.get_nfldb_play_data(season_years=validation_seasons,
                                                             season_types=validation_season_types)
