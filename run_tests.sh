@@ -3,6 +3,11 @@
 
 mflag=" -m"
 mflagval=" not requires_db"
+python_version=`python -c "import sys; print(sys.version_info.major)"`
+pytest_command="py.test"
+if [ $python_version == "3" ]; then
+    pytest_command="pytest"
+fi
 
 while getopts ":d" opt; do
     case $opt in
@@ -23,4 +28,4 @@ while getopts ":d" opt; do
     esac
 done
 
-python -m py.test${mflag}"${mflagval}" --cov=nflwin --cov-config .coveragerc --cov-report term-missing nflwin/tests/
+python -m ${pytest_command}${mflag}"${mflagval}" --cov=nflwin --cov-config .coveragerc --cov-report term-missing nflwin/tests/
